@@ -1,0 +1,13 @@
+
+some CUDA notes
+
+NVIDIA releases "CUDA toolkit" and an optional "CUDA SDK".
+
+https://developer.nvidia.com/cuda-toolkit
+https://developer.nvidia.com/gpu-computing-sdk
+
+toolkit is everything you need to run stuff with CUDA. SDK is optional and provides some useful stuff.
+
+there are some development tools like CUDA-GDB command line debugger and CUDA-MEMCHECK analyzer, which may be useful in the project.
+
+
