@@ -10,15 +10,16 @@
 extern "C"
 void runCudaPart();
 
-__global__ void helloCUDA(float f)
+__global__ void helloCUDA(glm::vec3 v)
 {
-    printf("Hello thread %d, f=%f\n", threadIdx.x, f);
+    printf("Hello thread %d, x=%f\n", threadIdx.x, v.x);
 }
 
 void runCudaPart()
 {
     // all your cuda code here
-    helloCUDA<<<1, 5>>>(1.2345f);
+    glm::vec3 v(0.1f, 0.2f, 0.3f);
+    helloCUDA<<<1, 5>>>(v);
     cudaDeviceSynchronize();
-    glm::vec4 v(0.0f);
+
 }
