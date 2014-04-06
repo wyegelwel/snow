@@ -12,14 +12,15 @@ void runCudaPart();
 
 __global__ void helloCUDA(glm::vec3 v)
 {
-    printf("Hello thread %d, x=%f\n", threadIdx.x, v.x);
+    int tid = blockIdx.x;
+    printf("Hello block %d thread %d, x=%f\n",tid , threadIdx.x, v.x);
 }
 
 void runCudaPart()
 {
     // all your cuda code here
     glm::vec3 v(0.1f, 0.2f, 0.3f);
-    helloCUDA<<<1, 5>>>(v);
+//    helloCUDA<<<1, 5>>>(v); // 1 block, 5 GPU threads
+    helloCUDA<<<5,1>>>(v); // 5 blocks, 1 GPU thread each
     cudaDeviceSynchronize();
-
 }

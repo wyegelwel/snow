@@ -12,6 +12,3 @@ int main(int argc, char *argv[])
     runCudaPart();
     return a.exec();
 }
-
-
-

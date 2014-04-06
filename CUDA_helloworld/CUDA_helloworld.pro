@@ -20,7 +20,7 @@ SOURCES += main.cpp
 INCLUDEPATH += /contrib/projects/glm/glm-0.9.5.1
 
 # C++ flag
-QMAKE_CXXFLAGS_RELEASE=-03
+QMAKE_CXXFLAGS_RELEASE=-O3
 
 # CUDA stuff
 CUDA_SOURCES += kernel.cu
