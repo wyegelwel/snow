@@ -12,6 +12,12 @@
 
 #include <glm/gtc/random.hpp>
 
+#include <cuda_runtime.h>
+#include <cuda_gl_interop.h>
+#include <helper_functions.h>
+#include <helper_cuda.h>
+#include <helper_cuda_gl.h>
+
 #include "common/common.h"
 #include "ui/userinput.h"
 #include "viewport/viewport.h"
@@ -24,14 +30,11 @@ ViewPanel::ViewPanel( QWidget *parent )
     m_viewport = new Viewport;
     resetViewport();
 
-    for ( int i = 0; i < 1000; ++i ) {
+    for ( int i = 0; i < 4*512; ++i ) {
         Particle particle;
         particle.position = glm::ballRand( 2.5f );
         m_particles += particle;
     }
-
-    assert( connect(&m_timer, SIGNAL(timeout()), this, SLOT(update())) );
-    m_timer.start( 1000/FPS );
 }
 
 ViewPanel::~ViewPanel()
@@ -58,8 +61,12 @@ ViewPanel::resizeEvent( QResizeEvent *event )
 void
 ViewPanel::initializeGL()
 {
-
+    QGLWidget::initializeGL();
+    assert( connect(&m_timer, SIGNAL(timeout()), this, SLOT(update())) );
+    m_timer.start( 1000/FPS );
 }
+
+float t = 0.f;
 
 void
 ViewPanel::paintGL()
@@ -68,6 +75,8 @@ ViewPanel::paintGL()
     glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
     m_viewport->push();
+
+    m_particles.update( t += 1.f/FPS );
 
     glColor3f( 1.f, 0.f, 0.f );
     glPointSize( 1.f );

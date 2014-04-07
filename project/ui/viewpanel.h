@@ -46,6 +46,8 @@ private:
     QTimer m_timer;
 
     Viewport *m_viewport;
+
+    int m_cudaDevice;
     ParticleSystem m_particles;
 
 };

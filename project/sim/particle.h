@@ -17,6 +17,8 @@
 
 typedef unsigned int GLuint;
 
+struct cudaGraphicsResource;
+
 struct Particle
 {
     glm::vec3 position;
@@ -42,13 +44,15 @@ public:
     QVector<Particle>& particles() { return m_particles; }
 
     void render();
+    void update( float time );
 
     ParticleSystem& operator += ( const Particle &particle ) { m_particles.append(particle); return *this; }
 
 private:
 
     QVector<Particle> m_particles;
-    GLuint m_vbo;
+    GLuint m_glVBO;
+    cudaGraphicsResource *m_cudaVBO;
 
     bool hasVBO() const;
     void buildVBO();
