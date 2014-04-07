@@ -70,7 +70,7 @@ CUDA_ARCH = sm_21
 NVCCFLAGS     = --compiler-options -fno-strict-aliasing -use_fast_math --ptxas-options=-v
 
 # Prepare the extra compiler configuration (taken from the nvidia forum - i'm not an expert in this part)
-CUDA_INC = $$join(INCLUDEPATH,' -I','-I',' ') -I/gpfs/main/home/mliberma/course/cs224/snow/src/snow/
+CUDA_INC = $$join(INCLUDEPATH,' -I','-I',' ') -I./
 
 message( $$CUDA_INC )
 
