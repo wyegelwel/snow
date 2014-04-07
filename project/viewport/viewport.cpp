@@ -136,3 +136,42 @@ Viewport::mouseMoved()
     }
     }
 }
+
+
+void
+Viewport::drawAxis()
+{
+    glViewport(0, 0, 50, 50); // small square in corner
+    loadMatrices();
+
+    // X
+    glColor3f(1.0f, 0.0f, 0.0f);
+    glEnable( GL_LINE_SMOOTH );
+    glLineWidth( 1.5 );
+    glBegin(GL_LINES);
+        glVertex3f(0, 0, 0);
+        glVertex3f(100, 0, 0);
+    glEnd();
+
+    // Y
+    glColor3f(0.0f, 1.0f, 0.0f);
+    glEnable( GL_LINE_SMOOTH );
+    glLineWidth( 1.5 );
+    glBegin(GL_LINES);
+        glVertex3f(0, 0, 0);
+        glVertex3f(0, 100, 0);
+    glEnd();
+
+    // Z
+    glColor3f(0.0f, 0.0f, 1.0f);
+    glEnable( GL_LINE_SMOOTH );
+    glLineWidth( 1.5 );
+    glBegin(GL_LINES);
+        glVertex3f(0, 0, 0);
+        glVertex3f(0, 0, 100);
+    glEnd();
+
+    //Restore View
+    popMatrices();
+    glViewport(0, 0, m_width, m_height);
+}

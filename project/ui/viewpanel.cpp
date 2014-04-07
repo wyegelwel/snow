@@ -32,6 +32,9 @@ ViewPanel::ViewPanel( QWidget *parent )
 
     assert( connect(&m_timer, SIGNAL(timeout()), this, SLOT(update())) );
     m_timer.start( 1000/FPS );
+
+    m_drawAxis = true;
+
 }
 
 ViewPanel::~ViewPanel()
@@ -67,13 +70,16 @@ ViewPanel::paintGL()
     glClearColor( 0.f, 0.f, 0.f, 0.f );
     glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
-    m_viewport->push();
+    m_viewport->push(); {
+        glColor3f( 1.f, 0.f, 0.f );
+        glPointSize( 1.f );
+        m_particles.render();
+    } m_viewport->pop();
 
-    glColor3f( 1.f, 0.f, 0.f );
-    glPointSize( 1.f );
-    m_particles.render();
-
-    m_viewport->pop();
+    if (m_drawAxis)
+    {
+        m_viewport->drawAxis();
+    }
 }
 
 void

@@ -49,11 +49,14 @@ public:
 
     void mouseMoved();
 
+    void drawAxis();
+
 private:
 
     State m_state;
     Camera *m_camera;
     int m_width, m_height;
+
 
 };
 

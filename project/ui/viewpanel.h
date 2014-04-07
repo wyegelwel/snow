@@ -48,6 +48,9 @@ private:
     Viewport *m_viewport;
     ParticleSystem m_particles;
 
+
+    // set true to draw a little XYZ axis in the corner
+    bool m_drawAxis;
 };
 
 #endif // VIEWPANEL_H
