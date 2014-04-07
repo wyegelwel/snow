@@ -16,6 +16,7 @@ __global__ void add(int *a, int *b, int *c)
 {
     // tid is which GPU block we are operating on
     // can be 1D, 2D, or even 3D indexed for image/grid-type operations
+    // int tid = threadIdx.x + blockIdx.x * blolckDim.x; // if we wanted to add arbitrarily long vectors and also leverage threading within each block
     int tid=blockIdx.x;
     if (tid<N) // safeguard in case GPU does something weird, but not really necessary
         c[tid] = a[tid] + b[tid];
