@@ -35,6 +35,8 @@ ViewPanel::ViewPanel( QWidget *parent )
         particle.position = glm::ballRand( 2.5f );
         m_particles += particle;
     }
+
+    m_drawAxis = true;
 }
 
 ViewPanel::~ViewPanel()
@@ -74,15 +76,18 @@ ViewPanel::paintGL()
     glClearColor( 0.f, 0.f, 0.f, 0.f );
     glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
-    m_viewport->push();
+    m_viewport->push(); {
+        glColor3f( 1.f, 0.f, 0.f );
+        glPointSize( 1.f );
+        m_particles.render();
+    } m_viewport->pop();
 
     m_particles.update( t += 1.f/FPS );
 
-    glColor3f( 1.f, 0.f, 0.f );
-    glPointSize( 1.f );
-    m_particles.render();
+    if (m_drawAxis) {
+        m_viewport->drawAxis();
+    }
 
-    m_viewport->pop();
 }
 
 void

@@ -4,7 +4,7 @@ extern "C" // tell compiler that function is defined somewhere else
 
 void runCudaPart();
 
-#include <stdio.h>
+
 
 int main(int argc, char *argv[])
 {

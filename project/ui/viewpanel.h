@@ -50,6 +50,9 @@ private:
     int m_cudaDevice;
     ParticleSystem m_particles;
 
+
+    // set true to draw a little XYZ axis in the corner
+    bool m_drawAxis;
 };
 
 #endif // VIEWPANEL_H
