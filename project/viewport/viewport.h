@@ -21,6 +21,14 @@ class Viewport
 
 public:
 
+    enum State
+    {
+        IDLE,
+        PANNING,
+        ZOOMING,
+        TUMBLING
+    };
+
     Viewport();
     ~Viewport();
 
@@ -36,8 +44,14 @@ public:
 
     void setDimensions( int width, int height );
 
+    void setState( State state ) { m_state = state; }
+    State getState() const { return m_state; }
+
+    void mouseMoved();
+
 private:
 
+    State m_state;
     Camera *m_camera;
     int m_width, m_height;
 

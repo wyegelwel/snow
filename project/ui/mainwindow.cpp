@@ -11,6 +11,8 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
+#include "ui/userinput.h"
+
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
@@ -21,4 +23,5 @@ MainWindow::MainWindow(QWidget *parent) :
 MainWindow::~MainWindow()
 {
     delete ui;
+    UserInput::deleteInstance();
 }

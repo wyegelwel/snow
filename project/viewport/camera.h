@@ -63,6 +63,8 @@ public:
     float getHeightAngle() const { return m_heightAngle; }
     void setHeightAngle( float radians ) { m_heightAngle = radians; updateProjectionMatrix(); }
 
+    float getFocusDistance() const { return glm::length(m_lookAt-m_eye); }
+
 private:
 
     glm::mat4 m_modelview, m_projection;

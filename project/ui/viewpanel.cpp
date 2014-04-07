@@ -13,6 +13,7 @@
 #include <glm/gtc/random.hpp>
 
 #include "common/common.h"
+#include "ui/userinput.h"
 #include "viewport/viewport.h"
 
 #define FPS 60
@@ -60,17 +61,11 @@ ViewPanel::initializeGL()
 
 }
 
-static int frame = 0;
-
 void
 ViewPanel::paintGL()
 {
     glClearColor( 0.f, 0.f, 0.f, 0.f );
     glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
-
-    float theta = (frame++)*M_PI/360.f;
-    glm::vec3 pos = glm::vec3( 10*cosf(theta), 0, 10*sinf(theta) );
-    m_viewport->orient( pos, glm::vec3(0,0,0), glm::vec3(0,1,0) );
 
     m_viewport->push();
 
@@ -79,4 +74,27 @@ ViewPanel::paintGL()
     m_particles.render();
 
     m_viewport->pop();
+}
+
+void
+ViewPanel::mousePressEvent( QMouseEvent *event )
+{
+    UserInput::update(event);
+    if ( UserInput::leftMouse() ) m_viewport->setState( Viewport::TUMBLING );
+    else if ( UserInput::rightMouse() ) m_viewport->setState( Viewport::ZOOMING );
+    else if ( UserInput::middleMouse() ) m_viewport->setState( Viewport::PANNING );
+}
+
+void
+ViewPanel::mouseMoveEvent( QMouseEvent *event )
+{
+    UserInput::update(event);
+    m_viewport->mouseMoved();
+}
+
+void
+ViewPanel::mouseReleaseEvent( QMouseEvent *event )
+{
+    UserInput::update(event);
+    m_viewport->setState( Viewport::IDLE );
 }
