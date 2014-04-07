@@ -11,13 +11,8 @@
 #ifndef PARTICLE_H
 #define PARTICLE_H
 
-#include <QVector>
 #include <glm/vec3.hpp>
 #include <glm/mat3x3.hpp>
-
-typedef unsigned int GLuint;
-
-struct cudaGraphicsResource;
 
 struct Particle
 {
@@ -27,8 +22,16 @@ struct Particle
     float volume;
     glm::mat3 elasticF;
     glm::mat3 plasticF;
+#ifndef CUDA_INCLUDE
     Particle() : elasticF(1.f), plasticF(1.f) {}
+#endif
 };
+
+#ifndef CUDA_INCLUDE
+
+#include <QVector>
+typedef unsigned int GLuint;
+struct cudaGraphicsResource;
 
 class ParticleSystem
 {
@@ -59,5 +62,7 @@ private:
     void deleteVBO();
 
 };
+
+#endif
 
 #endif // PARTICLE_H

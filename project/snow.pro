@@ -25,7 +25,8 @@ HEADERS  += ui/mainwindow.h \
     common/common.h \
     ui/viewpanel.h \
     sim/particle.h \
-    ui/userinput.h
+    ui/userinput.h \
+    cuda/functions.h
 
 FORMS    += ui/mainwindow.ui
 
@@ -70,9 +71,7 @@ CUDA_ARCH = sm_21
 NVCCFLAGS     = --compiler-options -fno-strict-aliasing -use_fast_math --ptxas-options=-v
 
 # Prepare the extra compiler configuration (taken from the nvidia forum - i'm not an expert in this part)
-CUDA_INC = $$join(INCLUDEPATH,' -I','-I',' ') -I/gpfs/main/home/mliberma/course/cs224/snow/src/snow/
-
-message( $$CUDA_INC )
+CUDA_INC = $$join(INCLUDEPATH,' -I','-I',' ') -I$$_PRO_FILE_PWD_
 
 # compile CUDA kernels using nvcc
 cuda.commands = $$CUDA_DIR/bin/nvcc -m64 -g -G -arch=$$CUDA_ARCH -c $$NVCCFLAGS $$CUDA_INC $$LIBS  ${QMAKE_FILE_NAME} -o ${QMAKE_FILE_OUT} \

@@ -12,12 +12,6 @@
 
 #include <glm/gtc/random.hpp>
 
-#include <cuda_runtime.h>
-#include <cuda_gl_interop.h>
-#include <helper_functions.h>
-#include <helper_cuda.h>
-#include <helper_cuda_gl.h>
-
 #include "common/common.h"
 #include "ui/userinput.h"
 #include "viewport/viewport.h"
@@ -84,7 +78,7 @@ ViewPanel::paintGL()
 
     m_particles.update( t += 1.f/FPS );
 
-    if (m_drawAxis) {
+    if ( m_drawAxis ) {
         m_viewport->drawAxis();
     }
 

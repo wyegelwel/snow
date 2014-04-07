@@ -18,20 +18,21 @@
 #include <helper_cuda.h>
 #include <helper_cuda_gl.h>
 
-#include <glm/glm.hpp>
+#include <glm/geometric.hpp>
 
-struct Particle
+#define CUDA_INCLUDE
+#include "sim/particle.h"
+#include "cuda/functions.h"
+
+void registerVBO( cudaGraphicsResource **resource, GLuint vbo )
 {
-    glm::vec3 position;
-    glm::vec3 velocity;
-    float mass;
-    float volume;
-    glm::mat3 elasticF;
-    glm::mat3 plasticF;
-};
+    checkCudaErrors( cudaGraphicsGLRegisterBuffer(resource, vbo, cudaGraphicsMapFlagsWriteDiscard) );
+}
 
-extern "C"
-void updateCUDA( float time, Particle *particles, int particleCount );
+void unregisterVBO( cudaGraphicsResource *resource )
+{
+    checkCudaErrors( cudaGraphicsUnregisterResource(resource) );
+}
 
 __global__ void snow_kernel( float time, Particle *particles )
 {
@@ -40,9 +41,15 @@ __global__ void snow_kernel( float time, Particle *particles )
     particles[index].position += 0.05f*sinf(10*time)*pn;
 }
 
-void updateCUDA( float time, Particle *particles, int particleCount )
+void updateParticles( cudaGraphicsResource **resource, float time, int particleCount )
 {
+
+    checkCudaErrors( cudaGraphicsMapResources(1, resource, 0) );
+    Particle *particles;
+    size_t size;
+    checkCudaErrors( cudaGraphicsResourceGetMappedPointer((void**)&particles, &size, *resource) );
     snow_kernel<<< particleCount/512, 512 >>>( time, particles );
+    checkCudaErrors( cudaGraphicsUnmapResources(1, resource, 0) );
 }
 
 #endif // SNOW_CU
