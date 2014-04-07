@@ -73,6 +73,7 @@ NVCCFLAGS     = --compiler-options -fno-strict-aliasing -use_fast_math --ptxas-o
 # Prepare the extra compiler configuration (taken from the nvidia forum - i'm not an expert in this part)
 CUDA_INC = $$join(INCLUDEPATH,' -I','-I',' ') -I$$_PRO_FILE_PWD_
 
+
 # compile CUDA kernels using nvcc
 cuda.commands = $$CUDA_DIR/bin/nvcc -m64 -g -G -arch=$$CUDA_ARCH -c $$NVCCFLAGS $$CUDA_INC $$LIBS  ${QMAKE_FILE_NAME} -o ${QMAKE_FILE_OUT} \
     2>&1 | sed -r \"s/\\(([0-9]+)\\)/:\\1/g\" 1>&2

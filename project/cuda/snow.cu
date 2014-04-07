@@ -14,9 +14,6 @@
 #include <cuda.h>
 #include <cuda_runtime.h>
 #include <cuda_gl_interop.h>
-#include <helper_functions.h>
-#include <helper_cuda.h>
-#include <helper_cuda_gl.h>
 
 #include <glm/geometric.hpp>
 
@@ -38,7 +35,7 @@ __global__ void snow_kernel( float time, Particle *particles )
 {
     int index = blockIdx.x*blockDim.x + threadIdx.x;
     glm::vec3 pn = glm::normalize( particles[index].position );
-    particles[index].position += 0.05f*sinf(10*time)*pn;
+    particles[index].position += 0.05f*sinf(6*time)*pn;
 }
 
 void updateParticles( cudaGraphicsResource **resource, float time, int particleCount )
