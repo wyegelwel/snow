@@ -33,20 +33,22 @@ struct Particle
 typedef unsigned int GLuint;
 struct cudaGraphicsResource;
 
-class ParticleSystem
+#include "scene/renderable.h"
+
+class ParticleSystem : public Renderable
 {
 
 public:
 
     ParticleSystem();
-    ~ParticleSystem();
+    virtual ~ParticleSystem();
 
     void clear();
 
     const QVector<Particle>& getParticles() const { return m_particles; }
     QVector<Particle>& particles() { return m_particles; }
 
-    void render();
+    virtual void render();
     void update( float time );
 
     ParticleSystem& operator += ( const Particle &particle ) { m_particles.append(particle); return *this; }

@@ -14,9 +14,9 @@
 #include <QGLWidget>
 #include <QTimer>
 
-#include "sim/particle.h"
-
 class Viewport;
+class Scene;
+class ParticleSystem;
 
 class ViewPanel : public QGLWidget
 {
@@ -47,9 +47,8 @@ private:
 
     Viewport *m_viewport;
 
-    int m_cudaDevice;
-    ParticleSystem m_particles;
-
+    ParticleSystem *m_particles;
+    Scene *m_scene;
 
     // set true to draw a little XYZ axis in the corner
     bool m_drawAxis;

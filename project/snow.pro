@@ -17,7 +17,11 @@ SOURCES += main.cpp\
     viewport/viewport.cpp \
     ui/viewpanel.cpp \
     sim/particle.cpp \
-    ui/userinput.cpp
+    ui/userinput.cpp \
+    scene/mesh.cpp \
+    io/objparser.cpp \
+    scene/scene.cpp \
+    scene/scenenode.cpp
 
 HEADERS  += ui/mainwindow.h \
     viewport/camera.h \
@@ -26,7 +30,13 @@ HEADERS  += ui/mainwindow.h \
     ui/viewpanel.h \
     sim/particle.h \
     ui/userinput.h \
-    cuda/functions.h
+    cuda/functions.h \
+    scene/mesh.h \
+    io/objparser.h \
+    scene/scene.h \
+    scene/scenenode.h \
+    scene/renderable.h \
+    common/types.h
 
 FORMS    += ui/mainwindow.ui
 

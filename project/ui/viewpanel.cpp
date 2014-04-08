@@ -15,6 +15,11 @@
 #include "common/common.h"
 #include "ui/userinput.h"
 #include "viewport/viewport.h"
+#include "io/objparser.h"
+#include "scene/mesh.h"
+#include "scene/scene.h"
+#include "scene/scenenode.h"
+#include "sim/particle.h"
 
 #define FPS 60
 
@@ -24,24 +29,37 @@ ViewPanel::ViewPanel( QWidget *parent )
     m_viewport = new Viewport;
     resetViewport();
 
+    m_drawAxis = true;
+
+    m_scene = new Scene;
+    SceneNode *node = new SceneNode;
+
+    Mesh *mesh = new Mesh;
+    OBJParser::load( "/gpfs/main/home/mliberma/course/cs224/teapot.obj", mesh );
+    node->addRenderable( mesh );
+
+    m_particles = new ParticleSystem;
     for ( int i = 0; i < 4*512; ++i ) {
         Particle particle;
         particle.position = glm::ballRand( 2.5f );
-        m_particles += particle;
+        *m_particles += particle;
     }
+    node->addRenderable( m_particles );
 
-    m_drawAxis = true;
+    m_scene->root()->addChild( node );
+
 }
 
 ViewPanel::~ViewPanel()
 {
     SAFE_DELETE( m_viewport );
+    SAFE_DELETE( m_scene );
 }
 
 void
 ViewPanel::resetViewport()
 {
-    m_viewport->orient( glm::vec3(0, 0, 10),
+    m_viewport->orient( glm::vec3( 10,10, 10),
                         glm::vec3( 0,  0,  0),
                         glm::vec3( 0,  1,  0) );
     m_viewport->setDimensions( width(), height() );
@@ -72,15 +90,13 @@ ViewPanel::paintGL()
 
     m_viewport->push(); {
 
-        glColor3f( 1.f, 0.f, 0.f );
-        glPointSize( 1.f );
-        m_particles.render();
+        m_scene->render();
 
         if ( m_drawAxis ) m_viewport->drawAxis();
 
     } m_viewport->pop();
 
-    m_particles.update( t += 1.f/FPS );
+    m_particles->update( t += 1.f/FPS );
 }
 
 void
