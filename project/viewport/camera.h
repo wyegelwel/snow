@@ -65,6 +65,13 @@ public:
 
     float getFocusDistance() const { return glm::length(m_lookAt-m_eye); }
 
+    glm::vec3 getCameraRay( const glm::vec2 &uv ) const
+    {
+        glm::vec3 camDir = glm::vec3(2.f*uv.x-1.f,1.f-2.f*uv.y,-1.f/tanf(m_heightAngle/2.f));
+        glm::vec3 worldDir = m_aspect*camDir.x*m_u + camDir.y*m_v + camDir.z*m_w;
+        return glm::normalize(worldDir);
+    }
+
 private:
 
     glm::mat4 m_modelview, m_projection;

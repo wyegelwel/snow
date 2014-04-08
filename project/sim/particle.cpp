@@ -11,10 +11,12 @@
 #include "particle.h"
 
 #include <GL/gl.h>
+#include "common/common.h"
+#include "cuda/functions.h"
 
 ParticleSystem::ParticleSystem()
 {
-    m_vbo = 0;
+    m_glVBO = 0;
 }
 
 ParticleSystem::~ParticleSystem()
@@ -33,7 +35,7 @@ void
 ParticleSystem::render()
 {
     if ( !hasVBO() ) buildVBO();
-    glBindBuffer( GL_ARRAY_BUFFER, m_vbo );
+    glBindBuffer( GL_ARRAY_BUFFER, m_glVBO );
     glEnableClientState( GL_VERTEX_ARRAY );
     glVertexPointer( 3, GL_FLOAT, sizeof(Particle), (void*)(0) );
     glDrawArrays( GL_POINTS, 0, m_particles.size() );
@@ -41,27 +43,43 @@ ParticleSystem::render()
     glBindBuffer( GL_ARRAY_BUFFER, 0 );
 }
 
+void
+ParticleSystem::update( float time )
+{
+    if ( !hasVBO() ) buildVBO();
+    updateParticles( &m_cudaVBO, time, m_particles.size() );
+}
+
 bool
 ParticleSystem::hasVBO() const
 {
-    return m_vbo > 0 && glIsBuffer( m_vbo );
+    return m_glVBO > 0 && glIsBuffer( m_glVBO );
 }
 
 void
 ParticleSystem::buildVBO()
 {
     deleteVBO();
-    glGenBuffers( 1, &m_vbo );
-    glBindBuffer( GL_ARRAY_BUFFER, m_vbo );
+
+    // Build OpenGL VBO
+    glGenBuffers( 1, &m_glVBO );
+    glBindBuffer( GL_ARRAY_BUFFER, m_glVBO );
     glBufferData( GL_ARRAY_BUFFER, m_particles.size()*sizeof(Particle), m_particles.data(), GL_DYNAMIC_DRAW );
     glBindBuffer( GL_ARRAY_BUFFER, 0 );
+
+    // Register OpenGL VBO with CUDA
+    registerVBO( &m_cudaVBO, m_glVBO );
 }
 
 void
 ParticleSystem::deleteVBO()
 {
+    // Delete OpenGL VBO and unregister with CUDA
     if ( hasVBO() ) {
-        glDeleteBuffers( 1, &m_vbo );
+        unregisterVBO( m_cudaVBO );
+        glBindBuffer( GL_ARRAY_BUFFER, m_glVBO );
+        glDeleteBuffers( 1, &m_glVBO );
+        glBindBuffer( GL_ARRAY_BUFFER, 0 );
     }
-    m_vbo = 0;
+    m_glVBO = 0;
 }

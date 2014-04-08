@@ -12,7 +12,6 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 TARGET = snow
 TEMPLATE = app
 
-
 SOURCES += main.cpp\
     ui/mainwindow.cpp \
     viewport/viewport.cpp \
@@ -27,7 +26,7 @@ HEADERS  += ui/mainwindow.h \
     ui/viewpanel.h \
     sim/particle.h \
     ui/userinput.h \
-    cuda/cuda_helper.h
+    cuda/functions.h
 
 FORMS    += ui/mainwindow.ui
 
@@ -51,6 +50,7 @@ CUDA_SOURCES += cuda/snow.cu
 
 CUDA_DIR = /contrib/projects/cuda5-toolkit
 INCLUDEPATH += $$CUDA_DIR/include
+INCLUDEPATH += $$CUDA_DIR/samples/common/inc
 QMAKE_LIBDIR += $$CUDA_DIR/lib64
 #LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:$$CUDA_DIR/lib64
 
@@ -71,7 +71,8 @@ CUDA_ARCH = sm_21
 NVCCFLAGS     = --compiler-options -fno-strict-aliasing -use_fast_math --ptxas-options=-v
 
 # Prepare the extra compiler configuration (taken from the nvidia forum - i'm not an expert in this part)
-CUDA_INC = $$join(INCLUDEPATH,' -I','-I',' ')
+CUDA_INC = $$join(INCLUDEPATH,' -I','-I',' ') -I$$_PRO_FILE_PWD_
+
 
 # compile CUDA kernels using nvcc
 cuda.commands = $$CUDA_DIR/bin/nvcc -m64 -g -G -arch=$$CUDA_ARCH -c $$NVCCFLAGS $$CUDA_INC $$LIBS  ${QMAKE_FILE_NAME} -o ${QMAKE_FILE_OUT} \

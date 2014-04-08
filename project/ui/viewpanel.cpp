@@ -24,17 +24,13 @@ ViewPanel::ViewPanel( QWidget *parent )
     m_viewport = new Viewport;
     resetViewport();
 
-    for ( int i = 0; i < 1000; ++i ) {
+    for ( int i = 0; i < 4*512; ++i ) {
         Particle particle;
         particle.position = glm::ballRand( 2.5f );
         m_particles += particle;
     }
 
-    assert( connect(&m_timer, SIGNAL(timeout()), this, SLOT(update())) );
-    m_timer.start( 1000/FPS );
-
     m_drawAxis = true;
-
 }
 
 ViewPanel::~ViewPanel()
@@ -45,7 +41,7 @@ ViewPanel::~ViewPanel()
 void
 ViewPanel::resetViewport()
 {
-    m_viewport->orient( glm::vec3(10, 10, 10),
+    m_viewport->orient( glm::vec3(0, 0, 10),
                         glm::vec3( 0,  0,  0),
                         glm::vec3( 0,  1,  0) );
     m_viewport->setDimensions( width(), height() );
@@ -61,8 +57,12 @@ ViewPanel::resizeEvent( QResizeEvent *event )
 void
 ViewPanel::initializeGL()
 {
-
+    QGLWidget::initializeGL();
+    assert( connect(&m_timer, SIGNAL(timeout()), this, SLOT(update())) );
+    m_timer.start( 1000/FPS );
 }
+
+float t = 0.f;
 
 void
 ViewPanel::paintGL()
@@ -71,15 +71,16 @@ ViewPanel::paintGL()
     glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
     m_viewport->push(); {
+
         glColor3f( 1.f, 0.f, 0.f );
         glPointSize( 1.f );
         m_particles.render();
+
+        if ( m_drawAxis ) m_viewport->drawAxis();
+
     } m_viewport->pop();
 
-    if (m_drawAxis)
-    {
-        m_viewport->drawAxis();
-    }
+    m_particles.update( t += 1.f/FPS );
 }
 
 void
