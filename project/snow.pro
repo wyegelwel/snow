@@ -39,7 +39,11 @@ QMAKE_CXXFLAGS_RELEASE=-O3
 QMAKE_CXXFLAGS += -std=c++11
 
 # CUDA stuff
-CUDA_SOURCES += cuda/snow.cu
+CUDA_SOURCES += cuda/snow.cu \
+    cuda/wil.cu \
+    cuda/max.cu \
+    cuda/tim.cu \
+    cuda/eric.cu \
 
 # uncomment below to also import include CUDA SDK
 #CUDA_SDK = /contrib/projects/cuda-sdk/C
@@ -58,7 +62,11 @@ LIBS += -lcudart -lcuda
 
 OTHER_FILES += \
     CUDA_notes.txt \
-    cuda/snow.cu
+    cuda/snow.cu \
+    cuda/wil.cu \
+    cuda/max.cu \
+    cuda/tim.cu \
+    cuda/eric.cu \
 
 # GPU ARCH
 # this gets passed as the gpu-architecture flag to nvcc compiler
