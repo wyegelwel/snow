@@ -63,4 +63,6 @@
     #define LOGIF( TEST, ... ) do {} while(0)
 #endif
 
+#define STR( QSTR ) QSTR.toStdString().c_str()
+
 #endif // COMMON_H

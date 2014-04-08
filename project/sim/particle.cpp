@@ -35,12 +35,20 @@ void
 ParticleSystem::render()
 {
     if ( !hasVBO() ) buildVBO();
+
+    glPushAttrib( GL_LIGHTING_BIT );
+    glDisable( GL_LIGHTING );
+    glColor3f( 0.8f, 0.8f, 1.f );
+    glPointSize( 1.f );
+
     glBindBuffer( GL_ARRAY_BUFFER, m_glVBO );
     glEnableClientState( GL_VERTEX_ARRAY );
     glVertexPointer( 3, GL_FLOAT, sizeof(Particle), (void*)(0) );
     glDrawArrays( GL_POINTS, 0, m_particles.size() );
     glDisableClientState( GL_VERTEX_ARRAY );
     glBindBuffer( GL_ARRAY_BUFFER, 0 );
+
+    glPopAttrib();
 }
 
 void
