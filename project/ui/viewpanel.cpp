@@ -41,7 +41,7 @@ ViewPanel::~ViewPanel()
 void
 ViewPanel::resetViewport()
 {
-    m_viewport->orient( glm::vec3(10, 10, 10),
+    m_viewport->orient( glm::vec3(0, 0, 10),
                         glm::vec3( 0,  0,  0),
                         glm::vec3( 0,  1,  0) );
     m_viewport->setDimensions( width(), height() );
@@ -71,17 +71,16 @@ ViewPanel::paintGL()
     glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
     m_viewport->push(); {
+
         glColor3f( 1.f, 0.f, 0.f );
         glPointSize( 1.f );
         m_particles.render();
+
+        if ( m_drawAxis ) m_viewport->drawAxis();
+
     } m_viewport->pop();
 
     m_particles.update( t += 1.f/FPS );
-
-    if ( m_drawAxis ) {
-        m_viewport->drawAxis();
-    }
-
 }
 
 void

@@ -27,7 +27,7 @@ Viewport::Viewport()
     m_width = 1000;
     m_height = 1000;
     m_camera->setClip( 0.01f, 1000.f );
-    m_camera->setHeightAngle( M_PI/3.f );
+    m_camera->setHeightAngle( M_PI/6.f );
 }
 
 Viewport::~Viewport()
@@ -138,41 +138,29 @@ Viewport::mouseMoved()
     }
 }
 
-
 void
 Viewport::drawAxis()
 {
-    glViewport(0, 0, 50, 50); // small square in corner
-    loadMatrices();
+    static const float corner = 50.f;
+    static const float distance = 10.f;
+    glm::vec2 uv = glm::vec2( corner/m_width, 1.f-(corner/m_height) );
+    glm::vec3 c = m_camera->getPosition() + distance*m_camera->getCameraRay( uv );
+    static const float length = 0.25f;
+    glm::vec3 x = c + length*glm::vec3(1,0,0);
+    glm::vec3 y = c + length*glm::vec3(0,1,0);
+    glm::vec3 z = c + length*glm::vec3(0,0,1);
 
-    // X
-    glColor3f(1.0f, 0.0f, 0.0f);
     glEnable( GL_LINE_SMOOTH );
-    glLineWidth( 1.5 );
-    glBegin(GL_LINES);
-        glVertex3f(0, 0, 0);
-        glVertex3f(100, 0, 0);
-    glEnd();
-
-    // Y
-    glColor3f(0.0f, 1.0f, 0.0f);
-    glEnable( GL_LINE_SMOOTH );
-    glLineWidth( 1.5 );
-    glBegin(GL_LINES);
-        glVertex3f(0, 0, 0);
-        glVertex3f(0, 100, 0);
-    glEnd();
-
-    // Z
-    glColor3f(0.0f, 0.0f, 1.0f);
-    glEnable( GL_LINE_SMOOTH );
-    glLineWidth( 1.5 );
-    glBegin(GL_LINES);
-        glVertex3f(0, 0, 0);
-        glVertex3f(0, 0, 100);
-    glEnd();
-
-    //Restore View
-    popMatrices();
-    glViewport(0, 0, m_width, m_height);
+    glHint( GL_LINE_SMOOTH, GL_NICEST );
+    glBegin( GL_LINES ); {
+        glColor3f( 1.f, 0.f, 0.f );
+        glVertex3f( c.x, c.y, c.z );
+        glVertex3f( x.x, x.y, x.z );
+        glColor3f( 0.f, 1.f, 0.f );
+        glVertex3f( c.x, c.y, c.z );
+        glVertex3f( y.x, y.y, y.z );
+        glColor3f( 0.f, 0.f, 1.f );
+        glVertex3f( c.x, c.y, c.z );
+        glVertex3f( z.x, z.y, z.z );
+    } glEnd();
 }
