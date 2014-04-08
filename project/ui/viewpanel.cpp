@@ -34,9 +34,9 @@ ViewPanel::ViewPanel( QWidget *parent )
     m_scene = new Scene;
     SceneNode *node = new SceneNode;
 
-    Mesh *mesh = new Mesh;
-    OBJParser::load( "/gpfs/main/home/mliberma/course/cs224/teapot.obj", mesh );
-    node->addRenderable( mesh );
+//    Mesh *mesh = new Mesh;
+//    OBJParser::load( "/gpfs/main/home/mliberma/course/cs224/teapot.obj", mesh );
+//    node->addRenderable( mesh );
 
     m_particles = new ParticleSystem;
     for ( int i = 0; i < 4*512; ++i ) {
