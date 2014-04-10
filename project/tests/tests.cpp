@@ -18,6 +18,7 @@ extern "C"
     void cumulativeSumTests();
     void groupParticlesTests();
     void weightingTestsHost();
+    void testColliding();
 }
 
 void Tests::runTests(char *argv[])  {
@@ -29,7 +30,16 @@ void Tests::runTests(char *argv[])  {
     {
         runEricTests();
     }
-    // wil, max, add your tests here as you like
+    else if (!strcmp(argv[2],"wil"))
+    {
+        runWilTests();
+    }
+    else if (!strcmp(argv[2], "all")){
+        runTimTests();
+        runEricTests();
+        runWilTests();
+    }
+    //max, add your tests here as you like
     else
     {
         printf("Error: test name not found ...\n");
@@ -47,4 +57,10 @@ void Tests::runEricTests() {
     printf("running Eric Tests...\n");
     weightingTestsHost();
     printf("done running Eric Tests\n");
+}
+
+void Tests::runWilTests() {
+    printf("running Wil Tests...\n");
+    testColliding();
+    printf("done running Wil Tests\n");
 }

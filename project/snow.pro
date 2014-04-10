@@ -25,6 +25,7 @@ SOURCES += main.cpp\
     scene/scene.cpp \
     scene/scenenode.cpp \
     tests/tests.cpp \
+    sim/collider.cpp
 
 HEADERS  += ui/mainwindow.h \
     viewport/camera.h \
@@ -41,7 +42,8 @@ HEADERS  += ui/mainwindow.h \
     scene/renderable.h \
     common/types.h \
     tests/tests.h \
-    sim/grid.h
+    sim/grid.h \
+    sim/collider.h
 
 FORMS    += ui/mainwindow.ui
 
