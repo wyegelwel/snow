@@ -16,7 +16,7 @@
 extern "C"
 {
     void cumulativeSumTests();
-    void weightingTests();
+    void weightingTestsHost();
 }
 
 void Tests::runTests(char *argv[])  {
@@ -43,6 +43,6 @@ void Tests::runTimTests()  {
 
 void Tests::runEricTests() {
     printf("running Eric Tests...\n");
-    weightingTests();
+    weightingTestsHost();
     printf("done running Eric Tests\n");
 }
