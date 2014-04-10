@@ -51,8 +51,18 @@ __device__ bool isCollidingHalfPlaneImplicit(ImplicitCollider collider, glm::vec
     return isCollidingHalfPlane(collider.center, collider.param, position);
 }
 
+/**
+ * Defines a sphere such that collider.center is the center of the sphere,
+ * and collider.param.x is the radius.
+ */
+__device__ bool isCollidingSphereImplicit(ImplicitCollider collider, glm::vec3 position){
+    float radius = collider.param.x;
+    return (glm::length(position-collider.center) < radius);
+}
+
+
 /** array of colliding functions. isCollidingFunctions[collider.type] will be the correct function */
-__device__ isCollidingFunc isCollidingFunctions[1] = {isCollidingHalfPlaneImplicit};
+__device__ isCollidingFunc isCollidingFunctions[2] = {isCollidingHalfPlaneImplicit, isCollidingSphereImplicit};
 
 /**
  * General purpose function for handling colliders
@@ -91,7 +101,7 @@ __global__ void testHalfPlaneColliding(){
         printf("\t[PASSED]: Non-colliding test on half plane \n");
     }
     if (!isColliding(halfPlane, glm::vec3(-1,-1,-1))){ // expect collision
-        printf("\t[FAILED]: Colliding test on halfplane failed\n");
+        printf("\t[FAILED]: Colliding test on halfplane \n");
     } else{
         printf("\t[PASSED]: Colliding test on half plane \n");
     }
@@ -100,8 +110,46 @@ __global__ void testHalfPlaneColliding(){
     printf("Done testing half plane colliding\n\n");
 }
 
+__global__ void testSphereColliding(){
+    printf("\nTesting sphere colliding:\n");
+    ImplicitCollider SpherePlane;
+    SpherePlane.center = glm::vec3(0,0,0);
+    SpherePlane.param = glm::vec3(1,0,0);
+    SpherePlane.type = SPHERE;
+
+    if (isColliding(SpherePlane, glm::vec3(1,1,1))){ //expect no collision
+        printf("\t[FAILED]: Simple non-colliding test\n");
+    } else{
+        printf("\t[PASSED]: Simple non-colliding test\n");
+    }
+    if (!isColliding(SpherePlane, glm::vec3(.5,0,0))){ // expect collision
+        printf("\t[FAILED]: Simple colliding test\n");
+    } else{
+        printf("\t[PASSED]: Simple colliding test\n");
+    }
+
+    SpherePlane.center = glm::vec3(0,10,0);
+    SpherePlane.param = glm::vec3(3.2,0,0);
+    SpherePlane.type = HALF_PLANE;
+
+    if (isColliding(SpherePlane, glm::vec3(0,0,0))){ //expect no collision
+        printf("\t[FAILED]: Non-colliding test \n");
+    } else{
+        printf("\t[PASSED]: Non-colliding test \n");
+    }
+    if (!isColliding(SpherePlane, glm::vec3(-1,10,-1))){ // expect collision
+        printf("\t[FAILED]: Colliding test\n");
+    } else{
+        printf("\t[PASSED]: Colliding test\n");
+    }
+
+
+    printf("Done testing sphere colliding\n\n");
+}
+
 void testColliding(){
     testHalfPlaneColliding<<<1,1>>>();
+    testSphereColliding<<<1,1>>>();
     cudaDeviceSynchronize();
 }
 

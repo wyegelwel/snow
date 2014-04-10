@@ -10,7 +10,7 @@
  */
 
 enum ColliderType{
-    HALF_PLANE
+    HALF_PLANE, SPHERE
 };
 
 struct ImplicitCollider{
