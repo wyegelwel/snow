@@ -106,6 +106,7 @@ Mesh::render()
     glPolygonMode( GL_FRONT_AND_BACK, GL_FILL );
     renderVBO();
 
+    glLineWidth( 1.f );
     glColor4fv( glm::value_ptr(m_color*0.8f) );
     glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
     renderVBO();

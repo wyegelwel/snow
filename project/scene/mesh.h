@@ -15,7 +15,7 @@
 #include <QString>
 
 #include "common/types.h"
-#include "scene/renderable.h"
+#include "common/renderable.h"
 
 typedef unsigned int GLuint;
 
