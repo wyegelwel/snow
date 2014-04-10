@@ -21,7 +21,8 @@ SOURCES += main.cpp\
     scene/mesh.cpp \
     io/objparser.cpp \
     scene/scene.cpp \
-    scene/scenenode.cpp
+    scene/scenenode.cpp \
+    tests/tests.cpp \
 
 HEADERS  += ui/mainwindow.h \
     viewport/camera.h \
@@ -36,7 +37,8 @@ HEADERS  += ui/mainwindow.h \
     scene/scene.h \
     scene/scenenode.h \
     scene/renderable.h \
-    common/types.h
+    common/types.h \
+    tests/tests.h \
 
 FORMS    += ui/mainwindow.ui
 

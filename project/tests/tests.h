@@ -16,6 +16,7 @@ public:
     static void runTests();
 private:
     static void runTimTests();
+    static void runEricTests();
 };
 
 #endif // TESTS_H

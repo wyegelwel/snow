@@ -24,18 +24,18 @@
 #include <stdio.h>
 
 extern "C"
-void runTestsEric();
+void weightingTests();
 
 
-__global__ void ericTestKernel( );
+__global__ void weightingTestKernel( );
 
-void runTestsEric()
+void weightingTests()
 {
-    ericTestKernel<<< 1,1 >>>();
+    weightingTestKernel<<< 1,1 >>>();
 }
 
 
-__global__ void ericTestKernel( )
+__global__ void weightingTestKernel( )
 {
     // compute weighting data on particles
     printf("Hello world!\n");

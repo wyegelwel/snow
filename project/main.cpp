@@ -8,11 +8,6 @@
 **
 **************************************************************************/
 
-
-#define devMode true
-
-#if devMode == true
-
 #include <QApplication>
 #include "ui/mainwindow.h"
 #include "tests/tests.h"
@@ -39,17 +34,3 @@ int main(int argc, char *argv[])
     }
     return 0;
 }
-
-
-#else
-
-extern "C"
-void runTestsEric();
-
-int main(int argc, char *argv[])
-{
-    std::cout << "hello world!" << std::endl;
-}
-
-
-#endif
