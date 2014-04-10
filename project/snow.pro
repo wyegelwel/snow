@@ -7,6 +7,8 @@
 QT       += core gui opengl
 DEFINES += GL_GLEXT_PROTOTYPES
 
+DEFINES += PROJECT_PATH=\\\"$$_PRO_FILE_PWD_\\\"
+
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 TARGET = snow
