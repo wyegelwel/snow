@@ -64,7 +64,7 @@ OBJParser::parse( const QStringList &lines,
                   int &lineIndex )
 {
     const QString &line = lines[lineIndex++];
-    switch ( line[0].toAscii() ) {
+    switch ( line[0].toLatin1() ) {
     case '#':
         break;
     case 'v':
