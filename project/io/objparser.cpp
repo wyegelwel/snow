@@ -82,7 +82,7 @@ OBJParser::parse( const QStringList &lines,
                   int &lineIndex )
 {
     const QString &line = lines[lineIndex++];
-    switch ( line[0].toAscii() ) {
+    switch ( line[0].toLatin1() ) {
     case '#':
         break;
     case 'g':
@@ -92,7 +92,7 @@ OBJParser::parse( const QStringList &lines,
         }
         break;
     case 'v':
-        switch ( line[1].toAscii() ) {
+        switch ( line[1].toLatin1() ) {
         case ' ': case'\t':
             if ( !parseVertex(line) ) {
                 LOG( "Error parsing vertex: %s", STR(line) );
