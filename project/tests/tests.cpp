@@ -10,6 +10,8 @@
 
 #include "tests.h"
 #include <stdio.h>
+#include <string.h>
+
 //#include "cuda/testFunctions.h"
 extern "C"
 {
@@ -17,8 +19,20 @@ extern "C"
     void weightingTests();
 }
 
-void Tests::runTests()  {
-    runTimTests();
+void Tests::runTests(char *argv[])  {
+    if (!strcmp(argv[2],"tim"))
+    {
+       runTimTests();
+    }
+    else if (!strcmp(argv[2],"eric"))
+    {
+        runEricTests();
+    }
+    // wil, max, add your tests here as you like
+    else
+    {
+        printf("Error: test name not found ...\n");
+    }
 }
 
 void Tests::runTimTests()  {
@@ -26,8 +40,6 @@ void Tests::runTimTests()  {
     cumulativeSumTests();
     printf("done running Tim Tests\n");
 }
-
-
 
 void Tests::runEricTests() {
     printf("running Eric Tests...\n");

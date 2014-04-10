@@ -13,7 +13,7 @@
 
 class Tests  {
 public:
-    static void runTests();
+    static void runTests(char *argv[]);
 private:
     static void runTimTests();
     static void runEricTests();

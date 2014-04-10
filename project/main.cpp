@@ -25,12 +25,11 @@ int main(int argc, char *argv[])
         w.show();
         return a.exec();
     }
-    else if (!strcmp(argv[1],"-test"))  {
-        Tests::runTests();
+    else if (argc == 3 && !strcmp(argv[1],"-test"))  {
+        Tests::runTests(argv);
     }
-
     else  {
-        printf("unknown argument %s, only support '-test' as an argument. Run with empty argument list to run with gui.",argv[1]);
+        printf("unknown argument %s, only support '-test <name>' as an argument. Run with empty argument list to run with gui.",argv[1]);
     }
     return 0;
 }
