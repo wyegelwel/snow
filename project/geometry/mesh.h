@@ -11,13 +11,28 @@
 #ifndef MESH_H
 #define MESH_H
 
+#include "common/types.h"
+
+#ifdef CUDA_INCLUDE
+    struct Tri {
+        glm::vec3 v0, n0;
+        glm::vec3 v1, n1;
+        glm::vec3 v2, n2;
+    };
+#else // CUDA_INCLUDE
+
 #include <QVector>
 #include <QString>
 
-#include "common/types.h"
+#include <glm/mat4x4.hpp>
+
 #include "common/renderable.h"
 
 typedef unsigned int GLuint;
+struct cudaGraphicsResource;
+
+class ParticleSystem;
+class BBox;
 
 class Mesh : public Renderable
 {
@@ -42,6 +57,8 @@ public:
     Mesh( const QVector<Vertex> &vertices, const QVector<Tri> &tris, const QVector<Normal> &normals );
 
     virtual ~Mesh();
+
+    void fill( ParticleSystem &particles, int n, float h );
 
     inline bool isEmpty() const { return m_vertices.empty() || m_tris.empty(); }
     inline void clear() { m_vertices.clear(); m_tris.clear(); m_normals.clear(); deleteVBO(); }
@@ -77,6 +94,9 @@ public:
 
     virtual void render();
 
+    BBox getWorldBBox( const glm::mat4 &transform ) const;
+    BBox getObjectBBox() const;
+
 private:
 
     QString m_name;
@@ -91,14 +111,19 @@ private:
     QVector<Normal> m_normals;
 
     // OpenGL stuff
-    GLuint m_vbo;
+    GLuint m_glVBO;
+    cudaGraphicsResource *m_cudaVBO;
+
     Color m_color;
 
     bool hasVBO() const;
     void buildVBO();
     void deleteVBO();
+
     void renderVBO();
 
 };
+
+#endif // CUDA_INCLUDE
 
 #endif // MESH_H

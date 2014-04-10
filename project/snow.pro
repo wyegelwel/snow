@@ -20,13 +20,14 @@ SOURCES += main.cpp\
     ui/viewpanel.cpp \
     sim/particle.cpp \
     ui/userinput.cpp \
-    scene/mesh.cpp \
+    geometry/mesh.cpp \
     io/objparser.cpp \
     scene/scene.cpp \
     scene/scenenode.cpp \
     tests/tests.cpp \
     ui/infopanel.cpp \
-    sim/collider.cpp
+    sim/collider.cpp \
+    geometry/bbox.cpp
 
 HEADERS  += ui/mainwindow.h \
     viewport/camera.h \
@@ -36,7 +37,7 @@ HEADERS  += ui/mainwindow.h \
     sim/particle.h \
     ui/userinput.h \
     cuda/functions.h \
-    scene/mesh.h \
+    geometry/mesh.h \
     io/objparser.h \
     scene/scene.h \
     scene/scenenode.h \
@@ -45,7 +46,9 @@ HEADERS  += ui/mainwindow.h \
     tests/tests.h \
     sim/grid.h \
     ui/infopanel.h \
-    sim/collider.h
+    sim/collider.h \
+    geometry/bbox.h \
+    common/math.h
 
 FORMS    += ui/mainwindow.ui
 
