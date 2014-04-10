@@ -41,6 +41,7 @@ HEADERS  += ui/mainwindow.h \
     scene/renderable.h \
     common/types.h \
     tests/tests.h \
+    sim/grid.h
 
 FORMS    += ui/mainwindow.ui
 
