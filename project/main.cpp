@@ -8,6 +8,11 @@
 **
 **************************************************************************/
 
+
+#define devMode true
+
+#if devMode == true
+
 #include <QApplication>
 #include "ui/mainwindow.h"
 
@@ -19,3 +24,17 @@ int main(int argc, char *argv[])
     
     return a.exec();
 }
+
+
+#else
+
+extern "C"
+void runTestsEric();
+
+int main(int argc, char *argv[])
+{
+    std::cout << "hello world!" << std::endl;
+}
+
+
+#endif
