@@ -21,15 +21,24 @@
 
 #define CUDA_INCLUDE
 #include "sim/particle.h"
+#include "sim/grid.h"
 #include "cuda/functions.h"
 
-extern "C"
+extern "C"  {
+void groupParticlesTests();
 void cumulativeSumTests();
 void CSTest1();
 void CSTest2();
 void CSTest3();
 void CSTest4();
 void CSTest5();
+void PGTest1();
+
+}
+
+__global__ void rasterizeParticles( Particle *particleData, Grid *grid, int *particleToCell, int *cellParticleCount, int *particleOffsetInCell ) {
+
+}
 
 __global__ void cumulativeSum(int *array, int M)  {
     int sum = 0;
@@ -37,6 +46,54 @@ __global__ void cumulativeSum(int *array, int M)  {
         sum+=array[i];
         array[i] = sum;
     }
+}
+
+__global__ void groupParticlesByCell( int *particleToCell, int *cellParticleIndex, int *particleOffsetInCell, int *gridParticles )  {
+    int index = blockIdx.x*blockDim.x + threadIdx.x;
+    int gridIndex = particleToCell[index];
+    int subPosition = particleOffsetInCell[index];
+    int resultIndex = cellParticleIndex[gridIndex] + subPosition;
+    gridParticles[resultIndex] = index;
+}
+
+void groupParticlesTests()  {
+    printf("running particle grouping tests...\n");
+
+    PGTest1();
+
+    printf("done running particle grouping tests\n");
+}
+
+void PGTest1()  {
+    int particleToCell[8] = {2,3,2,1,0,7,6,5};
+    int cellParticleIndex[9] = {0,1,1,2,1,0,1,1,1};
+    int particleOffsetInCell[8] = {0,0,1,0,0,0,0,0};
+    int gridParticles[8] = {0,0,0,0,0,0,0,0};
+    int *dev_particleToCell, *dev_cellParticleIndex, *dev_particleOffsetInCell, *dev_gridParticles;
+    checkCudaErrors(cudaMalloc((void**) &dev_particleToCell, 8*sizeof(int)));
+    checkCudaErrors(cudaMemcpy(dev_particleToCell,particleToCell,8*sizeof(int),cudaMemcpyHostToDevice));
+    checkCudaErrors(cudaMalloc((void**) &dev_cellParticleIndex, 9*sizeof(int)));
+    checkCudaErrors(cudaMemcpy(dev_cellParticleIndex,cellParticleIndex,9*sizeof(int),cudaMemcpyHostToDevice));
+    checkCudaErrors(cudaMalloc((void**) &dev_particleOffsetInCell, 8*sizeof(int)));
+    checkCudaErrors(cudaMemcpy(dev_particleOffsetInCell,particleOffsetInCell,8*sizeof(int),cudaMemcpyHostToDevice));
+    checkCudaErrors(cudaMalloc((void**) &dev_gridParticles, 8*sizeof(int)));
+    checkCudaErrors(cudaMemcpy(dev_gridParticles,gridParticles,8*sizeof(int),cudaMemcpyHostToDevice));
+
+    cumulativeSum<<<1,1>>>(dev_cellParticleIndex,9);
+    cudaDeviceSynchronize();
+    groupParticlesByCell<<<8,1>>>(dev_particleToCell,dev_cellParticleIndex,dev_particleOffsetInCell,dev_gridParticles);
+
+    cudaDeviceSynchronize();
+    cudaMemcpy(gridParticles,dev_gridParticles,8*sizeof(int),cudaMemcpyDeviceToHost);
+    cudaFree(dev_particleToCell);
+    cudaFree(dev_cellParticleIndex);
+    cudaFree(dev_particleOffsetInCell);
+    cudaFree(dev_gridParticles);
+    printf("{");
+    for (int i=0; i < 8; i++)  {
+        printf("%d,",gridParticles[i]);
+    }
+    printf("}\n");
 }
 
 void cumulativeSumTests()
