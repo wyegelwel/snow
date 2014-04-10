@@ -12,6 +12,7 @@
 #define MESH_H
 
 #include <QVector>
+#include <QString>
 
 #include "common/types.h"
 #include "scene/renderable.h"
@@ -42,8 +43,15 @@ public:
 
     virtual ~Mesh();
 
+    inline bool isEmpty() const { return m_vertices.empty() || m_tris.empty(); }
+    inline void clear() { m_vertices.clear(); m_tris.clear(); m_normals.clear(); deleteVBO(); }
+
     void computeNormals();
 
+    inline void setName( const QString &name ) { m_name = name; }
+    inline QString getName() const { return m_name; }
+
+    inline void setVertices( const QVector<Vertex> &vertices ) { m_vertices = vertices; }
     inline void addVertex( const Vertex &vertex ) { m_vertices += vertex; }
     inline int getNumVertices() const { return m_vertices.size(); }
     inline Vertex& getVertex( int i ) { return m_vertices[i]; }
@@ -51,6 +59,7 @@ public:
     inline QVector<Vertex>& getVertices() { return m_vertices; }
     inline const QVector<Vertex>& getVertices() const { return m_vertices; }
 
+    inline void setTris( const QVector<Tri> &tris ) { m_tris = tris; }
     inline void addTri( const Tri &tri ) { m_tris += tri; }
     inline int getNumTris() const { return m_tris.size(); }
     inline Tri& getTri( int i ) { return m_tris[i]; }
@@ -58,6 +67,7 @@ public:
     inline QVector<Tri>& getTris() { return m_tris; }
     inline const QVector<Tri>& getTris() const { return m_tris; }
 
+    inline void setNormals( const QVector<Normal> &normals ) { m_normals = normals; }
     inline void addNormal( const Normal &normal ) { m_normals += normal; }
     inline int getNumNormals() const { return m_normals.size(); }
     inline Normal& getNormal( int i ) { return m_normals[i]; }
@@ -68,6 +78,8 @@ public:
     virtual void render();
 
 private:
+
+    QString m_name;
 
     // List of vertices
     QVector<Vertex> m_vertices;

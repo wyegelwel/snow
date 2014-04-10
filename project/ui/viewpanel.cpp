@@ -34,9 +34,10 @@ ViewPanel::ViewPanel( QWidget *parent )
     m_scene = new Scene;
     SceneNode *node = new SceneNode;
 
-//    Mesh *mesh = new Mesh;
-//    OBJParser::load( "/gpfs/main/home/mliberma/course/cs224/teapot.obj", mesh );
-//    node->addRenderable( mesh );
+    QList<Mesh*> meshes;
+    OBJParser::load( PROJECT_PATH "/data/models/teapot.obj", meshes );
+    for ( int i = 0; i < meshes.size(); ++i )
+        node->addRenderable( meshes[i] );
 
     m_particles = new ParticleSystem;
     for ( int i = 0; i < 4*512; ++i ) {
@@ -76,6 +77,10 @@ void
 ViewPanel::initializeGL()
 {
     QGLWidget::initializeGL();
+
+    glEnable( GL_DEPTH_TEST );
+    glDepthFunc( GL_LESS );
+
     assert( connect(&m_timer, SIGNAL(timeout()), this, SLOT(update())) );
     m_timer.start( 1000/FPS );
 }

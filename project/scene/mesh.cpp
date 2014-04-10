@@ -86,7 +86,6 @@ Mesh::computeNormals()
     delete [] triNormals;
     delete [] triAreas;
     delete [] vertexMembership;
-
 }
 
 void
