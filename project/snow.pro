@@ -25,6 +25,7 @@ SOURCES += main.cpp\
     scene/scene.cpp \
     scene/scenenode.cpp \
     tests/tests.cpp \
+    ui/infopanel.cpp
 
 HEADERS  += ui/mainwindow.h \
     viewport/camera.h \
@@ -38,10 +39,11 @@ HEADERS  += ui/mainwindow.h \
     io/objparser.h \
     scene/scene.h \
     scene/scenenode.h \
-    scene/renderable.h \
+    common/renderable.h \
     common/types.h \
     tests/tests.h \
-    sim/grid.h
+    sim/grid.h \
+    ui/infopanel.h
 
 FORMS    += ui/mainwindow.ui
 
