@@ -13,7 +13,9 @@
 
 #include <QGLWidget>
 #include <QTimer>
+#include <QElapsedTimer>
 
+class InfoPanel;
 class Viewport;
 class Scene;
 class ParticleSystem;
@@ -43,8 +45,10 @@ public slots:
 
 private:
 
-    QTimer m_timer;
+    QTimer m_ticker;
+    QElapsedTimer m_timer;
 
+    InfoPanel *m_infoPanel;
     Viewport *m_viewport;
 
     ParticleSystem *m_particles;
