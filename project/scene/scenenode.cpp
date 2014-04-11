@@ -39,6 +39,7 @@ SceneNode::addChild( SceneNode *child )
 {
     m_children += child;
     child->m_parent = this;
+    child->m_ctmDirty = true;
 }
 
 void
@@ -66,4 +67,15 @@ SceneNode::render()
     for ( int i = 0; i < m_children.size(); ++i )
         m_children[i]->render();
     glPopMatrix();
+}
+
+glm::mat4
+SceneNode::getCTM()
+{
+    if ( m_ctmDirty ) {
+        glm::mat4 pCtm = ( m_parent ) ? m_parent->getCTM() : glm::mat4();
+        m_ctm = pCtm * m_transform;
+        m_ctmDirty = false;
+    }
+    return m_ctm;
 }

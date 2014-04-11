@@ -32,9 +32,15 @@ public:
 
     virtual void render();
 
+    glm::mat4 getCTM();
+
 private:
 
     SceneNode* m_parent;
+
+    glm::mat4 m_ctm;
+    bool m_ctmDirty;
+
     glm::mat4 m_transform;
 
     QList<SceneNode*> m_children;
