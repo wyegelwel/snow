@@ -29,18 +29,12 @@ extern "C"  {
 
 typedef bool (*isCollidingFunc) (ImplicitCollider collider, glm::vec3 position);
 
-
-// Apparent glm::dot doesn't work...
-__device__ float dot(glm::vec3 v, glm::vec3 w){
-    return v.x * w.x + v.y*w.y + v.z*w.z;
-}
-
 /**
  * A collision occurs when the point is on the OTHER side of the normal
  */
 __device__ bool isCollidingHalfPlane(glm::vec3 planePoint, glm::vec3 planeNormal, glm::vec3 position){
     glm::vec3 vecToPoint = position - planePoint;
-    return (dot(vecToPoint, planeNormal) < 0);
+    return (glm::dot(vecToPoint, planeNormal) < 0);
 }
 
 /**
@@ -64,12 +58,29 @@ __device__ bool isCollidingSphereImplicit(ImplicitCollider collider, glm::vec3 p
 /** array of colliding functions. isCollidingFunctions[collider.type] will be the correct function */
 __device__ isCollidingFunc isCollidingFunctions[2] = {isCollidingHalfPlaneImplicit, isCollidingSphereImplicit};
 
+
+
+
 /**
  * General purpose function for handling colliders
  */
 __device__ bool isColliding(ImplicitCollider collider, glm::vec3 position){
     return isCollidingFunctions[collider.type](collider, position);
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 // Begin testing code:
 
