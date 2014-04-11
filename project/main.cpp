@@ -11,7 +11,9 @@
 #include <QApplication>
 #include "ui/mainwindow.h"
 #include "tests/tests.h"
-#include <iostream>
+#include <iostream>\
+
+
 /*
  *
  * Run with '-test' as an argument to run tests defined in tests.cpp. Run with no argument to run with GUI
