@@ -14,11 +14,13 @@
 #include <glm/geometric.hpp>
 #include <glm/gtc/random.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <QElapsedTimer>
 
 #include "common/common.h"
 #include "cuda/functions.h"
 #include "geometry/bbox.h"
 #include "sim/particle.h"
+#include "sim/grid.h"
 
 Mesh::Mesh()
     : m_glVBO(0),
@@ -193,30 +195,35 @@ Mesh::buildVBO()
 }
 
 void
-Mesh::fill( ParticleSystem &particles, int n, float h )
+Mesh::fill( ParticleSystem &particles, int particleCount, float h )
 {
     if ( !hasVBO() ) {
         buildVBO();
     }
-//    for ( int i = 0; i < n; i++ ) {
-//        Particle particle;
-//        particle.position = glm::ballRand( 2.5f );
-//        particles += particle;
-//    }
+
+    QElapsedTimer timer;
+    timer.start();
 
     BBox box = getObjectBBox();
-    box.expandAbs(h);
+    box.expandAbs(2*h);
     box.fix(h);
 
-    Particle *p = new Particle[n];
-    fillMesh( &m_cudaVBO, getNumTris(), box, h, p, n );
+    Grid grid;
+    glm::vec3 dimf = glm::round( (box.max()-box.min())/h );
+    grid.dim = glm::ivec3( (int)dimf.x, (int)dimf.y, (int)dimf.z );
+    grid.h = h;
+    grid.pos = box.min();
 
-    for ( int i = 0; i < n; ++i ) {
-        particles += p[i];
-    }
+    Particle *particleArray = new Particle[particleCount];
+    fillMesh( &m_cudaVBO, getNumTris(), grid, particleArray, particleCount );
 
-    delete [] p;
+    for ( int i = 0; i < particleCount; ++i )
+        particles += particleArray[i];
 
+    delete [] particleArray;
+
+    qint64 ms = timer.restart();
+    LOG( "Mesh filled with %d particles in %lld ms.", particleCount, ms );
 }
 
 BBox

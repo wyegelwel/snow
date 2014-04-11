@@ -91,7 +91,7 @@ ViewPanel::initializeGL()
         node->addRenderable( meshes[i] );
 
     m_particles = new ParticleSystem;
-    meshes[0]->fill( *m_particles, 4*512, 0.05f );
+    meshes[0]->fill( *m_particles, 256*512, 0.1f );
     node->addRenderable( m_particles );
     m_infoPanel->setInfo( "Particles", QString::number(m_particles->particles().size()) );
 

@@ -53,7 +53,6 @@ HEADERS  += ui/mainwindow.h \
 FORMS    += ui/mainwindow.ui
 
 # GLM
-INCLUDEPATH += glm/
 DEFINES += GLM_FORCE_RADIANS
 
 # C++ flag

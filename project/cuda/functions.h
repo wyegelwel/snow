@@ -11,7 +11,7 @@
 #ifndef FUNCTIONS_H
 #define FUNCTIONS_H
 
-struct BBox;
+struct Grid;
 struct Particle;
 
 extern "C"
@@ -25,7 +25,7 @@ void unregisterVBO( cudaGraphicsResource *resource );
 void updateParticles( cudaGraphicsResource **resource, float time, int particleCount );
 
 // Mesh filling
-void fillMesh( cudaGraphicsResource **resource, int triCount, const BBox &box, float h, Particle *particles, int particleCount );
+void fillMesh( cudaGraphicsResource **resource, int triCount, const Grid &grid, Particle *particles, int particleCount );
 
 }
 

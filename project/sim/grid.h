@@ -6,8 +6,9 @@
 
 struct Grid {
     glm::ivec3 dim;
+    glm::vec3 pos;
     float h;
-    glm::vec3 corner; // The world position of node (0,0,0)
+    int index( int i, int j, int k ) { return (i*(dim.y*dim.z) + j*(dim.z) + k); }
 };
 
 #endif // GRID_H

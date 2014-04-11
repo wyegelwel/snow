@@ -18,6 +18,8 @@
 #include <helper_cuda_gl.h>
 
 #include <glm/geometric.hpp>
+#include <glm/vec3.hpp>
+#include <glm/mat3x3.hpp>
 
 #define CUDA_INCLUDE
 #include "sim/particle.h"
@@ -36,8 +38,20 @@ void PGTest1();
 
 }
 
-__global__ void rasterizeParticles( Particle *particleData, Grid *grid, int *particleToCell, int *cellParticleCount, int *particleOffsetInCell ) {
+__device__ int getGridIndex( int i, int j, int k, Grid* grid)  {
+    glm::ivec3 dim = grid->dim;
+    return (i*(dim.y*dim.z) + j*(dim.z) + k);
+}
 
+__global__ void rasterizeParticles( Particle *particleData, Grid *grid, int *particleToCell, int *cellParticleCount, int *particleOffsetInCell ) {
+    int index = blockIdx.x*blockDim.x + threadIdx.x;
+    Particle p = particleData[index];
+    glm::vec3 pos = p.position;
+    pos-=grid->pos;
+    pos/=grid->h;
+    int gridIndex = getGridIndex((int)pos.x,(int)pos.y,(int)pos.z,grid);
+    particleToCell[index] = gridIndex;
+    particleOffsetInCell[index]=cellParticleCount[gridIndex]++;
 }
 
 __global__ void cumulativeSum(int *array, int M)  {
