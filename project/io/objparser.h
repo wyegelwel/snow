@@ -17,7 +17,7 @@
 #include <QVector>
 
 #include "common/types.h"
-#include "scene/mesh.h"
+#include "geometry/mesh.h"
 
 class OBJParser
 {

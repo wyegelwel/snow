@@ -17,6 +17,7 @@
 
 #ifdef CUDA_INCLUDE
     struct BBox {
+        void *offset; // base class ptr!
         glm::vec3 min;
         glm::vec3 max;
     };
@@ -27,6 +28,11 @@
 
 class BBox : public Renderable
 {
+
+private:
+
+    glm::vec3 m_min;
+    glm::vec3 m_max;
 
 public:
 
@@ -72,7 +78,7 @@ public:
     inline void fix( float h )
     {
         glm::vec3 c = 0.5f*(m_min+m_max);
-        glm::vec3 d = glm::ceil((m_max-m_min)/h)/2.f;
+        glm::vec3 d = h*glm::ceil((m_max-m_min)/h)/2.f;
         m_min = c - d;
         m_max = c + d;
     }
@@ -111,12 +117,7 @@ public:
         return BBox( glm::min(m_min,rhs), glm::max(m_max,rhs) );
     }
 
-    virtual void render();
-
-private:
-
-    glm::vec3 m_min;
-    glm::vec3 m_max;
+    void render();
 
 };
 

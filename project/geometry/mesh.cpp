@@ -198,6 +198,11 @@ Mesh::fill( ParticleSystem &particles, int n, float h )
     if ( !hasVBO() ) {
         buildVBO();
     }
+//    for ( int i = 0; i < n; i++ ) {
+//        Particle particle;
+//        particle.position = glm::ballRand( 2.5f );
+//        particles += particle;
+//    }
 
     BBox box = getObjectBBox();
     box.expandAbs(h);
