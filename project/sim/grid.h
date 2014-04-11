@@ -7,6 +7,7 @@
 struct Grid {
     glm::ivec3 dim;
     float h;
+    glm::vec3 corner; // The world position of node (0,0,0)
 };
 
 #endif // GRID_H
