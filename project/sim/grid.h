@@ -6,7 +6,9 @@
 
 struct Grid {
     glm::ivec3 dim;
+    glm::ivec3 pos;
     float h;
+    int index(int i,int j,int k) {return (i*(dim.y*dim.z) + j*(dim.z) + k);}
 };
 
 #endif // GRID_H
