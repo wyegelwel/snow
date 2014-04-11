@@ -34,12 +34,16 @@ void Tests::runTests(char *argv[])  {
     {
         runWilTests();
     }
+    else if (!strcmp(argv[2], "max"))
+    {
+        runMaxTests();
+    }
     else if (!strcmp(argv[2], "all")){
         runTimTests();
         runEricTests();
         runWilTests();
+        runMaxTests();
     }
-    //max, add your tests here as you like
     else
     {
         printf("Error: test name not found ...\n");
@@ -63,4 +67,9 @@ void Tests::runWilTests() {
     printf("running Wil Tests...\n");
     testColliding();
     printf("done running Wil Tests\n");
+}
+
+void Tests::runMaxTests() {
+    printf("\nRunning Max Tests...\n");
+    printf("Done running Max Tests.\n");
 }

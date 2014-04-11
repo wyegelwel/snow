@@ -20,7 +20,7 @@ private:
     static void runTimTests();
     static void runEricTests();
     static void runWilTests();
-
+    static void runMaxTests();
 };
 
 #endif // TESTS_H
