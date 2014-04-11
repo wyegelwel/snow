@@ -8,6 +8,8 @@
 **
 **************************************************************************/
 
+#include <GL/gl.h>
+
 #include "viewpanel.h"
 
 #include <glm/gtc/random.hpp>
@@ -20,14 +22,19 @@
 #include "scene/scene.h"
 #include "scene/scenenode.h"
 #include "sim/particle.h"
+#include "ui/infopanel.h"
 
 #define FPS 60
 
 ViewPanel::ViewPanel( QWidget *parent )
-    : QGLWidget(QGLFormat(QGL::SampleBuffers), parent)
+    : QGLWidget(QGLFormat(QGL::SampleBuffers), parent),
+      m_infoPanel(NULL)
 {
     m_viewport = new Viewport;
     resetViewport();
+
+    m_infoPanel = new InfoPanel(this);
+    m_infoPanel->setInfo( "FPS", "XXXXXX" );
 
     m_drawAxis = true;
 
@@ -46,6 +53,7 @@ ViewPanel::ViewPanel( QWidget *parent )
         *m_particles += particle;
     }
     node->addRenderable( m_particles );
+    m_infoPanel->setInfo( "Particles", QString::number(m_particles->particles().size()) );
 
     m_scene->root()->addChild( node );
 
@@ -54,6 +62,7 @@ ViewPanel::ViewPanel( QWidget *parent )
 ViewPanel::~ViewPanel()
 {
     SAFE_DELETE( m_viewport );
+    SAFE_DELETE( m_infoPanel );
     SAFE_DELETE( m_scene );
 }
 
@@ -81,8 +90,15 @@ ViewPanel::initializeGL()
     glEnable( GL_DEPTH_TEST );
     glDepthFunc( GL_LESS );
 
-    assert( connect(&m_timer, SIGNAL(timeout()), this, SLOT(update())) );
-    m_timer.start( 1000/FPS );
+    glEnable( GL_BLEND );
+    glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
+
+    glEnable( GL_LINE_SMOOTH );
+    glHint( GL_LINE_SMOOTH_HINT, GL_NICEST );
+
+    assert( connect(&m_ticker, SIGNAL(timeout()), this, SLOT(update())) );
+    m_ticker.start( 1000/FPS );
+    m_timer.start();
 }
 
 float t = 0.f;
@@ -90,6 +106,7 @@ float t = 0.f;
 void
 ViewPanel::paintGL()
 {
+
     glClearColor( 0.f, 0.f, 0.f, 0.f );
     glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
@@ -102,6 +119,11 @@ ViewPanel::paintGL()
     } m_viewport->pop();
 
     m_particles->update( t += 1.f/FPS );
+
+    float fps = 1000.f / m_timer.restart();
+    m_infoPanel->setInfo( "FPS", QString::number(fps, 'f', 2), false );
+    m_infoPanel->render();
+
 }
 
 void

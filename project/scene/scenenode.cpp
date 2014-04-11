@@ -12,7 +12,7 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #include "scene/scenenode.h"
-#include "scene/renderable.h"
+#include "common/renderable.h"
 
 SceneNode::SceneNode( SceneNode *parent )
     : m_parent(parent),
