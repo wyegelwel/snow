@@ -27,7 +27,7 @@ SOURCES += main.cpp\
     tests/tests.cpp \
     ui/infopanel.cpp \
     sim/collider.cpp \
-    geometry/bbox.cpp
+    geometry/bbox.cpp \
 
 HEADERS  += ui/mainwindow.h \
     viewport/camera.h \
@@ -61,6 +61,7 @@ QMAKE_CXXFLAGS += -std=c++11
 
 # CUDA stuff
 CUDA_SOURCES += cuda/snow.cu \
+    cuda/mesh.cu \
     cuda/wil.cu \
     cuda/max.cu \
     cuda/tim.cu \
@@ -84,6 +85,7 @@ LIBS += -lcudart -lcuda
 OTHER_FILES += \
     CUDA_notes.txt \
     cuda/snow.cu \
+    cuda/mesh.cu \
     cuda/wil.cu \
     cuda/max.cu \
     cuda/tim.cu \

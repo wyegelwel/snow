@@ -24,7 +24,7 @@
 #include "sim/particle.h"
 #include "ui/infopanel.h"
 
-#define FPS 60
+#define FPS 65
 
 ViewPanel::ViewPanel( QWidget *parent )
     : QGLWidget(QGLFormat(QGL::SampleBuffers), parent),
@@ -52,9 +52,9 @@ ViewPanel::~ViewPanel()
 void
 ViewPanel::resetViewport()
 {
-    m_viewport->orient( glm::vec3( 10,10, 10),
-                        glm::vec3( 0,  0,  0),
-                        glm::vec3( 0,  1,  0) );
+    m_viewport->orient( glm::vec3( 25, 25, 25),
+                        glm::vec3(  0,  0,  0),
+                        glm::vec3(  0,  1,  0) );
     m_viewport->setDimensions( width(), height() );
 }
 
@@ -89,6 +89,8 @@ ViewPanel::initializeGL()
     OBJParser::load( PROJECT_PATH "/data/models/teapot.obj", meshes );
     for ( int i = 0; i < meshes.size(); ++i )
         node->addRenderable( meshes[i] );
+
+    this->makeCurrent();
 
     m_particles = new ParticleSystem;
     meshes[0]->fill( *m_particles, 256*512, 0.1f );

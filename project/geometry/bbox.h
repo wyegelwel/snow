@@ -15,16 +15,10 @@
 #include <glm/common.hpp>
 #include <glm/vec3.hpp>
 
-#ifdef CUDA_INCLUDE
-    struct BBox {
-        void *offset; // base class ptr!
-        glm::vec3 min;
-        glm::vec3 max;
-    };
-#else // CUDA_INCLUDE
-
 #include "common/math.h"
 #include "common/renderable.h"
+
+#include "sim/grid.h"
 
 class BBox : public Renderable
 {
@@ -83,13 +77,26 @@ public:
         m_max = c + d;
     }
 
+    inline Grid toGrid( float h ) const
+    {
+        BBox box(*this);
+        box.expandAbs( h );
+        box.fix( h );
+        Grid grid;
+        glm::vec3 dimf = glm::round( (box.max()-box.min())/h );
+        grid.dim = glm::ivec3( dimf.x, dimf.y, dimf.z );
+        grid.h = h;
+        grid.pos = box.min();
+        return grid;
+    }
+
     // Expand box by absolute distances
     inline void expandAbs( float d ) { m_min -= glm::vec3(d, d, d); m_max += glm::vec3(d, d, d); }
     inline void expandAbs( const glm::vec3 &d ) { m_min -= d; m_max += d; }
 
     // Expand box relative to current size
-    inline void expandRel( float d ) { glm::vec3 dd = 0.5f*d*(m_max-m_min); m_min -= dd; m_max += dd; }
-    inline void expandRel( const glm::vec3 &d ) { glm::vec3 dd = 0.5f*d*(m_max-m_min); m_min -= dd; m_max += dd; }
+    inline void expandRel( float d ) { glm::vec3 dd = d*(m_max-m_min); m_min -= dd; m_max += dd; }
+    inline void expandRel( const glm::vec3 &d ) { glm::vec3 dd = d*(m_max-m_min); m_min -= dd; m_max += dd; }
 
     // Merge two bounding boxes
     inline BBox& operator += ( const BBox &rhs )
@@ -120,7 +127,5 @@ public:
     void render();
 
 };
-
-#endif // CUDA_INCLUDE
 
 #endif // BBOX_H

@@ -14,7 +14,9 @@
 #include <glm/geometric.hpp>
 #include <glm/gtc/random.hpp>
 #include <glm/gtc/type_ptr.hpp>
+
 #include <QElapsedTimer>
+#include <QLocale>
 
 #include "common/common.h"
 #include "cuda/functions.h"
@@ -108,9 +110,9 @@ Mesh::render()
     glEnable( GL_POLYGON_OFFSET_LINE );
     glPolygonOffset( -1.f, -1.f );
 
-//    glColor4fv( glm::value_ptr(m_color) );
-//    glPolygonMode( GL_FRONT_AND_BACK, GL_FILL );
-//    renderVBO();
+    glColor4fv( glm::value_ptr(m_color) );
+    glPolygonMode( GL_FRONT_AND_BACK, GL_FILL );
+    renderVBO();
 
     glLineWidth( 1.f );
     glColor4fv( glm::value_ptr(m_color*0.8f) );
@@ -167,6 +169,8 @@ Mesh::deleteVBO()
 void
 Mesh::buildVBO()
 {
+    LOG( "Building mesh VBO..." );
+
     deleteVBO();
 
     // Create flat array of non-indexed triangles
@@ -204,26 +208,14 @@ Mesh::fill( ParticleSystem &particles, int particleCount, float h )
     QElapsedTimer timer;
     timer.start();
 
-    BBox box = getObjectBBox();
-    box.expandAbs(2*h);
-    box.fix(h);
+    Grid grid = getObjectBBox().toGrid( h );
 
-    Grid grid;
-    glm::vec3 dimf = glm::round( (box.max()-box.min())/h );
-    grid.dim = glm::ivec3( (int)dimf.x, (int)dimf.y, (int)dimf.z );
-    grid.h = h;
-    grid.pos = box.min();
+    LOG( "Filling mesh in %d x %d x %d grid (%s voxels)...", grid.dim.x, grid.dim.y, grid.dim.z, STR(QLocale().toString(grid.dim.x*grid.dim.y*grid.dim.z)) );
 
-    Particle *particleArray = new Particle[particleCount];
-    fillMesh( &m_cudaVBO, getNumTris(), grid, particleArray, particleCount );
+    particles.resize( particleCount );
+    fillMesh( &m_cudaVBO, getNumTris(), grid, particles.data(), particleCount );
 
-    for ( int i = 0; i < particleCount; ++i )
-        particles += particleArray[i];
-
-    delete [] particleArray;
-
-    qint64 ms = timer.restart();
-    LOG( "Mesh filled with %d particles in %lld ms.", particleCount, ms );
+    LOG( "Mesh filled with %s particles in %lld ms.", STR(QLocale().toString(particleCount)), timer.restart() );
 }
 
 BBox
