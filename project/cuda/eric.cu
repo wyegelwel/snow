@@ -19,7 +19,7 @@
 #include "glm/gtc/epsilon.hpp"
 #include "glm/gtc/quaternion.hpp"
 #include "glm/gtx/quaternion.hpp"
-//#include "glm/gtx/fast_square_root.hpp"
+//#include "glm/gtx/fast_square_root.hpp" // doesnt work with CUDA
 #include "glm/gtc/matrix_access.hpp"
 
 #include "math.h"
@@ -67,20 +67,6 @@ __device__ void printQuat(glm::quat q)
     printf("%f  %f  %f  %f\n", q.w,q.x,q.y,q.z);
     //std::cout << q.w << "  " << q.x << "  " << q.y  << "  " << q.z <<std::endl;
     //std::cout << q[3] << "  " << q[0] << "  " << q[1]  << "  " << q[2] <<std::endl;
-}
-
-__device__ inline void fastInvSqrt(float x, float &y)
-{
-    // TODO - use this in place of rsqrt!
-    long i;
-    float x2;
-    const float threehalfs = 1.5F;
-    x2 = x * 0.5F;
-    y  = x;
-    i  = * ( long * ) &y;
-    i  = 0x5f3759df - ( i >> 1 );
-    y  = * ( float * ) &i;
-    y  = y * ( threehalfs - ( x2 * y * y ) );
 }
 
 __device__ void toMat3(const glm::quat q, glm::mat3 &m)
@@ -168,6 +154,7 @@ __device__ void approximateGivensQuaternion(float a11, float a12, float a22, flo
     bool b = _gamma*sh*sh < ch*ch;
     //float w = glm::fastInverseSqrt(ch*ch+sh*sh);
     float w = rsqrt(ch*ch+sh*sh);
+
     ch=b?w*ch:_cstar;
     sh=b?w*sh:_sstar;
     
@@ -245,8 +232,10 @@ __device__ void QRGivensQuaternion(float a1, float a2, float &ch, float &sh)
     float epsilon = EPSILON;
     // the authors be trippin, accurateSQRT doesn't work...
     //float rho = accurateSQRT(a1*a1 + a2*a2);
-    //float rho = glm::fastSqrt(a1*a1+a2*a2);
-    float rho = sqrt(a1*a1 + a2*a2);
+    float tmp = a1*a1+a2*a2;
+    float rho = tmp*rsqrt(tmp); // = sqrt(tmp)
+    //float rho = rsqrt(a1*a1 + a2*a2);
+
     sh = rho > epsilon ? a2 : 0;
     ch = fabs(a1) + fmax(rho,epsilon);
     bool b = a1 < 0;
@@ -254,6 +243,7 @@ __device__ void QRGivensQuaternion(float a1, float a2, float &ch, float &sh)
     //float w = glm::inversesqrt(ch*ch+sh*sh);
     //float w = glm::fastInverseSqrt(ch*ch+sh*sh);
     float w = rsqrt(ch*ch+sh*sh);
+
     ch *= w;
     sh *= w;
 }
@@ -399,7 +389,6 @@ __global__ void svdTest(const glm::mat3 A)
 {
     printf("original matrix\n");
     printMat3(A);
-
     glm::mat3 U1;
     glm::mat3 S;
     glm::mat3 V;
@@ -431,7 +420,6 @@ void svdTestsHost()
                   -0.411397 ,    0.0365854   ,   0.199707,
                   0.285389  ,   -0.313789   ,   0.200189);
     A = glm::transpose(A);
-
 
     svdTest<<<1,1>>>(A);
     cudaDeviceSynchronize();
