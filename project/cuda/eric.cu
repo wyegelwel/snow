@@ -14,14 +14,17 @@
 #include <stdio.h>
 #include <cuda.h>
 #include <cuda_runtime.h> // prevents syntax errors on __global__ and __device__, among other things
-#include <glm/geometric.hpp>
-#include <glm/gtc/epsilon.hpp>
-#include <glm/gtc/quaternion.hpp>
-#include <glm/gtx/quaternion.hpp>
-#include <glm/gtx/fast_square_root.hpp>
-#include <glm/gtx/fast_trigonometry.hpp>
-#include <glm/gtc/matrix_access.hpp>
+#define GLM_FORCE_RADIANS
+#include "glm/geometric.hpp"
+#include "glm/gtc/epsilon.hpp"
+#include "glm/gtc/quaternion.hpp"
+#include "glm/gtx/quaternion.hpp"
+//#include "glm/gtx/fast_square_root.hpp"
+#include "glm/gtc/matrix_access.hpp"
+
 #include "math.h"
+
+
 
 
 #define _sqrtHalf 0.70710678
@@ -66,6 +69,20 @@ __device__ void printQuat(glm::quat q)
     //std::cout << q[3] << "  " << q[0] << "  " << q[1]  << "  " << q[2] <<std::endl;
 }
 
+__device__ inline void fastInvSqrt(float x, float &y)
+{
+    // TODO - use this in place of rsqrt!
+    long i;
+    float x2;
+    const float threehalfs = 1.5F;
+    x2 = x * 0.5F;
+    y  = x;
+    i  = * ( long * ) &y;
+    i  = 0x5f3759df - ( i >> 1 );
+    y  = * ( float * ) &i;
+    y  = y * ( threehalfs - ( x2 * y * y ) );
+}
+
 __device__ void toMat3(const glm::quat q, glm::mat3 &m)
 {
     // glm::toMat3 doesn't work in CUDA
@@ -89,19 +106,20 @@ __device__ void toMat3(const glm::quat q, glm::mat3 &m)
     m[2][2] = 1 - 2 * (qxx +  qyy);
 }
 
-inline float accurateRSQRT(float x)
-{
-    // TODO - something is wrong with this.
-    // used in step 3
-    /* Lomont 2003 */
-    float y = glm::fastSqrt(x);
-    return y * (3-x*y*y)/2;
-}
 
-inline float accurateSQRT(float x)
-{ 
-    return x * accurateRSQRT(x); 
-}
+//inline float accurateRSQRT(float x)
+//{
+//    // TODO - something is wrong with this.
+//    // used in step 3
+//    /* Lomont 2003 */
+//    //float y = glm::fastSqrt(x);
+//    //return y * (3-x*y*y)/2;
+//}
+
+//inline float accurateSQRT(float x)
+//{
+//    return x * accurateRSQRT(x);
+//}
 
 __device__ void condSwap(bool c, float &X, float &Y)
 {
@@ -148,8 +166,8 @@ __device__ void approximateGivensQuaternion(float a11, float a12, float a22, flo
     ch = 2*(a11-a22);
     sh = a12;
     bool b = _gamma*sh*sh < ch*ch;
-    float w = glm::fastInverseSqrt(ch*ch+sh*sh);
-    //float w = rsqrt(ch*ch+sh*sh);
+    //float w = glm::fastInverseSqrt(ch*ch+sh*sh);
+    float w = rsqrt(ch*ch+sh*sh);
     ch=b?w*ch:_cstar;
     sh=b?w*sh:_sstar;
     
@@ -227,14 +245,15 @@ __device__ void QRGivensQuaternion(float a1, float a2, float &ch, float &sh)
     float epsilon = EPSILON;
     // the authors be trippin, accurateSQRT doesn't work...
     //float rho = accurateSQRT(a1*a1 + a2*a2);
-    float rho = glm::fastSqrt(a1*a1+a2*a2);
-    //float rho = sqrt(a1*a1 + a2*a2);
+    //float rho = glm::fastSqrt(a1*a1+a2*a2);
+    float rho = sqrt(a1*a1 + a2*a2);
     sh = rho > epsilon ? a2 : 0;
     ch = fabs(a1) + fmax(rho,epsilon);
     bool b = a1 < 0;
     condSwap(b,sh,ch);
     //float w = glm::inversesqrt(ch*ch+sh*sh);
-    float w = glm::fastInverseSqrt(ch*ch+sh*sh);
+    //float w = glm::fastInverseSqrt(ch*ch+sh*sh);
+    float w = rsqrt(ch*ch+sh*sh);
     ch *= w;
     sh *= w;
 }
@@ -285,8 +304,6 @@ __device__ void jacobiEigenanalysis(glm::mat3 &S, glm::quat &qV)
     // given a symmetric matrix S, diagonalize it
     // also returns the cumulative rotation as a quaternion
     qV = glm::quat(1,0,0,0);
-    float scale;
-    int p; int q;
     for(int sweep=0;sweep<4;sweep++)
     {
         // we wish to eliminate the maximum off-diagonal element
@@ -353,7 +370,7 @@ __device__ void polarD(const glm::mat3 A, glm::mat3 &U, glm::mat3 &P )
     P = V * S * Vt; 
  }
 
-inline void printMat3Failure(char * name, glm::mat3 got, glm::mat3 expected)
+__device__ inline void printMat3Failure(char * name, glm::mat3 got, glm::mat3 expected)
 {
     printf("%C GRADIENT: [FAILED] \n", name);
     printf("Expected: \n");
@@ -380,6 +397,9 @@ inline bool epsilonNotEqualMat3(glm::mat3 A, glm::mat3 B)
 
 __global__ void svdTest(const glm::mat3 A)
 {
+    printf("original matrix\n");
+    printMat3(A);
+
     glm::mat3 U1;
     glm::mat3 S;
     glm::mat3 V;
@@ -387,17 +407,15 @@ __global__ void svdTest(const glm::mat3 A)
     glm::mat3 P;
     svdAndPolarD(A,U1,S,V,U2,P);
 
-    printf("original matrix");
-    printMat3(A);
-    printf("SVD: U");
+    printf("SVD: U\n");
     printMat3(U1);
-    printf("SVD: S");
+    printf("SVD: S\n");
     printMat3(S);
-    printf("SVD: V");
+    printf("SVD: V\n");
     printMat3(V);
-    printf("Polar: U");
+    printf("Polar: U\n");
     printMat3(U2);
-    printf("Polar: P");
+    printf("Polar: P\n");
     printMat3(P);
 }
 
@@ -409,8 +427,14 @@ void svdTestsHost()
     glm::mat3 S_e;
     glm::mat3 V_e;
     // TEST 1
-    A = glm::mat3(1,2,3,4,5,6,7,8,9);
+    A = glm::mat3(-0.558253  ,  -0.0461681   ,  -0.505735,
+                  -0.411397 ,    0.0365854   ,   0.199707,
+                  0.285389  ,   -0.313789   ,   0.200189);
+    A = glm::transpose(A);
+
+
     svdTest<<<1,1>>>(A);
+    cudaDeviceSynchronize();
 }
 
 
