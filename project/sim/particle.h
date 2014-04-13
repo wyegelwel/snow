@@ -33,7 +33,7 @@ struct Particle
 typedef unsigned int GLuint;
 struct cudaGraphicsResource;
 
-#include "scene/renderable.h"
+#include "common/renderable.h"
 
 class ParticleSystem : public Renderable
 {
@@ -44,6 +44,7 @@ public:
     virtual ~ParticleSystem();
 
     void clear();
+    inline int size() const { return m_particles.size(); }
 
     const QVector<Particle>& getParticles() const { return m_particles; }
     QVector<Particle>& particles() { return m_particles; }

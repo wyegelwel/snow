@@ -12,12 +12,18 @@
 
 #include <GL/gl.h>
 #include <glm/geometric.hpp>
+#include <glm/gtc/random.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <QElapsedTimer>
 
 #include "common/common.h"
+#include "cuda/functions.h"
+#include "geometry/bbox.h"
+#include "sim/particle.h"
+#include "sim/grid.h"
 
 Mesh::Mesh()
-    : m_vbo(0),
+    : m_glVBO(0),
       m_color(0.5f, 0.5f, 0.5f, 1.f)
 {
 }
@@ -26,7 +32,7 @@ Mesh::Mesh( const QVector<Vertex> &vertices,
             const QVector<Tri> &tris )
     : m_vertices(vertices),
       m_tris(tris),
-      m_vbo(0),
+      m_glVBO(0),
       m_color(0.5f, 0.5f, 0.5f, 1.f)
 {
     computeNormals();
@@ -38,7 +44,7 @@ Mesh::Mesh( const QVector<Vertex> &vertices,
     : m_vertices(vertices),
       m_tris(tris),
       m_normals(normals),
-      m_vbo(0),
+      m_glVBO(0),
       m_color(0.5f, 0.5f, 0.5f, 1.f)
 {
 }
@@ -86,7 +92,6 @@ Mesh::computeNormals()
     delete [] triNormals;
     delete [] triAreas;
     delete [] vertexMembership;
-
 }
 
 void
@@ -103,10 +108,11 @@ Mesh::render()
     glEnable( GL_POLYGON_OFFSET_LINE );
     glPolygonOffset( -1.f, -1.f );
 
-    glColor4fv( glm::value_ptr(m_color) );
-    glPolygonMode( GL_FRONT_AND_BACK, GL_FILL );
-    renderVBO();
+//    glColor4fv( glm::value_ptr(m_color) );
+//    glPolygonMode( GL_FRONT_AND_BACK, GL_FILL );
+//    renderVBO();
 
+    glLineWidth( 1.f );
     glColor4fv( glm::value_ptr(m_color*0.8f) );
     glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
     renderVBO();
@@ -118,7 +124,8 @@ Mesh::render()
 void
 Mesh::renderVBO()
 {
-    glBindBuffer( GL_ARRAY_BUFFER, m_vbo );
+
+    glBindBuffer( GL_ARRAY_BUFFER, m_glVBO );
     glEnableClientState( GL_VERTEX_ARRAY );
     glVertexPointer( 3, GL_FLOAT, 2*sizeof(glm::vec3), (void*)(0) );
     glEnableClientState( GL_NORMAL_ARRAY );
@@ -135,9 +142,9 @@ bool
 Mesh::hasVBO() const
 {
     bool has = false;
-    if ( m_vbo > 0 ) {
-        glBindBuffer( GL_ARRAY_BUFFER, m_vbo );
-        has = glIsBuffer( m_vbo );
+    if ( m_glVBO > 0 ) {
+        glBindBuffer( GL_ARRAY_BUFFER, m_glVBO );
+        has = glIsBuffer( m_glVBO );
         glBindBuffer( GL_ARRAY_BUFFER, 0 );
     }
     return has;
@@ -146,13 +153,14 @@ Mesh::hasVBO() const
 void
 Mesh::deleteVBO()
 {
-    if ( m_vbo > 0 ) {
-        glBindBuffer( GL_ARRAY_BUFFER, m_vbo );
-        if ( glIsBuffer(m_vbo) ) {
-            glDeleteBuffers( 1, &m_vbo );
+    if ( m_glVBO > 0 ) {
+        glBindBuffer( GL_ARRAY_BUFFER, m_glVBO );
+        if ( glIsBuffer(m_glVBO) ) {
+            unregisterVBO( m_cudaVBO );
+            glDeleteBuffers( 1, &m_glVBO );
         }
         glBindBuffer( GL_ARRAY_BUFFER, 0 );
-        m_vbo = 0;
+        m_glVBO = 0;
     }
 }
 
@@ -161,6 +169,7 @@ Mesh::buildVBO()
 {
     deleteVBO();
 
+    // Create flat array of non-indexed triangles
     glm::vec3 *data = new glm::vec3[6*getNumTris()];
     for ( int i = 0, index = 0; i < getNumTris(); ++i ) {
         const Tri &tri = m_tris[i];
@@ -172,12 +181,70 @@ Mesh::buildVBO()
         data[index++] = m_normals[tri[2]];
     }
 
-    glGenBuffers( 1, &m_vbo );
-    glBindBuffer( GL_ARRAY_BUFFER, m_vbo );
+    // Build OpenGL VBO
+    glGenBuffers( 1, &m_glVBO );
+    glBindBuffer( GL_ARRAY_BUFFER, m_glVBO );
     glBufferData( GL_ARRAY_BUFFER, 6*getNumTris()*sizeof(glm::vec3), data, GL_STATIC_DRAW );
     glBindBuffer( GL_ARRAY_BUFFER, 0 );
 
+    // Register with CUDA
+    registerVBO( &m_cudaVBO, m_glVBO );
+
     delete [] data;
+
 }
 
+void
+Mesh::fill( ParticleSystem &particles, int particleCount, float h )
+{
+    if ( !hasVBO() ) {
+        buildVBO();
+    }
+
+    QElapsedTimer timer;
+    timer.start();
+
+    BBox box = getObjectBBox();
+    box.expandAbs(2*h);
+    box.fix(h);
+
+    Grid grid;
+    glm::vec3 dimf = glm::round( (box.max()-box.min())/h );
+    grid.dim = glm::ivec3( (int)dimf.x, (int)dimf.y, (int)dimf.z );
+    grid.h = h;
+    grid.pos = box.min();
+
+    Particle *particleArray = new Particle[particleCount];
+    fillMesh( &m_cudaVBO, getNumTris(), grid, particleArray, particleCount );
+
+    for ( int i = 0; i < particleCount; ++i )
+        particles += particleArray[i];
+
+    delete [] particleArray;
+
+    qint64 ms = timer.restart();
+    LOG( "Mesh filled with %d particles in %lld ms.", particleCount, ms );
+}
+
+BBox
+Mesh::getWorldBBox( const glm::mat4 &transform ) const
+{
+    BBox box;
+    for ( int i = 0; i < getNumVertices(); ++i ) {
+        const Vertex &v = m_vertices[i];
+        glm::vec4 point = transform * glm::vec4( v, 1.f );
+        box += glm::vec3(point.x, point.y, point.z);
+    }
+    return box;
+}
+
+BBox
+Mesh::getObjectBBox() const
+{
+    BBox box;
+    for ( int i = 0; i < getNumVertices(); ++i ) {
+        box += m_vertices[i];
+    }
+    return box;
+}
 
