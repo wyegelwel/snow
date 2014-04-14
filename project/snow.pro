@@ -44,11 +44,12 @@ HEADERS  += ui/mainwindow.h \
     common/renderable.h \
     common/types.h \
     tests/tests.h \
-    sim/grid.h \
     ui/infopanel.h \
     sim/collider.h \
     geometry/bbox.h \
     common/math.h \
+    geometry/grid.h \
+    sim/particlegrid.h
 
 FORMS    += ui/mainwindow.ui
 
@@ -63,9 +64,9 @@ QMAKE_CXXFLAGS += -std=c++11
 CUDA_SOURCES += cuda/snow.cu \
     cuda/mesh.cu \
     cuda/wil.cu \
-#    cuda/max.cu \
+    cuda/max.cu \
     cuda/tim.cu \
-    cuda/eric.cu \
+#    cuda/eric.cu \
 
 # uncomment below to also import include CUDA SDK
 #CUDA_SDK = /contrib/projects/cuda-sdk/C
@@ -78,7 +79,6 @@ CUDA_DIR = /contrib/projects/cuda5-toolkit
 INCLUDEPATH += $$CUDA_DIR/include
 INCLUDEPATH += $$CUDA_DIR/samples/common/inc
 QMAKE_LIBDIR += $$CUDA_DIR/lib64
-#LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:$$CUDA_DIR/lib64
 
 LIBS += -lcudart -lcuda
 

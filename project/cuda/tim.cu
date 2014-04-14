@@ -23,7 +23,7 @@
 
 #define CUDA_INCLUDE
 #include "sim/particle.h"
-#include "sim/grid.h"
+#include "geometry/grid.h"
 #include "cuda/functions.h"
 
 extern "C"  {

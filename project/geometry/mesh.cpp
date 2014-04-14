@@ -21,8 +21,8 @@
 #include "common/common.h"
 #include "cuda/functions.h"
 #include "geometry/bbox.h"
+#include "geometry/grid.h"
 #include "sim/particle.h"
-#include "sim/grid.h"
 
 Mesh::Mesh()
     : m_glVBO(0),

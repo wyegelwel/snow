@@ -28,7 +28,7 @@
 #define SSTAR 0.3826834323 // sin(p/8)
 
 // Optimize C = glm::transpose(A) * B
-__device__ void multTransposeL( const glm::mat3 &A, const glm::mat3 &B, glm::mat3 &C )
+__device__ inline void multTransposeL( const glm::mat3 &A, const glm::mat3 &B, glm::mat3 &C )
 {
     glm::mat3 _C;
     _C[0][0] = A[0][0]*B[0][0] + A[0][1]*B[0][1] + A[0][2]*B[0][2];
@@ -52,10 +52,10 @@ __device__ void jacobiConjugation( int p, int q, glm::mat3 &S, glm::quat &qV )
     float w = rsqrt( ch2 + sh2 );
     ch = flag ? w*ch : CSTAR; ch2 = ch*ch;
     sh = flag ? w*sh : SSTAR; sh2 = sh*sh;
-    float scale = ch*ch + sh*sh;
 
     // build rotation matrix Q
     glm::mat3 Q;
+    float scale = ch*ch + sh*sh;
     float a = (ch2-sh2) / scale;
     float b = (2.f*sh*ch) / scale;
     Q[0][0] = a;  Q[1][0] = -b;
@@ -69,7 +69,7 @@ __device__ void jacobiConjugation( int p, int q, glm::mat3 &S, glm::quat &qV )
     // original
     qV *= ch;
 
-    // terrible hack this arranges such that for
+    // terrible hack, this arranges such that for
     // (p,q) = ((0,1),(1,2),(0,2)), n = (0,1,2)
     int n = 2*q-p-2;
     int x = n;
@@ -200,7 +200,6 @@ __device__ void QRGivensQuaternion( float a1, float a2, float &ch, float &sh )
     //float rho = accurateSQRT(a1*a1 + a2*a2);
     float tmp = a1*a1 + a2*a2;
     float rho = tmp * rsqrt(tmp); // = sqrt(tmp)
-    //float rho = rsqrt(a1*a1 + a2*a2);
 
     sh = rho > EPSILON ? a2 : 0;
     ch = fabsf(a1) + fmaxf( rho, EPSILON );
@@ -259,9 +258,9 @@ __device__ void QRDecomposition( const glm::mat3 &B, glm::mat3 &Q, glm::mat3 &R 
 /*
  * McAdams, Selle, Tamstorf, Teran, and Sifakis. Computing the Singular Value Decomposition of 3 x 3
  * matrices with minimal branching and elementary floating point operations
- * Computes SVD of 3x3 matrix A = U * S * V'
+ * Computes SVD of 3x3 matrix A = W * S * V'
  */
-__device__ void computeSVD( const glm::mat3 &A, glm::mat3 &U, glm::mat3 &S, glm::mat3 &V )
+__device__ void computeSVD( const glm::mat3 &A, glm::mat3 &W, glm::mat3 &S, glm::mat3 &V )
 {
     // normal equations matrix
     glm::mat3 ATA;
@@ -271,19 +270,19 @@ __device__ void computeSVD( const glm::mat3 &A, glm::mat3 &U, glm::mat3 &S, glm:
     glm::quat qV;
     jacobiEigenanalysis( ATA, qV );
     toMat3( qV, V );
-    glm::mat3 B = A * V; // B = AV = US
+    glm::mat3 B = A * V; // B = AV = WS
 
 /// 3. Sorting the singular values (find V)
     sortSingularValues( B, V );
 
 /// 4. QR decomposition
-    QRDecomposition( B, U, S );
+    QRDecomposition( B, W, S );
 }
 
 /*
  * Returns polar decomposition of 3x3 matrix M where
  * M = Fe = Re * Se = U * P
- * R is the orthonormal matrix, S is the rotation
+ * U is an orthonormal matrix
  * S is symmetric positive semidefinite
  * Can get Polar Decomposition from SVD, see first section of http://en.wikipedia.org/wiki/Polar_decomposition
  */
@@ -291,10 +290,10 @@ __device__ void computePD( const glm::mat3 &A, glm::mat3 &U, glm::mat3 &P )
 {
     // U is unitary matrix (i.e. orthogonal/orthonormal)
     // P is positive semidefinite Hermitian matrix
-    glm::mat3 U1, S, V;
-    computeSVD( A, U1, S, V );
+    glm::mat3 W, S, V;
+    computeSVD( A, W, S, V );
     glm::mat3 Vt = glm::transpose(V);
-    U = U1 * Vt;
+    U = W * Vt;
     P = V * S * Vt;
 }
 
@@ -302,14 +301,14 @@ __device__ void computePD( const glm::mat3 &A, glm::mat3 &U, glm::mat3 &P )
  * In snow we desire both SVD and polar decompositions simultaneously without
  * re-computing USV for polar.
  * here is a function that returns all the relevant values
- * SVD : A = U1 * S * V'
- * PD : A = U2 * P
+ * SVD : A = W * S * V'
+ * PD : A = U * P
  */
- __device__ void computeSVDandPD( const glm::mat3 &A, glm::mat3 &U1, glm::mat3 &S, glm::mat3 &V, glm::mat3 &U2, glm::mat3 &P )
+ __device__ void computeSVDandPD( const glm::mat3 &A, glm::mat3 &W, glm::mat3 &S, glm::mat3 &V, glm::mat3 &U, glm::mat3 &P )
  {
-    computeSVD( A, U1, S, V );
+    computeSVD( A, W, S, V );
     glm::mat3 Vt = glm::transpose(V);
-    U2 = U1 * Vt;
+    U = W * Vt;
     P = V * S * Vt;
  }
 
