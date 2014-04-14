@@ -30,6 +30,11 @@ int main(int argc, char *argv[])
     else if (argc == 3 && !strcmp(argv[1],"-test"))  {
         Tests::runTests(argv);
     }
+    else if (argc == 3 && !strcmp(argv[1],"-sim"))
+    {
+        // run the simulation in headless mode. Particle positions cached for offline rendering
+
+    }
     else  {
         printf("unknown argument %s, only support '-test <name>' as an argument. Run with empty argument list to run with gui.",argv[1]);
     }
