@@ -21,6 +21,7 @@ struct ParticleGrid : public Grid
     {
         float mass;
         glm::vec3 velocity;
+        glm::vec3 velocityChange; // v_n+1 - v_n (store this value through steps 4,5,6)
         glm::vec3 force;
 
         Node() : mass(0), velocity(0,0,0), force(0,0,0) {}
