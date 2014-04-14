@@ -28,7 +28,7 @@
 #include "cuda/functions.h"
 #include "geometry/mesh.h"
 #include "sim/particle.h"
-#include "sim/grid.h"
+#include "geometry/grid.h"
 
 /*
  * Moller, T, and Trumbore, B. Fast, Minimum Storage Ray/Triangle Intersection.

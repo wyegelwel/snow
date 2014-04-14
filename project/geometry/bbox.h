@@ -18,7 +18,7 @@
 #include "common/math.h"
 #include "common/renderable.h"
 
-#include "sim/grid.h"
+#include "geometry/grid.h"
 
 class BBox : public Renderable
 {
