@@ -43,6 +43,17 @@ __device__ int getGridIndex( int i, int j, int k, Grid* grid)  {
     return (i*(dim.y*dim.z) + j*(dim.z) + k);
 }
 
+
+/**
+* Assuming N = # particles, M = dim.x*dim.y*dim.z for grid.
+* naming convention: things that start with “particle” have N items, things that start with “cell” have M items.
+* particleData: Array of type Particle, simply a list of all of our particles, size N
+* grid: Grid dimensions and unit size
+* particleToCell: Array of type int, size N, index of cell that particle belongs to.
+* cellParticleCount: Array of type int, size M, number of particles in each cell.
+* particleOffsetInCell: Array of type int, size N, offset for each particle into cell’s subarray. (number of particles already inserted into the cell that the particle belongs to)
+*
+*/
 __global__ void rasterizeParticles( Particle *particleData, Grid *grid, int *particleToCell, int *cellParticleCount, int *particleOffsetInCell ) {
     int index = blockIdx.x*blockDim.x + threadIdx.x;
     Particle p = particleData[index];
@@ -62,6 +73,12 @@ __global__ void cumulativeSum(int *array, int M)  {
     }
 }
 
+/**
+ * particleToCell: Array of type int, size N, index of the cell that particle belongs to.
+ * cellParticleIndex: Array of type int, size M, index of first particle for each cell
+ * particleOffsetInCell: Array of type int, size N, offset for each particle into cell’s subarray
+ * gridParticles: Array of type int, size N, particle indices group by ascending cell index
+ */
 __global__ void groupParticlesByCell( int *particleToCell, int *cellParticleIndex, int *particleOffsetInCell, int *gridParticles )  {
     int index = blockIdx.x*blockDim.x + threadIdx.x;
     int gridIndex = particleToCell[index];
