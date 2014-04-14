@@ -12,6 +12,7 @@
 #define MATH_H
 
 #include <math.h>
+#include <stdlib.h>
 
 #ifdef EPSILON
 #undef EPSILON
@@ -52,5 +53,9 @@
     ( (_X_>_Y_) ? _X_ : _Y_ );          \
 })
 
+static inline float urand( float min = 0.f, float max = 1.f )
+{
+    return min + (float(rand())/float(RAND_MAX))*(max-min);
+}
 
 #endif // MATH_H
