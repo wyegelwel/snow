@@ -48,7 +48,7 @@ HEADERS  += ui/mainwindow.h \
     ui/infopanel.h \
     sim/collider.h \
     geometry/bbox.h \
-    common/math.h
+    common/math.h \
 
 FORMS    += ui/mainwindow.ui
 
@@ -63,7 +63,7 @@ QMAKE_CXXFLAGS += -std=c++11
 CUDA_SOURCES += cuda/snow.cu \
     cuda/mesh.cu \
     cuda/wil.cu \
-    cuda/max.cu \
+#    cuda/max.cu \
     cuda/tim.cu \
     cuda/eric.cu \
 
@@ -90,6 +90,8 @@ OTHER_FILES += \
     cuda/max.cu \
     cuda/tim.cu \
     cuda/eric.cu \
+    cuda/decomposition.cu \
+    cuda/weighting.cu
 
 # GPU ARCH
 # this gets passed as the gpu-architecture flag to nvcc compiler
@@ -99,7 +101,7 @@ OTHER_FILES += \
 CUDA_ARCH = sm_21
 
 # custom NVCC flags
-NVCCFLAGS     = --compiler-options -fno-strict-aliasing -use_fast_math --ptxas-options=-v
+NVCCFLAGS = --compiler-options -fno-strict-aliasing -use_fast_math --ptxas-options=-v
 
 # Prepare the extra compiler configuration (taken from the nvidia forum - i'm not an expert in this part)
 CUDA_INC = $$join(INCLUDEPATH,' -I','-I',' ') -I$$_PRO_FILE_PWD_

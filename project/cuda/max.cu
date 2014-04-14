@@ -13,22 +13,15 @@
 
 #include <cuda.h>
 #include <cuda_runtime.h>
-#include <cuda_gl_interop.h>
-#include <curand.h>
-#include <curand_kernel.h>
-#include <helper_cuda.h>
-#include <helper_cuda_gl.h>
 
-#include "glm/common.hpp"
-#include "glm/geometric.hpp"
+#include "cuda/decomposition.h"
 
 #define CUDA_INCLUDE
-#include "common/common.h"
-#include "common/math.h"
-#include "cuda/functions.h"
-#include "geometry/bbox.h"
-#include "geometry/mesh.h"
 #include "sim/particle.h"
-#include "sim/grid.h"
+
+__global__ void updateParticlesFromGrid( Particle *particles )
+{
+
+}
 
 #endif // MAX_CU

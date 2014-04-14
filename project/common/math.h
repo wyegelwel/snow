@@ -11,6 +11,25 @@
 #ifndef MATH_H
 #define MATH_H
 
+#include <math.h>
+
+#ifdef EPSILON
+#undef EPSILON
+#endif
+
+#ifdef _EPSILON_
+#undef _EPSILON_
+#endif
+
+#define _EPSILON_ 1e-6
+#define EPSILON _EPSILON_
+
+#define EQ(a, b) ( fabs((a) - (b)) < _EPSILON_ )
+#define NEQ(a, b) ( fabs((a) - (b)) > _EPSILON_ )
+
+#define EQF(a, b) ( fabsf((a) - (b)) < _EPSILON_ )
+#define NEQF(a, b) ( fabsf((a) - (b)) > _EPSILON_ )
+
 #ifdef MIN
 #undef MIN
 #endif
