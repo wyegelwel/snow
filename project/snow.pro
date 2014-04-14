@@ -27,7 +27,7 @@ SOURCES += main.cpp\
     tests/tests.cpp \
     ui/infopanel.cpp \
     sim/collider.cpp \
-    geometry/bbox.cpp
+    geometry/bbox.cpp \
 
 HEADERS  += ui/mainwindow.h \
     viewport/camera.h \
@@ -44,11 +44,12 @@ HEADERS  += ui/mainwindow.h \
     common/renderable.h \
     common/types.h \
     tests/tests.h \
-    sim/grid.h \
     ui/infopanel.h \
     sim/collider.h \
     geometry/bbox.h \
-    common/math.h
+    common/math.h \
+    geometry/grid.h \
+    sim/particlegrid.h
 
 FORMS    += ui/mainwindow.ui
 
@@ -61,10 +62,11 @@ QMAKE_CXXFLAGS += -std=c++11
 
 # CUDA stuff
 CUDA_SOURCES += cuda/snow.cu \
+    cuda/mesh.cu \
     cuda/wil.cu \
     cuda/max.cu \
     cuda/tim.cu \
-    cuda/eric.cu \
+#    cuda/eric.cu \
 
 # uncomment below to also import include CUDA SDK
 #CUDA_SDK = /contrib/projects/cuda-sdk/C
@@ -77,17 +79,19 @@ CUDA_DIR = /contrib/projects/cuda5-toolkit
 INCLUDEPATH += $$CUDA_DIR/include
 INCLUDEPATH += $$CUDA_DIR/samples/common/inc
 QMAKE_LIBDIR += $$CUDA_DIR/lib64
-#LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:$$CUDA_DIR/lib64
 
 LIBS += -lcudart -lcuda
 
 OTHER_FILES += \
     CUDA_notes.txt \
     cuda/snow.cu \
+    cuda/mesh.cu \
     cuda/wil.cu \
     cuda/max.cu \
     cuda/tim.cu \
     cuda/eric.cu \
+    cuda/decomposition.cu \
+    cuda/weighting.cu
 
 # GPU ARCH
 # this gets passed as the gpu-architecture flag to nvcc compiler
@@ -97,7 +101,7 @@ OTHER_FILES += \
 CUDA_ARCH = sm_21
 
 # custom NVCC flags
-NVCCFLAGS     = --compiler-options -fno-strict-aliasing -use_fast_math --ptxas-options=-v
+NVCCFLAGS = --compiler-options -fno-strict-aliasing -use_fast_math --ptxas-options=-v
 
 # Prepare the extra compiler configuration (taken from the nvidia forum - i'm not an expert in this part)
 CUDA_INC = $$join(INCLUDEPATH,' -I','-I',' ') -I$$_PRO_FILE_PWD_

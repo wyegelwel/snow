@@ -43,12 +43,13 @@ __global__ void snow_kernel( float time, Particle *particles )
 void updateParticles( cudaGraphicsResource **resource, float time, int particleCount )
 {
 
-    checkCudaErrors( cudaGraphicsMapResources(1, resource, 0) );
+    cudaGraphicsMapResources( 1, resource, 0 );
     Particle *particles;
     size_t size;
-    checkCudaErrors( cudaGraphicsResourceGetMappedPointer((void**)&particles, &size, *resource) );
+    cudaGraphicsResourceGetMappedPointer( (void**)&particles, &size, *resource );
     snow_kernel<<< particleCount/512, 512 >>>( time, particles );
-    checkCudaErrors( cudaGraphicsUnmapResources(1, resource, 0) );
+    checkCudaErrors( cudaDeviceSynchronize() );
+    cudaGraphicsUnmapResources( 1, resource, 0 );
 }
 
 #endif // SNOW_CU

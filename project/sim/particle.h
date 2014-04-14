@@ -45,7 +45,9 @@ public:
 
     void clear();
     inline int size() const { return m_particles.size(); }
+    inline void resize( int n ) { m_particles.resize(n); }
 
+    Particle* data() { return m_particles.data(); }
     const QVector<Particle>& getParticles() const { return m_particles; }
     QVector<Particle>& particles() { return m_particles; }
 

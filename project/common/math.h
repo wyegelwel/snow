@@ -11,6 +11,26 @@
 #ifndef MATH_H
 #define MATH_H
 
+#include <math.h>
+#include <stdlib.h>
+
+#ifdef EPSILON
+#undef EPSILON
+#endif
+
+#ifdef _EPSILON_
+#undef _EPSILON_
+#endif
+
+#define _EPSILON_ 1e-6
+#define EPSILON _EPSILON_
+
+#define EQ(a, b) ( fabs((a) - (b)) < _EPSILON_ )
+#define NEQ(a, b) ( fabs((a) - (b)) > _EPSILON_ )
+
+#define EQF(a, b) ( fabsf((a) - (b)) < _EPSILON_ )
+#define NEQF(a, b) ( fabsf((a) - (b)) > _EPSILON_ )
+
 #ifdef MIN
 #undef MIN
 #endif
@@ -33,5 +53,9 @@
     ( (_X_>_Y_) ? _X_ : _Y_ );          \
 })
 
+static inline float urand( float min = 0.f, float max = 1.f )
+{
+    return min + (float(rand())/float(RAND_MAX))*(max-min);
+}
 
 #endif // MATH_H

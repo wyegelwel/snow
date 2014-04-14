@@ -14,6 +14,8 @@
 #include <cassert>
 #include <stdlib.h>
 #include <iostream>
+#include <time.h>
+#include <sys/time.h>
 
 #define SAFE_DELETE(MEM)                \
     {                                   \
@@ -58,9 +60,20 @@
             fflush( stderr );                               \
         }                                                   \
     }
+    #define TIME( START, END, ... ) {                       \
+        timeval start, end;                                 \
+        gettimeofday( &start, NULL );                       \
+        printf( "%s", START );                              \
+        { __VA_ARGS__ };                                    \
+        gettimeofday( &end, NULL );                         \
+        long int ms = (end.tv_sec-start.tv_sec)*1000 +      \
+                  (end.tv_usec-start.tv_usec)/1000;         \
+        printf( "[%ld ms] %s", ms, END );                   \
+    }
 #else
     #define LOG(...) do {} while(0)
     #define LOGIF( TEST, ... ) do {} while(0)
+    #define TIME( START, END, ... ) do {} while(0)
 #endif
 
 #define STR( QSTR ) QSTR.toStdString().c_str()

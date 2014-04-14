@@ -11,189 +11,308 @@
 #ifndef MAX_CU
 #define MAX_CU
 
+#include <stdio.h>
+
 #include <cuda.h>
 #include <cuda_runtime.h>
-#include <cuda_gl_interop.h>
-#include <curand.h>
-#include <curand_kernel.h>
+#include <helper_functions.h>
 #include <helper_cuda.h>
-#include <helper_cuda_gl.h>
 
-#include "glm/common.hpp"
-#include "glm/geometric.hpp"
-#include "glm/gtc/random.hpp"
+#include "cuda/decomposition.cu"
+#include "cuda/weighting.cu"
 
 #define CUDA_INCLUDE
-#include "cuda/functions.h"
+#include "sim/particlegrid.h"
 #include "sim/particle.h"
-#include "sim/grid.h"
-#include "geometry/bbox.h"
-#include "geometry/mesh.h"
 
-/*
- * Moller, T, and Trumbore, B. Fast, Minimum Storage Ray/Triangle Intersection.
- */
-__device__ bool intersectTri( const glm::vec3 &rayO, const glm::vec3 &rayD, 
-                              const glm::vec3 &v0, const glm::vec3 &v1, const glm::vec3 &v2,
-                              float &t )
+#define VEC2IVEC( V ) ( glm::ivec3((int)V.x, (int)V.y, (int)V.z) )
+
+#define CLAMP( X, A, B ) ( (X < A) ? A : ((X > B) ? B : X) )
+
+// Computes M += v * w^T
+__device__ inline void addOuterProduct( const glm::vec3 &v, const glm::vec3 &w, glm::mat3 &M )
 {
-    glm::vec3 e0 = v1 - v0;
-    glm::vec3 e1 = v2 - v0;
-    
-    glm::vec3 pVec = glm::cross( rayD, e1 );
-    float det = glm::dot( e0, pVec );
-    if ( fabsf(det) < 1e-8 ) return false;
-
-    float invDet = 1.f / det;
-
-    glm::vec3 tVec = rayO - v0;
-    float u = glm::dot( tVec, pVec ) * invDet;
-    if ( u < 0.f || u > 1.f ) return false;
-
-    glm::vec3 qVec = glm::cross( tVec, e0 );
-    float v = glm::dot( rayD, qVec ) * invDet;
-    if ( v < 0.f || v > 1.f ) return false;
-
-    t = glm::dot( e1, qVec ) * invDet;
-    return t > 0.f;
+    M[0][0] += v.x*w.x;    M[1][0] += v.x*w.y;    M[2][0] += v.x*w.z;
+    M[0][1] += v.y*w.x;    M[1][1] += v.y*w.y;    M[2][1] += v.y*w.z;
+    M[0][2] += v.z*w.x;    M[1][2] += v.z*w.y;    M[2][2] += v.z*w.z;
 }
 
-__global__ void voxelizeMeshKernel( Tri *tris, int triCount, Grid grid, bool *flags )
+// Use weighting functions to compute particle velocity gradient and update particle velocity
+__device__ void processGridVelocities( Particle &particle, const Grid &grid, const ParticleGrid::Node *nodes, glm::mat3 &velocityGradient, float alpha )
 {
+    const glm::vec3 &pos = particle.position;
     const glm::ivec3 &dim = grid.dim;
+    const float h = grid.h;
 
-    int x = threadIdx.x + blockIdx.x * blockDim.x;
-    if ( x >= dim.x ) return;
-    int y = threadIdx.y + blockIdx.y * blockDim.y;
-    if ( y >= dim.y ) return;
+    // Compute neighborhood of particle in grid
+    glm::vec3 gridPos = (pos - grid.pos),
+              gridIndex = gridPos / h,
+              gridMax = glm::floor( gridIndex + glm::vec3(2,2,2) ),
+              gridMin = glm::ceil( gridIndex - glm::vec3(2,2,2) );
+    glm::ivec3 maxIndex = glm::clamp( VEC2IVEC(gridMax), glm::ivec3(0,0,0), grid.dim ),
+               minIndex = glm::clamp( VEC2IVEC(gridMin), glm::ivec3(0,0,0), grid.dim );
 
-    // Shoot ray in z-direction
-    glm::vec3 origin = grid.pos + grid.h*glm::vec3(x+0.5f,y+0.5f,0.f);
-    glm::vec3 direction = glm::vec3( 0.f, 0.f, 1.f );
-
-    // Flag surface-intersecting voxels
-    float t;
-    int xyOffset = x*dim.y*dim.z + y*dim.z;
-    for ( int i = 0; i < triCount; ++i ) {
-        const Tri &tri = tris[i];
-        if ( intersectTri(origin, direction, tri.v0, tri.v1, tri.v2, t) ) {
-            int z = (int)(t/grid.h);
-            flags[xyOffset+z] = true;
+    // For computing particle velocity gradient:
+    //      grad(v_p) = sum( v_i * transpose(grad(w_ip)) ) = [3x3 matrix]
+    // For updating particle velocity:
+    //      v_PIC = sum( v_i * w_ip )
+    //      v_FLIP = v_p + sum( dv_i * w_ip )
+    //      v = (1-alpha)*v_PIC _ alpha*v_FLIP
+    float w;
+    glm::vec3 d, s, wg;
+    glm::vec3 v_PIC(0,0,0), dv_FLIP(0,0,0);
+    for ( int i = minIndex.x; i <= maxIndex.x; ++i ) {
+        d.x = i - gridIndex.x;
+        d.x *= ( s.x = ( d.x < 0 ) ? -1.f : 1.f );
+        int pageOffset = i*(dim.y+1)*(dim.z+1);
+        for ( int j = minIndex.y; j <= maxIndex.y; ++j ) {
+            d.y = j - gridIndex.y;
+            d.y *= ( s.y = ( d.y < 0 ) ? -1.f : 1.f );
+            int rowOffset = pageOffset + j*(dim.z+1);
+            for ( int k = minIndex.z; k <= maxIndex.z; ++k ) {
+                d.z = k - gridIndex.z;
+                d.z *= ( s.z = ( d.z < 0 ) ? -1.f : 1.f );
+                weightAndGradient( s, d, w, wg );
+                int offset = rowOffset + k;
+                const ParticleGrid::Node &node = nodes[offset];
+                // Particle velocities
+                v_PIC += node.velocity * w;
+                dv_FLIP += node.velocityChange * w;
+                // Velocity gradient
+                addOuterProduct( node.velocity, wg, velocityGradient );
+            }
         }
     }
 
-    // Scanline to fill inner voxels
-    int end = xyOffset + dim.z;
-    for ( int z = xyOffset; z < end; ++z ) {
-        if ( flags[z] ) {
-            do { z++; } while ( flags[z] && z < end );
-            int zz = z;
-            do { zz++; } while ( !flags[zz] && zz < end );
-            if ( zz < end-1 ) {
-                for ( int i = z; i < zz; ++i ) flags[i] = true;
-                z = zz;
-            } else break;
+    particle.velocity = (1.f-alpha)*v_PIC + alpha*(particle.velocity+dv_FLIP);
+}
+
+__device__ void updateParticleDeformationGradients( Particle &particle, const glm::mat3 &velocityGradient, float timeStep,
+                                                    float criticalCompression, float criticalStretch )
+{
+    // Temporarily assign all deformation to elastic portion
+    glm::mat3 F = (glm::mat3(1.f) + timeStep*velocityGradient) * particle.elasticF;
+
+    // Clamp the singular values
+    glm::mat3 W, S, Sinv, V;
+    computeSVD( F, W, S, V );
+    S = glm::mat3( CLAMP( S[0][0], criticalCompression, criticalStretch ), 0.f, 0.f,
+                   0.f, CLAMP( S[1][1], criticalCompression, criticalStretch ), 0.f,
+                   0.f, 0.f, CLAMP( S[2][2], criticalCompression, criticalStretch ) );
+    Sinv = glm::mat3( 1.f/S[0][0], 0.f, 0.f,
+                      0.f, 1.f/S[1][1], 0.f,
+                      0.f, 0.f, 1.f/S[2][2] );
+
+    // Compute final deformation components
+    particle.elasticF = W * S * glm::transpose(V);
+    particle.plasticF = V * Sinv * glm::transpose(W) * particle.plasticF;
+}
+
+__device__ void checkForCollisions( Particle &particle )
+{
+
+}
+
+// NOTE: assumes particleCount % blockDim.x = 0, so tid is never out of range!
+// criticalCompression = 1 - theta_c
+// criticalStretch = 1 + theta_s
+__global__ void updateParticlesFromGrid( Particle *particles, const ParticleGrid grid, const ParticleGrid::Node *nodes, float timeStep,
+                                         float criticalCompression, float criticalStretch, float alpha )
+{
+    int tid = threadIdx.x + blockIdx.x * blockDim.x;
+
+    Particle &particle = particles[tid];
+
+    // Update particle velocities and fill in velocity gradient for deformation gradient computation
+    glm::mat3 velocityGradient = glm::mat3( 0.f );
+    processGridVelocities( particle, grid, nodes, velocityGradient, alpha );
+
+    updateParticleDeformationGradients( particle, velocityGradient, timeStep, criticalCompression, criticalStretch );
+
+    checkForCollisions( particle );
+
+    particle.position += timeStep * particle.velocity;
+}
+
+extern "C" { void grid2ParticlesTests(); }
+
+__host__ __device__ void print( const glm::vec3 &v )
+{
+    printf( "    %10.5f    %10.5f    %10.5f\n", v.x, v.y, v.z );
+}
+
+__host__ __device__ void print( const glm::mat3 &M )
+{
+    for ( int i = 0; i < 3; ++i ) {
+        for ( int j = 0; j < 3; j++ ) {
+            printf( "    %10.5f", M[j][i] );
+        }
+        printf( "\n" );
+    }
+}
+
+__host__ __device__ void print( const glm::mat4 &M )
+{
+    for ( int i = 0; i < 4; ++i ) {
+        for ( int j = 0; j < 4; j++ ) {
+            printf( "    %10.5f", M[j][i] );
+        }
+        printf( "\n" );
+    }
+}
+
+#include "glm/gtc/epsilon.hpp"
+
+__host__ __device__ bool equals( const glm::mat3 &A, const glm::mat3 &B )
+{
+    for ( int i = 0; i < 3; ++i ) {
+        for ( int j = 0; j < 3; ++j ) {
+            if ( glm::epsilonNotEqual(A[j][i], B[j][i], (float)EPSILON) ) {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
+#include "glm/gtc/matrix_transform.hpp"
+
+__global__ void outerProductTestKernel()
+{
+    {
+        printf( "\nOuter Product Test 1: " );
+
+        glm::vec3 v( 1, 2, 3 ), w( 4, 5, 6 );
+        glm::mat3 M( 0.f );
+        addOuterProduct( v, w, M );
+
+        glm::mat3 expected = glm::transpose(glm::mat3(4, 5, 6, 8, 10, 12, 12, 15, 18));
+        if ( !equals(M, expected) ) {
+            printf( "FAILED:\n" );
+            printf( "    Expected matrix:\n" ); print( expected );
+            printf( "    Got matrix:\n" ); print( M );
+        } else {
+            printf( "PASSED.\n" );
+        }
+    }
+
+    {
+        printf( "\nOuter Product Test 2: " );
+
+        glm::vec3 v( 3, 2, 1 ), w( 10, 9, 10 );
+        glm::mat3 M( 0.f );
+        addOuterProduct( v, w, M );
+
+        glm::mat3 expected = glm::transpose(glm::mat3(30, 27, 30, 20, 18, 20, 10, 9, 10));
+        if ( !equals(M, expected) ) {
+            printf( "FAILED:\n" );
+            printf( "    Expected matrix:\n" ); print( expected );
+            printf( "    Got matrix:\n" ); print( M );
+        } else {
+            printf( "PASSED.\n" );
+        }
+    }
+
+    {
+        printf( "\nOuter Product Test 3: " );
+
+        glm::vec3 v( 10, 5, 1 ), w( 8, 2, 9 );
+        glm::mat3 M( 0.f );
+        addOuterProduct( v, w, M );
+
+        glm::mat3 expected = glm::transpose(glm::mat3(80, 20, 90, 40, 10, 45, 8, 2, 9));
+        if ( !equals(M, expected) ) {
+            printf( "FAILED:\n" );
+            printf( "    Expected matrix:\n" ); print( expected );
+            printf( "    Got matrix:\n" ); print( M );
+        } else {
+            printf( "PASSED.\n" );
         }
     }
 
 }
 
-__global__ void sampleVoxelsKernel( curandState *states, unsigned int seed, bool *flags, int voxelCount, unsigned int *particleVoxels, int particleCount )
+__global__ void velocityTest( Particle *particles, const Grid grid, ParticleGrid::Node *nodes, float alpha )
 {
     int tid = threadIdx.x + blockIdx.x * blockDim.x;
-    if ( tid >= particleCount ) return;
-
-    // Rejection sample
-    curand_init( seed, tid, 0, &states[tid] );
-    unsigned int i;
-    do {
-        curandState localState = states[tid];
-        i = curand(&localState) % voxelCount;
-        states[tid] = localState;
-    } while ( !flags[i] );
-
-    particleVoxels[tid] = i;
+    Particle &particle = particles[tid];
+    glm::mat3 velocityGradient;
+    processGridVelocities( particle, grid, nodes, velocityGradient, alpha );
 }
 
+#include "glm/gtc/random.hpp"
+#include "common/common.h"
+#include "common/math.h"
 
-__global__ void fillVoxelsKernel( curandState *states, Grid grid, unsigned int *particleVoxels, glm::vec3 *particlePositions, int particleCount )
+__host__ void grid2ParticlesTests()
 {
-    int tid = threadIdx.x + blockIdx.x * blockDim.x;
-    if ( tid >= particleCount ) return;
 
-    const glm::ivec3 &dim = grid.dim;
+//    printf( "\nSANITY CHECK: TRANSLATION MATRIX\n" );
+//    glm::mat4 test = glm::translate( glm::mat4(1.f), glm::vec3(1, 2, 3) );
+//    print( test );
 
-    // Convert voxel index to 3D index
-    int i = (int)particleVoxels[tid];
-    int x = i / (dim.y*dim.z);
-    int y = (i-(x*dim.y*dim.z)) / (dim.z);
-    int z = i - (y*dim.z) - (x*dim.y*dim.z);
+    outerProductTestKernel<<<1,1>>>();
+    cudaDeviceSynchronize();
 
-    // Generate 3 uniform floats
-    glm::vec3 r;
-    curandState localState = states[tid];
-    r.x = curand_uniform(&localState);
-    states[tid] = localState;
-    localState = states[tid];
-    r.y = curand_uniform(&localState);
-    states[tid] = localState;
-    localState = states[tid];
-    r.z = curand_uniform(&localState);
-    states[tid] = localState;
+    printf( "\nVelocity Processing Test:\n" );
 
-    glm::vec3 min = grid.pos + grid.h*glm::vec3(x, y, z);
-    glm::vec3 max = min + glm::vec3(grid.h,grid.h,grid.h);
-    particlePositions[tid] = min + r*(max-min);
-}
+    const int dim = 64;
+    ParticleGrid grid;
+    grid.dim = glm::ivec3( dim, dim, dim );
+    grid.h = 1.f/dim;
+    grid.pos = glm::vec3(0,0,0);
 
-void fillMesh( cudaGraphicsResource **resource, int triCount, const Grid &grid, Particle *particles, int particleCount )
-{
-    // Get mesh data
-    checkCudaErrors( cudaGraphicsMapResources(1, resource, 0) );
-    Tri *tris;
-    size_t size;
-    checkCudaErrors( cudaGraphicsResourceGetMappedPointer((void**)&tris, &size, *resource) );
+    int nParticles = dim*dim*dim;
+    printf( "    Generating %d particles (%.2f MB)...\n", nParticles, nParticles*sizeof(Particle)/1e6 );
+    Particle *particles = new Particle[nParticles];
+    for ( int i = 0; i < dim; ++i ) {
+        for ( int j = 0; j < dim; ++j ) {
+            for ( int k = 0; k < dim; ++k ) {
+                Particle particle;
+                particle.position = grid.pos + grid.h*glm::vec3( i+0.5f, j+0.5f, k+0.5f );
+                particle.velocity = glm::vec3( 0.f, -0.124f, 0.f );
+                particle.elasticF = glm::mat3(1.f);
+                particle.plasticF = glm::mat3(1.f);
+                particles[i*dim*dim+j*dim+k] = particle;
+            }
+        }
+    }
 
-    // Voxelize mesh
-    dim3 blocks( (grid.dim.x+15)/16, (grid.dim.y+15)/16 );
-    dim3 threads( 16, 16 );
-    int voxelCount = grid.dim.x * grid.dim.y * grid.dim.z;
-    bool *flags;
-    checkCudaErrors( cudaMalloc((void**)&flags, voxelCount*sizeof(bool)) );
-    checkCudaErrors( cudaMemset( (void*)flags, 0, voxelCount*sizeof(bool)) );
-    voxelizeMeshKernel<<< blocks, threads >>>( tris, triCount, grid, flags );
-    checkCudaErrors( cudaDeviceSynchronize() );
-    checkCudaErrors( cudaGraphicsUnmapResources(1, resource, 0) );
+    printf( "    Generating %d grid nodes (%.2f MB)...\n", (dim+1)*(dim+1)*(dim+1), (dim+1)*(dim+1)*(dim+1)*sizeof(ParticleGrid::Node)/1e6 );
+    ParticleGrid::Node *nodes = grid.createNodes();
+    for ( int i = 0; i <= dim; ++i ) {
+        for ( int j = 0; j <= dim; ++j ) {
+            for ( int k = 0; k <= dim; ++k ) {
+                ParticleGrid::Node node;
+                node.velocity = glm::vec3( 0.f, -0.125f, 0.f );
+                node.velocityChange = glm::vec3( 0.f, -0.001f, 0.f );
+                nodes[i*(dim+1)*(dim+1)+j*(dim+1)+k] = node;
+            }
+        }
+    }
 
-    blocks.x = (particleCount+255)/256;
-    blocks.y = 1;
-    threads.x = 256;
-    threads.y = 1;
+    printf( "    Allocating kernel resources...\n" );
+    Particle *devParticles;
+    ParticleGrid::Node *devNodes;
+    checkCudaErrors( cudaMalloc( &devParticles, nParticles*sizeof(Particle) ) );
+    checkCudaErrors( cudaMemcpy( devParticles, particles, nParticles*sizeof(Particle), cudaMemcpyHostToDevice ) );
+    checkCudaErrors( cudaMalloc( &devNodes, (dim+1)*(dim+1)*(dim+1)*sizeof(ParticleGrid::Node) ) );
+    checkCudaErrors( cudaMemcpy( devNodes, nodes, (dim+1)*(dim+1)*(dim+1)*sizeof(ParticleGrid::Node), cudaMemcpyHostToDevice ) );
 
-    // Rejection sample voxels
-    curandState *devStates;
-    checkCudaErrors( cudaMalloc(&devStates, particleCount*sizeof(curandState)) );
-    unsigned int *devParticleVoxels;
-    checkCudaErrors( cudaMalloc(&devParticleVoxels, particleCount*sizeof(unsigned int)) );
-    sampleVoxelsKernel<<< blocks, threads >>>( devStates, time(NULL), flags, voxelCount, devParticleVoxels, particleCount );
-    checkCudaErrors( cudaDeviceSynchronize() );
-    checkCudaErrors( cudaFree(flags) );
+    for ( int i = 0; i < 10; ++i ) {
+        TIME( "    Launching kernel... ", "Kernel finished.\n",
+              velocityTest<<< nParticles/512, 512 >>>( devParticles, grid, devNodes, 0.95f );
+              checkCudaErrors( cudaDeviceSynchronize() );
+        );
+    }
 
-    // Randomly fill sampled voxels
-    glm::vec3 *devPoints;
-    checkCudaErrors( cudaMalloc((void**)&devPoints, particleCount*sizeof(glm::vec3)) );
-    fillVoxelsKernel<<< blocks, threads >>>( devStates, grid, devParticleVoxels, devPoints, particleCount );
-    checkCudaErrors( cudaDeviceSynchronize() );
-    checkCudaErrors( cudaFree(devParticleVoxels) );
-    checkCudaErrors( cudaFree(devStates) );
+    printf( "    Freeing kernel resources...\n" );
+    checkCudaErrors( cudaFree( devParticles ) );
+    checkCudaErrors( cudaFree( devNodes ) );
+    delete [] particles;
+    delete [] nodes;
 
-    // Copy back results
-    glm::vec3 *hostPoints = new glm::vec3[particleCount];
-    checkCudaErrors( cudaMemcpy(hostPoints, devPoints, particleCount*sizeof(glm::vec3), cudaMemcpyDeviceToHost) );
-    checkCudaErrors( cudaFree(devPoints) );
-    for ( int i = 0; i < particleCount; ++i )
-        particles[i].position = hostPoints[i];
-    delete [] hostPoints;
+    printf( "\nDone.\n" );
 }
 
 #endif // MAX_CU
