@@ -62,26 +62,24 @@ __device__ void weight( glm::vec3 &dx, float &w )
 
 /*
  * returns gradient of interpolation weights  \grad{w_ip}
- * xp = positions
- * dx = distance from grid cell
- * h =
- * wg =
+ * xp = sign( distance from grid node to particle )
+ * dx = abs( distance from grid node to particle )
  */
-__device__ void weightGradient( const glm::vec3 &xp, const glm::vec3 &dx, float h, glm::vec3 &wg )
+__device__ void weightGradient( const glm::vec3 &sdx, const glm::vec3 &dx, float h, glm::vec3 &wg )
 {
     const glm::vec3 dx_h = dx / h;
     const glm::vec3 N = glm::vec3( N(dx_h.x), N(dx_h.y), N(dx_h.z) );
-    const glm::vec3 Nx = glm::sign(xp) * glm::vec3( Nd(dx_h.x), Nd(dx_h.y), Nd(dx_h.z) );
+    const glm::vec3 Nx = sdx * glm::vec3( Nd(dx_h.x), Nd(dx_h.y), Nd(dx_h.z) );
     wg.x = Nx.x * N.y * N.z;
     wg.y = N.x  * Nx.y* N.z;
     wg.z = N.x  * N.y * Nx.z;
 }
 
 // Same as above, but dx is already normalized with h
-__device__ void weightGradient( const glm::vec3 &xp, const glm::vec3 &dx, glm::vec3 &wg )
+__device__ void weightGradient( const glm::vec3 &sdx, const glm::vec3 &dx, glm::vec3 &wg )
 {
     const glm::vec3 N = glm::vec3( N(dx.x), N(dx.y), N(dx.z) );
-    const glm::vec3 Nx = glm::sign(xp) * glm::vec3( Nd(dx.x), Nd(dx.y), Nd(dx.z) );
+    const glm::vec3 Nx = sdx * glm::vec3( Nd(dx.x), Nd(dx.y), Nd(dx.z) );
     wg.x = Nx.x * N.y * N.z;
     wg.y = N.x  * Nx.y* N.z;
     wg.z = N.x  * N.y * Nx.z;
@@ -90,10 +88,10 @@ __device__ void weightGradient( const glm::vec3 &xp, const glm::vec3 &dx, glm::v
 // Same as above, but dx is not already absolute-valued
 __device__ void weightGradient( const glm::vec3 &dx, glm::vec3 &wg )
 {
-    const glm::vec3 s = glm::sign( dx );
+    const glm::vec3 sdx = glm::sign( dx );
     const glm::vec3 adx = glm::abs( dx );
     const glm::vec3 N = glm::vec3( N(adx.x), N(adx.y), N(adx.z) );
-    const glm::vec3 Nx = s * glm::vec3( Nd(adx.x), Nd(adx.y), Nd(adx.z) );
+    const glm::vec3 Nx = sdx * glm::vec3( Nd(adx.x), Nd(adx.y), Nd(adx.z) );
     wg.x = Nx.x * N.y * N.z;
     wg.y = N.x  * Nx.y* N.z;
     wg.z = N.x  * N.y * Nx.z;
@@ -102,23 +100,23 @@ __device__ void weightGradient( const glm::vec3 &dx, glm::vec3 &wg )
 /*
  * returns weight and gradient of weight, avoiding duplicate computations if applicable
  */
-__device__ void weightAndGradient( const glm::vec3 &xp, const glm::vec3 &dx, float h, float &w, glm::vec3 &wg )
+__device__ void weightAndGradient( const glm::vec3 &sdx, const glm::vec3 &dx, float h, float &w, glm::vec3 &wg )
 {
     const glm::vec3 dx_h = dx / h;
     const glm::vec3 N = glm::vec3( N(dx_h.x), N(dx_h.y), N(dx_h.z) );
     w = N.x * N.y * N.z;
-    const glm::vec3 Nx = glm::sign(xp) * glm::vec3( Nd(dx_h.x), Nd(dx_h.y), Nd(dx_h.z) );
+    const glm::vec3 Nx = sdx * glm::vec3( Nd(dx_h.x), Nd(dx_h.y), Nd(dx_h.z) );
     wg.x = Nx.x * N.y * N.z;
     wg.y = N.x  * Nx.y* N.z;
     wg.z = N.x  * N.y * Nx.z;
 }
 
 // Same as above, but dx is already normalized with h
-__device__ void weightAndGradient( const glm::vec3 &xp, const glm::vec3 &dx, float &w, glm::vec3 &wg )
+__device__ void weightAndGradient( const glm::vec3 &sdx, const glm::vec3 &dx, float &w, glm::vec3 &wg )
 {
     const glm::vec3 N = glm::vec3( N(dx.x), N(dx.y), N(dx.z) );
     w = N.x * N.y * N.z;
-    const glm::vec3 Nx = glm::sign(xp) * glm::vec3( Nd(dx.x), Nd(dx.y), Nd(dx.z) );
+    const glm::vec3 Nx = sdx * glm::vec3( Nd(dx.x), Nd(dx.y), Nd(dx.z) );
     wg.x = Nx.x * N.y * N.z;
     wg.y = N.x  * Nx.y* N.z;
     wg.z = N.x  * N.y * Nx.z;
@@ -127,11 +125,11 @@ __device__ void weightAndGradient( const glm::vec3 &xp, const glm::vec3 &dx, flo
 // Same as above, but dx is not already absolute-valued
 __device__ void weightAndGradient( const glm::vec3 &dx, float &w, glm::vec3 &wg )
 {
-    const glm::vec3 s = glm::sign( dx );
+    const glm::vec3 sdx = glm::sign( dx );
     const glm::vec3 adx = glm::abs( dx );
     const glm::vec3 N = glm::vec3( N(adx.x), N(adx.y), N(adx.z) );
     w = N.x * N.y * N.z;
-    const glm::vec3 Nx = s * glm::vec3( Nd(adx.x), Nd(adx.y), Nd(adx.z) );
+    const glm::vec3 Nx = sdx * glm::vec3( Nd(adx.x), Nd(adx.y), Nd(adx.z) );
     wg.x = Nx.x * N.y * N.z;
     wg.y = N.x  * Nx.y* N.z;
     wg.z = N.x  * N.y * Nx.z;
