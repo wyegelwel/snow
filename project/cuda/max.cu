@@ -30,12 +30,14 @@
 #define CLAMP( X, A, B ) ( (X < A) ? A : ((X > B) ? B : X) )
 
 // Computes M += v * w^T
-__device__ inline void addOuterProduct( const glm::vec3 &v, const glm::vec3 &w, glm::mat3 &M )
+ __device__ inline void addOuterProduct( const glm::vec3 &v, const glm::vec3 &w, glm::mat3 &M )
 {
     M[0][0] += v.x*w.x;    M[1][0] += v.x*w.y;    M[2][0] += v.x*w.z;
     M[0][1] += v.y*w.x;    M[1][1] += v.y*w.y;    M[2][1] += v.y*w.z;
     M[0][2] += v.z*w.x;    M[1][2] += v.z*w.y;    M[2][2] += v.z*w.z;
 }
+
+__host__ __device__ void print( const glm::vec3 &v );
 
 // Use weighting functions to compute particle velocity gradient and update particle velocity
 __device__ void processGridVelocities( Particle &particle, const Grid &grid, const ParticleGrid::Node *nodes, glm::mat3 &velocityGradient, float alpha )
@@ -45,8 +47,7 @@ __device__ void processGridVelocities( Particle &particle, const Grid &grid, con
     const float h = grid.h;
 
     // Compute neighborhood of particle in grid
-    glm::vec3 gridPos = (pos - grid.pos),
-              gridIndex = gridPos / h,
+    glm::vec3 gridIndex = (pos - grid.pos) / h,
               gridMax = glm::floor( gridIndex + glm::vec3(2,2,2) ),
               gridMin = glm::ceil( gridIndex - glm::vec3(2,2,2) );
     glm::ivec3 maxIndex = glm::clamp( VEC2IVEC(gridMax), glm::ivec3(0,0,0), grid.dim ),
@@ -73,8 +74,7 @@ __device__ void processGridVelocities( Particle &particle, const Grid &grid, con
                 d.z = k - gridIndex.z;
                 d.z *= ( s.z = ( d.z < 0 ) ? -1.f : 1.f );
                 weightAndGradient( s, d, w, wg );
-                int offset = rowOffset + k;
-                const ParticleGrid::Node &node = nodes[offset];
+                const ParticleGrid::Node &node = nodes[rowOffset+k];
                 // Particle velocities
                 v_PIC += node.velocity * w;
                 dv_FLIP += node.velocityChange * w;
@@ -180,7 +180,7 @@ __host__ __device__ bool equals( const glm::mat3 &A, const glm::mat3 &B )
 __global__ void outerProductTestKernel()
 {
     {
-        printf( "\nOuter Product Test 1: " );
+        printf( "Outer Product Test 1: " );
 
         glm::vec3 v( 1, 2, 3 ), w( 4, 5, 6 );
         glm::mat3 M( 0.f );
@@ -197,7 +197,7 @@ __global__ void outerProductTestKernel()
     }
 
     {
-        printf( "\nOuter Product Test 2: " );
+        printf( "Outer Product Test 2: " );
 
         glm::vec3 v( 3, 2, 1 ), w( 10, 9, 10 );
         glm::mat3 M( 0.f );
@@ -214,7 +214,7 @@ __global__ void outerProductTestKernel()
     }
 
     {
-        printf( "\nOuter Product Test 3: " );
+        printf( "Outer Product Test 3: " );
 
         glm::vec3 v( 10, 5, 1 ), w( 8, 2, 9 );
         glm::mat3 M( 0.f );
@@ -232,38 +232,38 @@ __global__ void outerProductTestKernel()
 
 }
 
-__global__ void velocityTest( Particle *particles, const Grid grid, ParticleGrid::Node *nodes, float alpha )
+__global__ void velocityTest( Particle *particles, glm::mat3 *gradients, const Grid grid, ParticleGrid::Node *nodes, float alpha )
 {
     int tid = threadIdx.x + blockIdx.x * blockDim.x;
     Particle &particle = particles[tid];
-    glm::mat3 velocityGradient;
+    glm::mat3 &velocityGradient = gradients[tid];
+    velocityGradient = glm::mat3(0.f);
     processGridVelocities( particle, grid, nodes, velocityGradient, alpha );
 }
 
 #include "glm/gtc/random.hpp"
+#include "glm/gtc/matrix_access.hpp"
 #include "common/common.h"
 #include "common/math.h"
 
 __host__ void grid2ParticlesTests()
 {
 
-//    printf( "\nSANITY CHECK: TRANSLATION MATRIX\n" );
-//    glm::mat4 test = glm::translate( glm::mat4(1.f), glm::vec3(1, 2, 3) );
-//    print( test );
-
     outerProductTestKernel<<<1,1>>>();
     cudaDeviceSynchronize();
 
-    printf( "\nVelocity Processing Test:\n" );
+    printf( "Velocity Processing Test:\n" );
 
-    const int dim = 64;
+    const int dim = 8;
     ParticleGrid grid;
     grid.dim = glm::ivec3( dim, dim, dim );
     grid.h = 1.f/dim;
     grid.pos = glm::vec3(0,0,0);
 
     int nParticles = dim*dim*dim;
-    printf( "    Generating %d particles (%.2f MB)...\n", nParticles, nParticles*sizeof(Particle)/1e6 );
+    printf( "    Generating %d particles (%.2f MB)...\n",
+            nParticles, nParticles*sizeof(Particle)/1e6 );
+    fflush(stdout);
     Particle *particles = new Particle[nParticles];
     for ( int i = 0; i < dim; ++i ) {
         for ( int j = 0; j < dim; ++j ) {
@@ -278,7 +278,9 @@ __host__ void grid2ParticlesTests()
         }
     }
 
-    printf( "    Generating %d grid nodes (%.2f MB)...\n", (dim+1)*(dim+1)*(dim+1), (dim+1)*(dim+1)*(dim+1)*sizeof(ParticleGrid::Node)/1e6 );
+    printf( "    Generating %d grid nodes (%.2f MB)...\n",
+            (dim+1)*(dim+1)*(dim+1), (dim+1)*(dim+1)*(dim+1)*sizeof(ParticleGrid::Node)/1e6 );
+    fflush(stdout);
     ParticleGrid::Node *nodes = grid.createNodes();
     for ( int i = 0; i <= dim; ++i ) {
         for ( int j = 0; j <= dim; ++j ) {
@@ -291,28 +293,106 @@ __host__ void grid2ParticlesTests()
         }
     }
 
-    printf( "    Allocating kernel resources...\n" );
+    printf( "    Allocating kernel resources...\n" ); fflush(stdout);
     Particle *devParticles;
     ParticleGrid::Node *devNodes;
-    checkCudaErrors( cudaMalloc( &devParticles, nParticles*sizeof(Particle) ) );
-    checkCudaErrors( cudaMemcpy( devParticles, particles, nParticles*sizeof(Particle), cudaMemcpyHostToDevice ) );
-    checkCudaErrors( cudaMalloc( &devNodes, (dim+1)*(dim+1)*(dim+1)*sizeof(ParticleGrid::Node) ) );
-    checkCudaErrors( cudaMemcpy( devNodes, nodes, (dim+1)*(dim+1)*(dim+1)*sizeof(ParticleGrid::Node), cudaMemcpyHostToDevice ) );
+    glm::mat3 *devGradients;
+    cudaError_t error;
+    error = cudaMalloc( &devParticles, nParticles*sizeof(Particle) );
+    error = cudaMemcpy( devParticles, particles, nParticles*sizeof(Particle), cudaMemcpyHostToDevice );
+    error = cudaMalloc( &devNodes, (dim+1)*(dim+1)*(dim+1)*sizeof(ParticleGrid::Node) );
+    error = cudaMemcpy( devNodes, nodes, (dim+1)*(dim+1)*(dim+1)*sizeof(ParticleGrid::Node), cudaMemcpyHostToDevice );
+    error = cudaMalloc( &devGradients, nParticles*sizeof(glm::mat3) );
 
-    for ( int i = 0; i < 10; ++i ) {
-        TIME( "    Launching kernel... ", "Kernel finished.\n",
-              velocityTest<<< nParticles/512, 512 >>>( devParticles, grid, devNodes, 0.95f );
-              checkCudaErrors( cudaDeviceSynchronize() );
-        );
+    if ( error != cudaSuccess ) {
+        printf( "    FAILED: %s\n", _cudaGetErrorEnum(error) );
+    } else {
+        static const int blockSize = 128;
+        for ( int i = 0; i < 5; ++i ) {
+            TIME( "    Launching kernel... ", "Kernel finished.\n",
+                  velocityTest<<< (nParticles+blockSize-1)/blockSize, blockSize >>>( devParticles, devGradients, grid, devNodes, 0.95f );
+                  error = cudaDeviceSynchronize();
+            );
+            if ( error != cudaSuccess ) {
+                printf( "    FAILED: %s\n", _cudaGetErrorEnum(error) );
+                break;
+            }
+            fflush(stdout);
+        }
     }
 
-    printf( "    Freeing kernel resources...\n" );
-    checkCudaErrors( cudaFree( devParticles ) );
-    checkCudaErrors( cudaFree( devNodes ) );
+    error = cudaMemcpy( particles, devParticles, nParticles*sizeof(Particle), cudaMemcpyDeviceToHost );
+
+    // Velocity checks
+    float expected[] = { -0.127181205566406f, -0.127181205566406f, -0.127845724062500f, -0.128524381250000f };
+    if ( NEQF(particles[64].velocity.y, expected[0] ) ) {
+        printf( "    FAILED: expected particles[64].velocity.y = %.6g, got %.6g\n", expected[0], particles[64].velocity.y );
+    } else if ( NEQF(particles[120].velocity.y, expected[1] ) ) {
+        printf( "    FAILED: expected particles[120].velocity.y = %.6g, got %.6g\n", expected[1], particles[120].velocity.y );
+    } else if ( NEQF(particles[167].velocity.y, expected[2] ) ) {
+        printf( "    FAILED: expected particles[167].velocity.y = %.6g, got %.6g\n", expected[2], particles[167].velocity.y );
+    } else if ( NEQF(particles[394].velocity.y, expected[3] ) ) {
+        printf( "    FAILED: expected particles[394].velocity.y = %.6g, got %.6g\n", expected[3], particles[394].velocity.y );
+    } else {
+        printf( "    ALL VELOCITY CHECKS PASSED.\n" );
+    }
+
+    glm::mat3 *gradients = new glm::mat3[nParticles];
+    error = cudaMemcpy( gradients, devGradients, nParticles*sizeof(glm::mat3), cudaMemcpyDeviceToHost );
+
+    bool fail = false;
+    for ( int i = 0; i < nParticles; ++i ) {
+        glm::vec3 row = glm::row( gradients[i], 1 );
+        if ( i >= 64 && i < 448 ) {
+            if ( NEQF(row.x, 0.f) ) {
+                printf( "    FAILED: expected particles[%d] x-velocity gradient to be ~0, got %f\n", i, row.x );
+                fail = true;
+                break;
+            }
+        }
+        if ( i >= 65 && i < 386 && (i-65) % 64 == 0 ) {
+            if ( NEQF(row.y, 0.015625f) ) {
+                printf( "    FAILED: expected particles[%d] y-velocity gradient to be 0.015625, got %f\n", i, row.y );
+                fail = true;
+                break;
+            }
+        }
+        if ( i >= 121 && i < 442 && (i-121) % 64 == 0 ) {
+            if ( NEQF(row.y, -0.015625f ) ) {
+                printf( "    FAILED: expected particles[%d] y-velocity gradient to be -0.015299, got %f\n", i, row.y );
+                fail = true;
+                break;
+            }
+        }
+        if ( i >= 30 && (i-30) % 64 == 0 ) {
+            if ( NEQF(row.y, 0.f ) ) {
+                printf( "    FAILED: expected particles[%d] y-velocity gradient to be 0, got %f\n", i, row.y );
+                fail = true;
+                break;
+            }
+        }
+        if ( i == nParticles-1 ) {
+            glm::mat3 expected = glm::mat3(0.f,-0.014980740017361f,0.f,0.f,-0.014980740017361f,0.f,0.f,-0.014980740017361f,0.f);
+            if ( !equals(gradients[i], expected) ) {
+                printf( "    FAILED: expected:\n" );
+                print(expected);
+                printf( "            got: \n" );
+                print( gradients[i] );
+            }
+        }
+    }
+
+    if ( !fail ) printf( "    ALL VELOCITY GRADIENT CHECKS PASSED.\n" );
+
+    printf( "    Freeing kernel resources...\n" ); fflush(stdout);
+    cudaFree( devParticles );
+    cudaFree( devNodes );
+    cudaFree( devGradients );
     delete [] particles;
     delete [] nodes;
+    delete [] gradients;
 
-    printf( "\nDone.\n" );
+    printf( "Done.\n" );
 }
 
 #endif // MAX_CU
