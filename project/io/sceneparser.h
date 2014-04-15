@@ -21,6 +21,8 @@
  *
  */
 
+#include <iostream>
+
 class SceneNode;
 class WorldParams;
 
@@ -33,18 +35,18 @@ public:
     /**
      * returns a sceneNode corresponding to the parsed XML data
      * The simulation parameters will also read the world simulation params
-     * (which contains details like lambda, mu, dt, etc?)
+     * (which contains details like lambda, mu, dt, etc)
      * Usage:
      *
-     * SceneParser parser();
+     *
      * SceneNode * root;
      * WorldParams params;
-     * parser.read("snowballdrop.xml", root, params);
+     * SceneParser::read("snowballdrop.xml", root, params);
      *
      * // now add root, params to your scene.
      *
      */
-    void read(std::string fname, SceneNode * &node, WorldParams &params);
+    static void read(std::string fname, SceneNode * &node, WorldParams &params);
 
     /**
      * writes the data to XML format. Use case: we set up a simulation in the GUI
@@ -53,8 +55,10 @@ public:
      *
      * That is up to the mitsubaexporter class and is done during rendering.
      *
+     * SceneParser::write("myscene.xml", SceneNode * node);
+     *
      */
-    void write();
+    static void write();
 
 };
 

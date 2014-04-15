@@ -13,6 +13,8 @@
 
 class SceneNode;
 
+
+
 class Scene
 {
 
@@ -24,6 +26,7 @@ public:
     virtual void render();
 
     SceneNode* root() { return m_root; }
+
 
 private:
 

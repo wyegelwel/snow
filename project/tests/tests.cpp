@@ -60,8 +60,8 @@ void Tests::runTimTests()  {
 
 void Tests::runEricTests() {
     printf("running Eric Tests...\n");
-    svdTestsHost();
-    weightingTestsHost();
+    //svdTestsHost();
+    //weightingTestsHost();
     printf("done running Eric Tests\n");
 }
 

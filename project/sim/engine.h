@@ -22,15 +22,24 @@
  */
 
 
+#include <iostream>
+
 class Engine
 {
 public:
     Engine();
 
+
+    /**
+     * loads simulation from XML file
+     */
+    void load(std::string fname);
+
     /**
      * Runs the simulation
      */
     bool start();
+
 };
 
 #endif // ENGINE_H
