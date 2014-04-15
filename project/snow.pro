@@ -4,7 +4,7 @@
 #
 #-------------------------------------------------
 
-QT       += core gui opengl
+QT       += core gui opengl xml
 DEFINES += GL_GLEXT_PROTOTYPES
 
 DEFINES += PROJECT_PATH=\\\"$$_PRO_FILE_PWD_\\\"
@@ -22,12 +22,15 @@ SOURCES += main.cpp\
     ui/userinput.cpp \
     geometry/mesh.cpp \
     io/objparser.cpp \
+    io/mitsubaexporter.cpp \
     scene/scene.cpp \
     scene/scenenode.cpp \
     tests/tests.cpp \
     ui/infopanel.cpp \
     sim/collider.cpp \
     geometry/bbox.cpp \
+    sim/engine.cpp \
+    io/sceneparser.cpp
 
 HEADERS  += ui/mainwindow.h \
     viewport/camera.h \
@@ -39,6 +42,7 @@ HEADERS  += ui/mainwindow.h \
     cuda/functions.h \
     geometry/mesh.h \
     io/objparser.h \
+    io/mitsubaexporter.h \
     scene/scene.h \
     scene/scenenode.h \
     common/renderable.h \
@@ -49,7 +53,9 @@ HEADERS  += ui/mainwindow.h \
     geometry/bbox.h \
     common/math.h \
     geometry/grid.h \
-    sim/particlegrid.h
+    sim/particlegrid.h \
+    sim/engine.h \
+    io/sceneparser.h
 
 FORMS    += ui/mainwindow.ui
 

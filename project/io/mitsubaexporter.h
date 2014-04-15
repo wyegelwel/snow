@@ -22,6 +22,15 @@
 //    // TODO - populate with general render settings
 //};
 
+/**
+ * @brief The MitsubaExporter class exports the scene
+ * to a Mitsuba-readable XML format.
+ * The snow is rendered to a grid-based volume data source (gridvolume)
+ * our colliders are basic geometric primitives
+ * and mitsuba can render them once we write them out.
+ */
+
+
 class MitsubaExporter
 {
 public:
