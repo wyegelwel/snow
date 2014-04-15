@@ -27,6 +27,12 @@
 #define CSTAR 0.923879532 // cos(pi/8)
 #define SSTAR 0.3826834323 // sin(p/8)
 
+extern "C"
+{
+    void svdTestsHost();
+}
+
+
 // Optimize C = glm::transpose(A) * B
 __host__ __device__ inline void multTransposeL( const glm::mat3 &A, const glm::mat3 &B, glm::mat3 &C )
 {
@@ -311,5 +317,57 @@ __host__ __device__ void computePD( const glm::mat3 &A, glm::mat3 &U, glm::mat3 
     U = W * Vt;
     P = V * S * Vt;
  }
+
+
+
+ /**
+  * TESTING ROUTINES
+  */
+
+
+ __global__ void svdTest(const glm::mat3 A)
+ {
+     printf("original matrix\n");
+     printMat3(A);
+     glm::mat3 U1;
+     glm::mat3 S;
+     glm::mat3 V;
+     glm::mat3 U2;
+     glm::mat3 P;
+     computeSVDandPD(A,U1,S,V,U2,P);
+
+     glm::mat3 A_svd = U1*S*glm::transpose(V);
+     glm::mat3 diff = glm::transpose(A_svd-A) * (A_svd-A);
+     float norm = sqrtf( diff[0][0] + diff[1][1] + diff[2][2] );
+
+     printf("SVD: U\n");
+     printMat3(U1);
+     printf("SVD: S\n");
+     printMat3(S);
+     printf("SVD: V\n");
+     printMat3(V);
+     printf("SVD: U*S*V'\n");
+     printMat3(A_svd);
+     printf("SVD: ||U*S*V' - A|| = %g\n\n", norm);
+     printf("Polar: U\n");
+     printMat3(U2);
+     printf("Polar: P\n");
+     printMat3(P);
+ }
+
+void svdTestsHost()
+{
+     glm::mat3 A;
+     // TEST 1
+     A = glm::mat3(-0.558253  ,  -0.0461681   ,  -0.505735,
+                   -0.411397 ,    0.0365854   ,   0.199707,
+                   0.285389  ,   -0.313789   ,   0.200189);
+     A = glm::transpose(A);
+
+     svdTest<<<1,1>>>(A);
+     cudaDeviceSynchronize();
+}
+
+
 
 #endif // DECOMPOSITION_H

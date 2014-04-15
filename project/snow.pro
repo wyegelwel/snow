@@ -4,54 +4,76 @@
 #
 #-------------------------------------------------
 
-QT       += core gui opengl
-DEFINES += GL_GLEXT_PROTOTYPES
-
+TEMPLATE = app
 DEFINES += PROJECT_PATH=\\\"$$_PRO_FILE_PWD_\\\"
 
-greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
-
-TARGET = snow
-TEMPLATE = app
-
-SOURCES += main.cpp\
-    ui/mainwindow.cpp \
-    viewport/viewport.cpp \
-    ui/viewpanel.cpp \
+SOURCES += \
     sim/particle.cpp \
-    ui/userinput.cpp \
     geometry/mesh.cpp \
     io/objparser.cpp \
+    io/mitsubaexporter.cpp \
     scene/scene.cpp \
     scene/scenenode.cpp \
     tests/tests.cpp \
-    ui/infopanel.cpp \
     sim/collider.cpp \
     geometry/bbox.cpp \
+    sim/engine.cpp \
+    io/sceneparser.cpp \
 
-HEADERS  += ui/mainwindow.h \
-    viewport/camera.h \
-    viewport/viewport.h \
+HEADERS  += \
     common/common.h \
-    ui/viewpanel.h \
     sim/particle.h \
-    ui/userinput.h \
     cuda/functions.h \
     geometry/mesh.h \
     io/objparser.h \
+    io/mitsubaexporter.h \
     scene/scene.h \
     scene/scenenode.h \
     common/renderable.h \
     common/types.h \
     tests/tests.h \
-    ui/infopanel.h \
     sim/collider.h \
     geometry/bbox.h \
     common/math.h \
     geometry/grid.h \
-    sim/particlegrid.h
+    sim/particlegrid.h \
+    sim/engine.h \
+    io/sceneparser.h \
 
-FORMS    += ui/mainwindow.ui
+# CONFIG FOR GUI TARGET
+configGUI {
+
+    DEFINES += GL_GLEXT_PROTOTYPES
+    TARGET = snow
+    greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
+    QT       += core gui opengl xml
+    FORMS    += ui/mainwindow.ui
+
+    SOURCES += \
+        main.cpp \
+        ui/mainwindow.cpp \
+        ui/viewpanel.cpp \
+        ui/userinput.cpp \
+        ui/infopanel.cpp \
+        viewport/viewport.cpp \
+
+    HEADERS += \
+        ui/mainwindow.h \
+        ui/viewpanel.h \
+        ui/infopanel.h \
+        ui/userinput.h \
+        viewport/camera.h \
+        viewport/viewport.h \
+}
+
+# CONFIG FOR CONSOLE TARGET
+configConsole {
+    TARGET = snow_console
+    QT += core xml
+    SOURCES += \
+        main_console.cpp
+}
+
 
 # GLM
 DEFINES += GLM_FORCE_RADIANS
@@ -67,13 +89,6 @@ CUDA_SOURCES += cuda/snow.cu \
     cuda/max.cu \
     cuda/tim.cu \
 #    cuda/eric.cu \
-
-# uncomment below to also import include CUDA SDK
-#CUDA_SDK = /contrib/projects/cuda-sdk/C
-#INCLUDEPATH += $$CUDA_SDK/common/inc/
-#INCLUDEPATH += $$CUDA_SDK/../shared/inc/
-#QMAKE_LIBDIR += $$CUDA_SDK/lib
-#QMAKE_LIBDIR += $$CUDA_SDK/common/lib
 
 CUDA_DIR = /contrib/projects/cuda5-toolkit
 INCLUDEPATH += $$CUDA_DIR/include

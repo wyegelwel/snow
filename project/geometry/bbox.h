@@ -20,6 +20,9 @@
 
 #include "geometry/grid.h"
 
+/**
+ * @brief Axis-aligned bounding box
+ */
 class BBox : public Renderable
 {
 
