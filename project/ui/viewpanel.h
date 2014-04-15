@@ -30,6 +30,11 @@ public:
     ViewPanel( QWidget *parent );
     virtual ~ViewPanel();
 
+    void pauseDrawing();
+    void resumeDrawing();
+    void saveToFile(QString fname);
+    void loadFromFile(QString fname);
+
 public slots:
 
     void resetViewport();

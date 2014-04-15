@@ -19,6 +19,8 @@ SOURCES += \
     geometry/bbox.cpp \
     sim/engine.cpp \
     io/sceneparser.cpp \
+    #sim/AppSettings.cpp \
+
 
 HEADERS  += \
     common/common.h \
@@ -39,6 +41,7 @@ HEADERS  += \
     sim/particlegrid.h \
     sim/engine.h \
     io/sceneparser.h \
+    #sim/AppSettings.h
 
 # CONFIG FOR GUI TARGET
 configGUI {
@@ -67,12 +70,16 @@ configGUI {
 }
 
 # CONFIG FOR CONSOLE TARGET
-configConsole {
-    TARGET = snow_console
-    QT += core xml
-    SOURCES += \
-        main_console.cpp
-}
+# disabled for the time being.
+# will be less cumbersome to just hit the render
+# button from GUI since we are using VBOs to store vertex
+# data.
+#configConsole {
+#    TARGET = snow_console
+#    QT += core xml
+#    SOURCES += \
+#        main_console.cpp
+#}
 
 
 # GLM
