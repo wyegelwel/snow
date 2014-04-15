@@ -29,7 +29,28 @@
 #define CSTAR 0.923879532 // cos(pi/8)
 #define SSTAR 0.3826834323 // sin(p/8)
 
-__device__ void jacobiConjugation( int p, int q, mat3 &S, glm::quat &qV )
+extern "C"
+{
+    void svdTestsHost();
+}
+
+// Optimize C = glm::transpose(A) * B
+__host__ __device__ inline void multTransposeL( const glm::mat3 &A, const glm::mat3 &B, glm::mat3 &C )
+{
+    glm::mat3 _C;
+    _C[0][0] = A[0][0]*B[0][0] + A[0][1]*B[0][1] + A[0][2]*B[0][2];
+    _C[1][0] = A[0][0]*B[1][0] + A[0][1]*B[1][1] + A[0][2]*B[1][2];
+    _C[2][0] = A[0][0]*B[2][0] + A[0][1]*B[2][1] + A[0][2]*B[2][2];
+    _C[0][1] = A[1][0]*B[0][0] + A[1][1]*B[0][1] + A[1][2]*B[0][2];
+    _C[1][1] = A[1][0]*B[1][0] + A[1][1]*B[1][1] + A[1][2]*B[1][2];
+    _C[2][1] = A[1][0]*B[2][0] + A[1][1]*B[2][1] + A[1][2]*B[2][2];
+    _C[0][2] = A[2][0]*B[0][0] + A[2][1]*B[0][1] + A[2][2]*B[0][2];
+    _C[1][2] = A[2][0]*B[1][0] + A[2][1]*B[1][1] + A[2][2]*B[1][2];
+    _C[2][2] = A[2][0]*B[2][0] + A[2][1]*B[2][1] + A[2][2]*B[2][2];
+    C = _C;
+}
+
+__host__ __device__ void jacobiConjugation( int p, int q, glm::mat3 &S, glm::quat &qV )
 {
     // eliminate off-diagonal entries Spq, Sqp
     float ch = 2.f * (S[0]-S[4]), ch2 = ch*ch;
@@ -79,7 +100,7 @@ __device__ void jacobiConjugation( int p, int q, mat3 &S, glm::quat &qV )
  * matrix S, diagonalize it also returns the cumulative
  * rotation as a quaternion.
  */
-__device__ void jacobiEigenanalysis( mat3 &S, glm::quat &qV )
+__host__ __device__ void jacobiEigenanalysis( mat3 &S, glm::quat &qV )
 {
     qV = glm::quat(1,0,0,0);
     for ( int sweep = 0; sweep < 4; ++sweep ) {
@@ -94,7 +115,7 @@ __device__ void jacobiEigenanalysis( mat3 &S, glm::quat &qV )
 }
 
 // glm::toMat3 doesn't work in CUDA
-__device__ void toMat3( const glm::quat &q, mat3 &M )
+__host__ __device__ void toMat3( const glm::quat &q, mat3 &M )
 {
     float qxx = q.x*q.x;
     float qyy = q.y*q.y;
@@ -130,7 +151,7 @@ __device__ void toMat3( const glm::quat &q, mat3 &M )
     Y = COND ? _X_ : Y;                 \
 }
 
-__device__ void sortSingularValues( mat3 &B, mat3 &V )
+__host__ __device__ void sortSingularValues( mat3 &B, mat3 &V )
 {
     // used in step 2
     vec3 b1 = B.column(0); vec3 v1 = V.column(0);
@@ -174,7 +195,7 @@ __device__ void sortSingularValues( mat3 &B, mat3 &V )
 //    return x * accurateRSQRT(x);
 //}
 
-__device__ void QRGivensQuaternion( float a1, float a2, float &ch, float &sh )
+__host__ __device__ void QRGivensQuaternion( float a1, float a2, float &ch, float &sh )
 {
     /// TODO - if SVD isnt accurate enough, work on fixing accurateSQRT function here
 
@@ -198,7 +219,7 @@ __device__ void QRGivensQuaternion( float a1, float a2, float &ch, float &sh )
     sh *= w;
 }
 
-__device__ void QRDecomposition( const mat3 &B, mat3 &Q, mat3 &R )
+__host__ __device__ void QRDecomposition( const mat3 &B, mat3 &Q, mat3 &R )
 {
     R = B;
 
@@ -245,7 +266,7 @@ __device__ void QRDecomposition( const mat3 &B, mat3 &Q, mat3 &R )
  * matrices with minimal branching and elementary floating point operations
  * Computes SVD of 3x3 matrix A = W * S * V'
  */
-__device__ void computeSVD( const mat3 &A, mat3 &W, mat3 &S, mat3 &V )
+__host__ __device__ void computeSVD( const mat3 &A, mat3 &W, mat3 &S, mat3 &V )
 {
     // normal equations matrix
     mat3 ATA = mat3::multiplyTransposeL( A, A );
@@ -271,7 +292,7 @@ __device__ void computeSVD( const mat3 &A, mat3 &W, mat3 &S, mat3 &V )
  * S is symmetric positive semidefinite
  * Can get Polar Decomposition from SVD, see first section of http://en.wikipedia.org/wiki/Polar_decomposition
  */
-__device__ void computePD( const mat3 &A, mat3 &U, mat3 &P )
+__host__ __device__ void computePD( const mat3 &A, mat3 &U, mat3 &P )
 {
     // U is unitary matrix (i.e. orthogonal/orthonormal)
     // P is positive semidefinite Hermitian matrix
@@ -289,12 +310,76 @@ __device__ void computePD( const mat3 &A, mat3 &U, mat3 &P )
  * SVD : A = W * S * V'
  * PD : A = U * P
  */
- __device__ void computeSVDandPD( const mat3 &A, mat3 &W, mat3 &S, mat3 &V, mat3 &U, mat3 &P )
- {
+__host__ __device__ void computeSVDandPD( const mat3 &A, mat3 &W, mat3 &S, mat3 &V, mat3 &U, mat3 &P )
+{
     computeSVD( A, W, S, V );
     mat3 Vt = mat3::transpose(V);
     U = W * Vt;
     P = V * S * Vt;
- }
+}
+
+
+
+/**
+  * TESTING ROUTINES
+  */
+
+__device__ void printMat3(glm::mat3 mat) {
+    // prints by rows
+    for (int j=0; j<3; ++j) // g3d stores column-major
+    {
+        for (int i=0; i<3; ++i)
+        {
+            printf("%f   ", mat[i][j]);
+        }
+        printf("\n");
+    }
+    printf("\n");
+}
+
+__global__ void svdTest(const glm::mat3 A)
+{
+    printf("original matrix\n");
+    printMat3(A);
+    glm::mat3 U1;
+    glm::mat3 S;
+    glm::mat3 V;
+    glm::mat3 U2;
+    glm::mat3 P;
+    computeSVDandPD(A,U1,S,V,U2,P);
+
+    glm::mat3 A_svd = U1*S*glm::transpose(V);
+    glm::mat3 diff = glm::transpose(A_svd-A) * (A_svd-A);
+    float norm = sqrtf( diff[0][0] + diff[1][1] + diff[2][2] );
+
+    printf("SVD: U\n");
+    printMat3(U1);
+    printf("SVD: S\n");
+    printMat3(S);
+    printf("SVD: V\n");
+    printMat3(V);
+    printf("SVD: U*S*V'\n");
+    printMat3(A_svd);
+    printf("SVD: ||U*S*V' - A|| = %g\n\n", norm);
+    printf("Polar: U\n");
+    printMat3(U2);
+    printf("Polar: P\n");
+    printMat3(P);
+}
+
+void svdTestsHost()
+{
+    glm::mat3 A;
+    // TEST 1
+    A = glm::mat3(-0.558253  ,  -0.0461681   ,  -0.505735,
+                  -0.411397 ,    0.0365854   ,   0.199707,
+                  0.285389  ,   -0.313789   ,   0.200189);
+    A = glm::transpose(A);
+
+    svdTest<<<1,1>>>(A);
+    cudaDeviceSynchronize();
+}
+
+
 
 #endif // DECOMPOSITION_H

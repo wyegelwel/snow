@@ -27,7 +27,7 @@ struct ParticleGrid : public Grid
         Node() : mass(0), velocity(0,0,0), force(0,0,0) {}
     };
 
-    inline Node* createNodes() const { return new Node[(dim.x+1)*(dim.y+1)*(dim.z+1)]; }
+    inline Node* createNodes() const { return new Node[nodeCount()]; }
 };
 
 #endif // PARTICLEGRID_H

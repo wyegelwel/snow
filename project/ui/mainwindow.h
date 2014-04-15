@@ -20,7 +20,11 @@ class MainWindow;
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
-    
+
+public slots:
+    void saveToFile();
+    void loadFromFile();
+
 public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();

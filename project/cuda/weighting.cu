@@ -38,13 +38,13 @@
  * in the weightGradient function.
  * by paper notation, w_ip = N_{i}^{h}(p) = N((xp-ih)/h)N((yp-jh)/h)N((zp-kh)/h)
  */
-__device__ __forceinline__ void weight( glm::vec3 &dx, float h, float &w )
+__host__ __device__ __forceinline__ void weight( glm::vec3 &dx, float h, float &w )
 {
     w = N( dx.x/h ) * N( dx.y/h ) * N( dx.z/h );
 }
 
 // Same as above, but dx is already normalized with h
-__device__ __forceinline__ void weight( glm::vec3 &dx, float &w )
+__host__ __device__ __forceinline__ void weight( glm::vec3 &dx, float &w )
 {
     w = N( dx.x ) * N( dx.y ) * N( dx.z );
 }
@@ -64,7 +64,7 @@ __device__ __forceinline__ void weight( glm::vec3 &dx, float &w )
  * xp = sign( distance from grid node to particle )
  * dx = abs( distance from grid node to particle )
  */
-__device__ __forceinline__ void weightGradient( const glm::vec3 &sdx, const glm::vec3 &dx, float h, glm::vec3 &wg )
+__host__ __device__ __forceinline__ void weightGradient( const glm::vec3 &sdx, const glm::vec3 &dx, float h, glm::vec3 &wg )
 {
     const glm::vec3 dx_h = dx / h;
     const glm::vec3 N = glm::vec3( N(dx_h.x), N(dx_h.y), N(dx_h.z) );
@@ -75,7 +75,7 @@ __device__ __forceinline__ void weightGradient( const glm::vec3 &sdx, const glm:
 }
 
 // Same as above, but dx is already normalized with h
-__device__ __forceinline__ void weightGradient( const glm::vec3 &sdx, const glm::vec3 &dx, glm::vec3 &wg )
+__host__ __device__ __forceinline__ void weightGradient( const glm::vec3 &sdx, const glm::vec3 &dx, glm::vec3 &wg )
 {
     const glm::vec3 N = glm::vec3( N(dx.x), N(dx.y), N(dx.z) );
     const glm::vec3 Nx = sdx * glm::vec3( Nd(dx.x), Nd(dx.y), Nd(dx.z) );
@@ -85,7 +85,7 @@ __device__ __forceinline__ void weightGradient( const glm::vec3 &sdx, const glm:
 }
 
 // Same as above, but dx is not already absolute-valued
-__device__ __forceinline__ void weightGradient( const glm::vec3 &dx, glm::vec3 &wg )
+__host__ __device__ __forceinline__ void weightGradient( const glm::vec3 &dx, glm::vec3 &wg )
 {
     const glm::vec3 sdx = glm::sign( dx );
     const glm::vec3 adx = glm::abs( dx );
@@ -99,7 +99,7 @@ __device__ __forceinline__ void weightGradient( const glm::vec3 &dx, glm::vec3 &
 /*
  * returns weight and gradient of weight, avoiding duplicate computations if applicable
  */
-__device__ __forceinline__ void weightAndGradient( const glm::vec3 &sdx, const glm::vec3 &dx, float h, float &w, glm::vec3 &wg )
+__host__ __device__ __forceinline__ void weightAndGradient( const glm::vec3 &sdx, const glm::vec3 &dx, float h, float &w, glm::vec3 &wg )
 {
     const glm::vec3 dx_h = dx / h;
     const glm::vec3 N = glm::vec3( N(dx_h.x), N(dx_h.y), N(dx_h.z) );
@@ -111,7 +111,7 @@ __device__ __forceinline__ void weightAndGradient( const glm::vec3 &sdx, const g
 }
 
 // Same as above, but dx is already normalized with h
-__device__ __forceinline__ void weightAndGradient( const glm::vec3 &sdx, const glm::vec3 &dx, float &w, glm::vec3 &wg )
+__host__ __device__ __forceinline__ void weightAndGradient( const glm::vec3 &sdx, const glm::vec3 &dx, float &w, glm::vec3 &wg )
 {
     const glm::vec3 N = glm::vec3( N(dx.x), N(dx.y), N(dx.z) );
     w = N.x * N.y * N.z;
@@ -122,7 +122,7 @@ __device__ __forceinline__ void weightAndGradient( const glm::vec3 &sdx, const g
 }
 
 // Same as above, but dx is not already absolute-valued
-__device__ __forceinline__ void weightAndGradient( const glm::vec3 &dx, float &w, glm::vec3 &wg )
+__host__ __device__ __forceinline__ void weightAndGradient( const glm::vec3 &dx, float &w, glm::vec3 &wg )
 {
     const glm::vec3 sdx = glm::sign( dx );
     const glm::vec3 adx = glm::abs( dx );

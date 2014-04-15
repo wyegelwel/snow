@@ -21,6 +21,7 @@ extern "C"
     void svdTestsHost();
     void testColliding();
     void grid2ParticlesTests();
+    void testGridMath();
 }
 
 void Tests::runTests(char *argv[])  {
@@ -42,8 +43,8 @@ void Tests::runTests(char *argv[])  {
     }
     else if (!strcmp(argv[2], "all")){
         runTimTests();
-        runEricTests();
-        runWilTests();
+//        runEricTests();
+        //runWilTests();
         runMaxTests();
     }
     else
@@ -69,6 +70,7 @@ void Tests::runEricTests() {
 void Tests::runWilTests() {
     printf("running Wil Tests...\n");
 //    testColliding();
+//    testGridMath();
     printf("done running Wil Tests\n");
 }
 
