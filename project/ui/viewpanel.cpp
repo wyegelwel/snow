@@ -37,7 +37,6 @@ ViewPanel::ViewPanel( QWidget *parent )
     m_infoPanel->setInfo( "FPS", "XXXXXX" );
 
     m_drawAxis = true;
-
     m_scene = new Scene;
 
 }
@@ -122,6 +121,7 @@ ViewPanel::paintGL()
 
     } m_viewport->pop();
 
+    // we still might want to manipulate scene before starting the simulation
     m_particles->update( t += 1.f/FPS );
 
     float fps = 1000.f / m_timer.restart();
@@ -151,4 +151,17 @@ ViewPanel::mouseReleaseEvent( QMouseEvent *event )
 {
     UserInput::update(event);
     m_viewport->setState( Viewport::IDLE );
+}
+
+
+// UI methods to pause/resume drawing
+// we might want to do this when doing non-viewing stuff
+void ViewPanel::pauseDrawing()
+{
+    m_ticker.stop();
+}
+
+void ViewPanel::resumeDrawing()
+{
+    m_ticker.start();
 }

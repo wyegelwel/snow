@@ -16,30 +16,44 @@
  * Simulates the ParticleSystem without drawing
  */
 
- /* In the future, the ViewPanel class will instantiate an engine to handle the simulation.
- * But for now I want to avoid breaking the GUI so will leave viewpanel.cpp alone until this is ready
- *
- */
+#include <QFile>
 
-
-#include <iostream>
+class Scene;
+class ParticleSystem;
 
 class Engine
 {
 public:
     Engine();
 
-
     /**
      * loads simulation from XML file
+     * calls the SceneParser class to do this
      */
-    void load(std::string fname);
+    void load(QFile file);
 
     /**
      * Runs the simulation
      */
-    bool start();
+    void start();
 
+    /**
+     * calls MitsubaExporter class to serialize volume data
+     * also writes out the collider primitives to Mitsuba-compatible shapes
+     */
+    void exportMitsuba();
+
+    /**
+     * called to advance particles 1 time step.
+     */
+    void update();
+
+    int numParticles();
+
+private:
+    ParticleSystem *m_particles;
+    Scene *m_scene;
+    bool m_paused; // pause particle update
 };
 
 #endif // ENGINE_H

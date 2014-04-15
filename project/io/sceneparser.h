@@ -26,7 +26,6 @@
 class SceneNode;
 class WorldParams;
 
-
 class SceneParser
 {
 public:
