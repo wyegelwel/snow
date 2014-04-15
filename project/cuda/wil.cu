@@ -122,10 +122,14 @@ __device__ void atomicAdd(glm::vec3 *add, glm::vec3 toAdd){
 __global__ void computeCellMassVelocityAndForce(Particle *particleData, Grid *grid, WorldParams *worldParams, ParticleGrid::Node *nodes){
     int particleIdx = blockIdx.x*blockDim.x + threadIdx.x;
     Particle &particle = particleData[particleIdx];
+
     glm::ivec3 gridIJK;
     positionToGridIJK(particle.position, grid, gridIJK); // NOTE: since we are working with nodes, we may need to reconcile grid.dim and size of nodes at some point
+
     glm::mat3 sigma;
     computeSigma(particle, worldParams, sigma);
+
+    // Apply particles contribution of mass, velocity and force to surrounding nodes
     glm::ivec3 min = glm::max(glm::ivec3(0.0f), gridIJK-2);
     glm::ivec3 max = glm::min(grid->dim, gridIJK+2); //+1 because we are working on nodes
     for (int i = min.x; i <= max.x; i++){
@@ -134,9 +138,11 @@ __global__ void computeCellMassVelocityAndForce(Particle *particleData, Grid *gr
                 glm::vec3 nodePosition = glm::vec3(i, j, k)*grid->h + grid->pos;
                 int currIdx = getGridIndex(i, j, k, grid);
                 ParticleGrid::Node &node = nodes[currIdx];
+
                 float w;
                 glm::vec3 wg;
                 weightAndGradient((particle.position-nodePosition)/grid->h, w, wg);
+
                 atomicAdd(&node.mass, particle.mass*w);
                 atomicAdd(&node.velocity, particle.velocity*particle.mass*w);
                 atomicAdd(&node.force, particle.volume*sigma*wg);
