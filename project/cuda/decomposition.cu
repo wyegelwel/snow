@@ -324,6 +324,18 @@ __host__ __device__ void computePD( const glm::mat3 &A, glm::mat3 &U, glm::mat3 
   * TESTING ROUTINES
   */
 
+ __device__ void printMat3(glm::mat3 mat) {
+     // prints by rows
+     for (int j=0; j<3; ++j) // g3d stores column-major
+     {
+         for (int i=0; i<3; ++i)
+         {
+             printf("%f   ", mat[i][j]);
+         }
+         printf("\n");
+     }
+     printf("\n");
+ }
 
  __global__ void svdTest(const glm::mat3 A)
  {
