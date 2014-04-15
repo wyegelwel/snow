@@ -22,47 +22,34 @@
 #include "glm/vec3.hpp"
 #include "glm/gtc/matrix_access.hpp"
 #include "glm/gtc/quaternion.hpp"
+#include "glm/gtc/type_ptr.hpp"
+#include "cuda/matrix.cu"
 
 #define GAMMA 5.828427124 // FOUR_GAMMA_SQUARED = sqrt(8)+3;
 #define CSTAR 0.923879532 // cos(pi/8)
 #define SSTAR 0.3826834323 // sin(p/8)
 
-// Optimize C = glm::transpose(A) * B
-__device__ inline void multTransposeL( const glm::mat3 &A, const glm::mat3 &B, glm::mat3 &C )
-{
-    glm::mat3 _C;
-    _C[0][0] = A[0][0]*B[0][0] + A[0][1]*B[0][1] + A[0][2]*B[0][2];
-    _C[1][0] = A[0][0]*B[1][0] + A[0][1]*B[1][1] + A[0][2]*B[1][2];
-    _C[2][0] = A[0][0]*B[2][0] + A[0][1]*B[2][1] + A[0][2]*B[2][2];
-    _C[0][1] = A[1][0]*B[0][0] + A[1][1]*B[0][1] + A[1][2]*B[0][2];
-    _C[1][1] = A[1][0]*B[1][0] + A[1][1]*B[1][1] + A[1][2]*B[1][2];
-    _C[2][1] = A[1][0]*B[2][0] + A[1][1]*B[2][1] + A[1][2]*B[2][2];
-    _C[0][2] = A[2][0]*B[0][0] + A[2][1]*B[0][1] + A[2][2]*B[0][2];
-    _C[1][2] = A[2][0]*B[1][0] + A[2][1]*B[1][1] + A[2][2]*B[1][2];
-    _C[2][2] = A[2][0]*B[2][0] + A[2][1]*B[2][1] + A[2][2]*B[2][2];
-    C = _C;
-}
-
-__device__ void jacobiConjugation( int p, int q, glm::mat3 &S, glm::quat &qV )
+__device__ void jacobiConjugation( int p, int q, mat3 &S, glm::quat &qV )
 {
     // eliminate off-diagonal entries Spq, Sqp
-    float ch = 2.f * (S[0][0]-S[1][1]), ch2 = ch*ch;
-    float sh = S[1][0], sh2 = sh*sh;
+    float ch = 2.f * (S[0]-S[4]), ch2 = ch*ch;
+    float sh = S[3], sh2 = sh*sh;
     bool flag = ( GAMMA * sh2 < ch2 );
     float w = rsqrt( ch2 + sh2 );
     ch = flag ? w*ch : CSTAR; ch2 = ch*ch;
     sh = flag ? w*sh : SSTAR; sh2 = sh*sh;
 
     // build rotation matrix Q
-    glm::mat3 Q;
     float scale = ch*ch + sh*sh;
     float a = (ch2-sh2) / scale;
     float b = (2.f*sh*ch) / scale;
-    Q[0][0] = a;  Q[1][0] = -b;
-    Q[0][1] = b;  Q[1][1] = a;
+//    glm::mat3 Q;
+//    Q[0][0] = a;  Q[1][0] = -b;
+//    Q[0][1] = b;  Q[1][1] = a;
+    mat3 Q( a, b, 0, -b, a, 0, 0, 0, 1 );
 
     // perform the conjugation to annihilate S = Q' S Q
-    multTransposeL( Q, S, S ); S *= Q;
+    S = mat3::multiplyTransposeL( Q, S ) * Q;
     glm::vec3 tmp( qV.x, qV.y, qV.z );
     tmp *= sh;
     sh *= qV.w;
@@ -81,9 +68,9 @@ __device__ void jacobiConjugation( int p, int q, glm::mat3 &S, glm::quat &qV )
     qV[y] -= tmp[x];
 
     // re-arrange matrix for next iteration
-    S = glm::mat3( S[1][1], S[1][2], S[1][0],
-                   S[1][2], S[2][2], S[0][2],
-                   S[1][0], S[0][2], S[0][0] );
+    S = mat3( S[4], S[5], S[3],
+              S[5], S[8], S[2],
+              S[3], S[2], S[0] );
 }
 
 /*
@@ -92,7 +79,7 @@ __device__ void jacobiConjugation( int p, int q, glm::mat3 &S, glm::quat &qV )
  * matrix S, diagonalize it also returns the cumulative
  * rotation as a quaternion.
  */
-__device__ void jacobiEigenanalysis( glm::mat3 &S, glm::quat &qV )
+__device__ void jacobiEigenanalysis( mat3 &S, glm::quat &qV )
 {
     qV = glm::quat(1,0,0,0);
     for ( int sweep = 0; sweep < 4; ++sweep ) {
@@ -107,7 +94,7 @@ __device__ void jacobiEigenanalysis( glm::mat3 &S, glm::quat &qV )
 }
 
 // glm::toMat3 doesn't work in CUDA
-__device__ void toMat3( const glm::quat &q, glm::mat3 &m )
+__device__ void toMat3( const glm::quat &q, mat3 &M )
 {
     float qxx = q.x*q.x;
     float qyy = q.y*q.y;
@@ -118,42 +105,40 @@ __device__ void toMat3( const glm::quat &q, glm::mat3 &m )
     float qwx = q.w*q.x;
     float qwy = q.w*q.y;
     float qwz = q.w*q.z;
-    m[0][0] = 1.f - 2.f*(qyy+qzz);
-    m[0][1] = 2.f * (qxy+qwz);
-    m[0][2] = 2.f * (qxz-qwy);
-    m[1][0] = 2.f * (qxy-qwz);
-    m[1][1] = 1.f - 2.f*(qxx+qzz);
-    m[1][2] = 2.f * (qyz+qwx);
-    m[2][0] = 2.f * (qxz+qwy);
-    m[2][1] = 2.f * (qyz-qwx);
-    m[2][2] = 1.f - 2.f*(qxx+qyy);
+    M[0] = 1.f - 2.f*(qyy+qzz);
+    M[1] = 2.f * (qxy+qwz);
+    M[2] = 2.f * (qxz-qwy);
+    M[3] = 2.f * (qxy-qwz);
+    M[4] = 1.f - 2.f*(qxx+qzz);
+    M[5] = 2.f * (qyz+qwx);
+    M[6] = 2.f * (qxz+qwy);
+    M[7] = 2.f * (qyz-qwx);
+    M[8] = 1.f - 2.f*(qxx+qyy);
 }
 
 #define condSwap( COND, X, Y )          \
 {                                       \
     __typeof__ (X) _X_ = X;             \
-    bool _COND_ = (COND);               \
-    X = _COND_ ? Y : X;                 \
-    Y = _COND_ ? _X_ : Y;               \
+    X = COND ? Y : X;                   \
+    Y = COND ? _X_ : Y;                 \
 }
 
 #define condNegSwap( COND, X, Y )       \
 {                                       \
     __typeof__ (X) _X_ = -X;            \
-    bool _COND_ = (COND);               \
-    X = _COND_ ? Y : X;                 \
-    Y = _COND_ ? _X_ : Y;               \
+    X = COND ? Y : X;                   \
+    Y = COND ? _X_ : Y;                 \
 }
 
-__device__ void sortSingularValues( glm::mat3 &B, glm::mat3 &V )
+__device__ void sortSingularValues( mat3 &B, mat3 &V )
 {
     // used in step 2
-    glm::vec3 b1 = glm::column(B,0); glm::vec3 v1 = glm::column(V,0);
-    glm::vec3 b2 = glm::column(B,1); glm::vec3 v2 = glm::column(V,1);
-    glm::vec3 b3 = glm::column(B,2); glm::vec3 v3 = glm::column(V,2);
-    float rho1 = glm::dot(b1,b1);
-    float rho2 = glm::dot(b2,b2);
-    float rho3 = glm::dot(b3,b3);
+    vec3 b1 = B.column(0); vec3 v1 = V.column(0);
+    vec3 b2 = B.column(1); vec3 v2 = V.column(1);
+    vec3 b3 = B.column(2); vec3 v3 = V.column(2);
+    float rho1 = vec3::dot(b1,b1);
+    float rho2 = vec3::dot(b2,b2);
+    float rho3 = vec3::dot(b3,b3);
     bool c;
 
     c = rho1 < rho2;
@@ -171,8 +156,8 @@ __device__ void sortSingularValues( glm::mat3 &B, glm::mat3 &V )
     condNegSwap( c, v2, v3 );
 
     // re-build B,V
-    B = glm::mat3( b1, b2, b3 );
-    V = glm::mat3( v1, v2, v3 );
+    B = mat3( b1, b2, b3 );
+    V = mat3( v1, v2, v3 );
 }
 
 //inline float accurateRSQRT(float x)
@@ -213,7 +198,7 @@ __device__ void QRGivensQuaternion( float a1, float a2, float &ch, float &sh )
     sh *= w;
 }
 
-__device__ void QRDecomposition( const glm::mat3 &B, glm::mat3 &Q, glm::mat3 &R )
+__device__ void QRDecomposition( const mat3 &B, mat3 &Q, mat3 &R )
 {
     R = B;
 
@@ -221,32 +206,32 @@ __device__ void QRDecomposition( const glm::mat3 &B, glm::mat3 &Q, glm::mat3 &R 
     // eliminate elements B21, B31, B32
     glm::quat qQ; // cumulative rotation
     glm::quat qU; // each Givens rotation in quaternion form
-    glm::mat3 U;
+    mat3 U;
     float ch, sh;
 
     // first givens rotation
-    QRGivensQuaternion( R[0][0], R[0][1], ch, sh );
+    QRGivensQuaternion( R[0], R[1], ch, sh );
     qU = glm::quat( ch, 0, 0, sh );
     toMat3( qU, U );
-    multTransposeL( U, R, R );
+    R = mat3::multiplyTransposeL( U, R );
 
     // update cumulative rotation
     qQ *= qU;
 
     // second givens rotation
-    QRGivensQuaternion( R[0][0], R[0][2], ch, sh );
+    QRGivensQuaternion( R[0], R[2], ch, sh );
     qU = glm::quat( ch, 0, -sh, 0 );
     toMat3( qU, U );
-    multTransposeL( U, R, R );
+    R = mat3::multiplyTransposeL( U, R );
 
     // update cumulative rotation
     qQ *= qU;
 
     // third Givens rotation
-    QRGivensQuaternion( R[1][1], R[1][2], ch, sh );
+    QRGivensQuaternion( R[4], R[5], ch, sh );
     qU = glm::quat( ch, sh, 0, 0 );
     toMat3( qU, U );
-    multTransposeL( U, R, R );
+    R = mat3::multiplyTransposeL( U, R );
 
     // update cumulative rotation
     qQ *= qU;
@@ -260,17 +245,17 @@ __device__ void QRDecomposition( const glm::mat3 &B, glm::mat3 &Q, glm::mat3 &R 
  * matrices with minimal branching and elementary floating point operations
  * Computes SVD of 3x3 matrix A = W * S * V'
  */
-__device__ void computeSVD( const glm::mat3 &A, glm::mat3 &W, glm::mat3 &S, glm::mat3 &V )
+__device__ void computeSVD( const mat3 &A, mat3 &W, mat3 &S, mat3 &V )
 {
     // normal equations matrix
-    glm::mat3 ATA;
-    multTransposeL( A, A, ATA );
+    mat3 ATA = mat3::multiplyTransposeL( A, A );
 
 /// 2. Symmetric Eigenanlysis
     glm::quat qV;
     jacobiEigenanalysis( ATA, qV );
     toMat3( qV, V );
-    glm::mat3 B = A * V; // B = AV = WS
+//    glm::mat3 B = A * V; // B = AV = WS
+    mat3 B = A * V;
 
 /// 3. Sorting the singular values (find V)
     sortSingularValues( B, V );
@@ -286,13 +271,13 @@ __device__ void computeSVD( const glm::mat3 &A, glm::mat3 &W, glm::mat3 &S, glm:
  * S is symmetric positive semidefinite
  * Can get Polar Decomposition from SVD, see first section of http://en.wikipedia.org/wiki/Polar_decomposition
  */
-__device__ void computePD( const glm::mat3 &A, glm::mat3 &U, glm::mat3 &P )
+__device__ void computePD( const mat3 &A, mat3 &U, mat3 &P )
 {
     // U is unitary matrix (i.e. orthogonal/orthonormal)
     // P is positive semidefinite Hermitian matrix
-    glm::mat3 W, S, V;
+    mat3 W, S, V;
     computeSVD( A, W, S, V );
-    glm::mat3 Vt = glm::transpose(V);
+    mat3 Vt = mat3::transpose(V);
     U = W * Vt;
     P = V * S * Vt;
 }
@@ -304,10 +289,10 @@ __device__ void computePD( const glm::mat3 &A, glm::mat3 &U, glm::mat3 &P )
  * SVD : A = W * S * V'
  * PD : A = U * P
  */
- __device__ void computeSVDandPD( const glm::mat3 &A, glm::mat3 &W, glm::mat3 &S, glm::mat3 &V, glm::mat3 &U, glm::mat3 &P )
+ __device__ void computeSVDandPD( const mat3 &A, mat3 &W, mat3 &S, mat3 &V, mat3 &U, mat3 &P )
  {
     computeSVD( A, W, S, V );
-    glm::mat3 Vt = glm::transpose(V);
+    mat3 Vt = mat3::transpose(V);
     U = W * Vt;
     P = V * S * Vt;
  }
