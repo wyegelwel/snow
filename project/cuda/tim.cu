@@ -38,13 +38,21 @@ void PGTest1();
 
 }
 
-__device__ int getGridIndex( int i, int j, int k, Grid* grid)  {
-    glm::ivec3 dim = grid->dim;
+__host__ __device__ void gridIndexToIJK(int idx, int &i, int &j, int &k, Grid *grid){
+    glm::ivec3 dim = grid->dim + 1; // +1 for nodes
+    i = idx / (dim.y*dim.z);
+    idx = idx % (dim.y*dim.z);
+    j = idx / dim.z;
+    k = idx % dim.z;
+}
+
+__host__ __device__ int getGridIndex( int i, int j, int k, Grid* grid)  {
+    glm::ivec3 dim = grid->dim + 1; // +1 for nodes
     return (i*(dim.y*dim.z) + j*(dim.z) + k);
 }
 
 
-__device__ void positionToGridIJK(glm::vec3 pos, Grid *grid, glm::ivec3 &gridIJK){
+__host__ __device__ void positionToGridIJK(glm::vec3 pos, Grid *grid, glm::ivec3 &gridIJK){
     pos-=grid->pos;
     pos/=grid->h;
     pos = glm::round(pos);
