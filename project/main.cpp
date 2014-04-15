@@ -11,7 +11,7 @@
 #include <QApplication>
 #include "ui/mainwindow.h"
 #include "tests/tests.h"
-#include <iostream>\
+#include <iostream>
 
 
 /*

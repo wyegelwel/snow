@@ -63,12 +63,12 @@
     #define TIME( START, END, ... ) {                       \
         timeval start, end;                                 \
         gettimeofday( &start, NULL );                       \
-        printf( "%s", START );                              \
+        printf( "%s", START ); fflush(stdout);              \
         { __VA_ARGS__ };                                    \
         gettimeofday( &end, NULL );                         \
         long int ms = (end.tv_sec-start.tv_sec)*1000 +      \
                   (end.tv_usec-start.tv_usec)/1000;         \
-        printf( "[%ld ms] %s", ms, END );                   \
+        printf( "[%ld ms] %s", ms, END ); fflush(stdout);   \
     }
 #else
     #define LOG(...) do {} while(0)
