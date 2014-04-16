@@ -24,6 +24,10 @@
 #include "sim/particle.h"
 #include "ui/infopanel.h"
 
+// temporary hack:
+
+
+
 #define FPS 65
 
 ViewPanel::ViewPanel( QWidget *parent )
@@ -124,6 +128,12 @@ ViewPanel::paintGL()
     // we still might want to manipulate scene before starting the simulation
     m_particles->update( t += 1.f/FPS );
 
+
+    // TODO - as a cheap hack we'll have the renderer spit out the
+
+
+
+
     float fps = 1000.f / m_timer.restart();
     m_infoPanel->setInfo( "FPS", QString::number(fps, 'f', 2), false );
     m_infoPanel->render();
@@ -164,4 +174,9 @@ void ViewPanel::pauseDrawing()
 void ViewPanel::resumeDrawing()
 {
     m_ticker.start();
+}
+
+void ViewPanel::renderOffline(QString outputDir)
+{
+
 }

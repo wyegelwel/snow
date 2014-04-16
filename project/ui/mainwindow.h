@@ -24,6 +24,7 @@ class MainWindow : public QMainWindow
 public slots:
     void saveToFile();
     void loadFromFile();
+    void renderOffline();
 
 public:
     explicit MainWindow(QWidget *parent = 0);

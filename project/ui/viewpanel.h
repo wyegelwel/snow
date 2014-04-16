@@ -14,6 +14,8 @@
 #include <QGLWidget>
 #include <QTimer>
 #include <QElapsedTimer>
+#include <QFile>
+#include <QDir>
 
 class InfoPanel;
 class Viewport;
@@ -34,6 +36,7 @@ public:
     void resumeDrawing();
     void saveToFile(QString fname);
     void loadFromFile(QString fname);
+    void renderOffline(QString outputDir);
 
 public slots:
 

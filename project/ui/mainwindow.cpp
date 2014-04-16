@@ -46,8 +46,11 @@ void MainWindow::saveToFile()
     //ui->viewPanel->savetoFile(fname);
 }
 
+void MainWindow::renderOffline()
+{
+    QFileDialog dialog(this);
+    dialog.setFileMode(QFileDialog::Directory);
+    QString dirname = dialog.getOpenFileName(this,QString("Output Directory"));
 
-//void MainWindow::renderOffline()
-//{
-
-//}
+    ui->viewPanel->renderOffline(dirname);
+}
