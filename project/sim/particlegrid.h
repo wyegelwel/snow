@@ -13,16 +13,26 @@
 
 #include "geometry/grid.h"
 
-#include "glm/vec3.hpp"
+#ifdef CUDA_INCLUDE
+    #include "cuda/vector.cu"
+#else
+    #include <glm/vec3.hpp>
+#endif
+
 
 struct ParticleGrid : public Grid
-{
+{  
     struct Node
     {
+#ifdef CUDA_INCLUDE
+    typedef vec3 vector_type;
+#else
+    typedef glm::vec3 vector_type;
+#endif
         float mass;
-        glm::vec3 velocity;
-        glm::vec3 velocityChange; // v_n+1 - v_n (store this value through steps 4,5,6)
-        glm::vec3 force;
+        vector_type velocity;
+        vector_type velocityChange; // v_n+1 - v_n (store this value through steps 4,5,6)
+        vector_type force;
 
         Node() : mass(0), velocity(0,0,0), force(0,0,0) {}
     };

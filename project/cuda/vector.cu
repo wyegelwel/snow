@@ -16,8 +16,8 @@
 
 #include "common/math.h"
 
-#define GLM_FORCE_RADIANS
-#include "glm/vec3.hpp"
+
+
 
 struct vec3
 {
@@ -28,6 +28,9 @@ struct vec3
 
     __host__ __device__ __forceinline__
     vec3() { x = 0.f; y = 0.f; z = 0.f; }
+
+    __host__ __device__ __forceinline__
+    vec3( float v ) { x = v; y = v; z = v; }
 
     __host__ __device__ __forceinline__
     vec3( float xx, float yy, float zz ) { x = xx; y = yy; z = zz; }
@@ -71,6 +74,20 @@ struct vec3
     static vec3 ceil( const vec3 &v ) { return vec3( ceilf(v.x), ceilf(v.y), ceilf(v.z) ); }
 
     __host__ __device__ __forceinline__
+    static vec3 abs( const vec3 &v ) { return vec3( fabs(v.x), fabs(v.y), fabs(v.z) ); }
+
+    __host__ __device__ __forceinline__
+    static vec3 round( const vec3 &v ) { return vec3( roundf(v.x), roundf(v.y), roundf(v.z) ); }
+
+    //From http://stackoverflow.com/questions/1903954/is-there-a-standard-sign-function-signum-sgn-in-c-c
+    __host__ __device__ __forceinline__
+    static float sign( const float v ) { return (0 < v) - (v < 0);}
+
+    //From http://stackoverflow.com/questions/1903954/is-there-a-standard-sign-function-signum-sgn-in-c-c
+    __host__ __device__ __forceinline__
+    static vec3 sign( const vec3 &v ) { return vec3(sign(v.x), sign(v.y), sign(v.z) );}
+
+    __host__ __device__ __forceinline__
     static float length2( const vec3 &v ) { return v.x*v.x + v.y*v.y + v.z*v.z; }
 
     __host__ __device__ __forceinline__
@@ -95,7 +112,7 @@ struct vec3
     vec3& operator *= ( const vec3 &rhs ) { x *= rhs.x; y *= rhs.y; z *= rhs.z; return *this; }
 
     __host__ __device__ __forceinline__
-    vec3 operator * ( const vec3 &rhs ) { return vec3( x*rhs.x, y*rhs.y, z*rhs.z ); }
+    vec3 operator * ( const vec3 &rhs ) const { return vec3( x*rhs.x, y*rhs.y, z*rhs.z ); }
 
     __host__ __device__ __forceinline__
     vec3& operator /= ( const vec3 &rhs ) { x /= rhs.x; y /= rhs.y; z /= rhs.z; return *this; }
@@ -104,16 +121,18 @@ struct vec3
     vec3 operator / ( const vec3 &rhs ) const { return vec3( x/rhs.x, y/rhs.y, z/rhs.z ); }
 
     __host__ __device__ __forceinline__
-    vec3& operator *= ( float f ) { x *= f; y *= f; z *= f; return *this; }
+    vec3& operator *= ( float f )  { x *= f; y *= f; z *= f; return *this; }
 
     __host__ __device__ __forceinline__
-    vec3 operator * ( float f ) { return vec3( f*x, f*y, f*z ); }
+    vec3 operator * ( float f ) const { return vec3( f*x, f*y, f*z ); }
 
     __host__ __device__ __forceinline__
     vec3& operator /= ( float f ) { float fi = 1./f; x *= fi; y *= fi; z *= fi; return *this; }
 
     __host__ __device__ __forceinline__
-    vec3 operator / ( float f ) { float fi = 1.f/f; return vec3( x*fi, y*fi, z*fi ); }
+    vec3 operator / ( float f ) const { float fi = 1.f/f; return vec3( x*fi, y*fi, z*fi ); }
+
+
 
 };
 

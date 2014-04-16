@@ -35,7 +35,9 @@ struct Particle
     float volume;
     matrix_type elasticF;
     matrix_type plasticF;
+#ifndef CUDA_INCLUDE
     Particle() : elasticF(1.f), plasticF(1.f) {}
+#endif
 };
 
 #ifndef CUDA_INCLUDE

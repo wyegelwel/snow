@@ -148,6 +148,16 @@ struct mat3
     }
 
     __host__ __device__ __forceinline__
+    vec3 operator * ( const vec3 &rhs ) const
+    {
+        vec3 result;
+        result.x = data[0]*rhs.x + data[3]*rhs.y + data[6]*rhs.z;
+        result.y = data[1]*rhs.x + data[4]*rhs.y + data[7]*rhs.z;
+        result.z = data[2]*rhs.x + data[5]*rhs.y + data[8]*rhs.z;
+        return result;
+    }
+
+    __host__ __device__ __forceinline__
     mat3& operator += ( const mat3 &rhs )
     {
         data[0] += rhs[0]; data[3] += rhs[3]; data[6] += rhs[6];
@@ -287,5 +297,6 @@ struct mat3
 
 __host__ __device__ __forceinline__
 mat3 operator * ( float f, const mat3 &m ) { return m*f; }
+
 
 #endif // MATRIX_CU

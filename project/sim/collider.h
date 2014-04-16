@@ -1,8 +1,7 @@
 #ifndef COLLIDER_H
 #define COLLIDER_H
 
-#include <glm/vec3.hpp>
-#include <glm/mat3x3.hpp>
+#include "cuda/vector.cu"
 
 /**
  * For the sake of supporting multiple implicit colliders in cuda, we define an enum for the type of collider
@@ -16,9 +15,9 @@ enum ColliderType{
 };
 
 struct ImplicitCollider{
-    glm::vec3 center;
-    glm::vec3 param;
-    glm::vec3 velocity;
+    vec3 center;
+    vec3 param;
+    vec3 velocity;
     ColliderType type;
 };
 
