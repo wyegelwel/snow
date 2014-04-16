@@ -243,9 +243,18 @@ struct mat3
                      m[2], m[5], m[8] );
     }
 
+    // Optimize I + A
+    __host__ __device__ __forceinline__
+    static mat3 addIdentity( const mat3 &A )
+    {
+        return mat3( A[0]+1.f, A[1], A[2],
+                     A[3], A[4]+1.f, A[5],
+                     A[6], A[7], A[8]+1.f );
+    }
+
     // Optimize transpose(A) * B;
     __host__ __device__ __forceinline__
-    static mat3 multiplyTransposeL( const mat3 &A, const mat3 &B )
+    static mat3 multiplyAtB( const mat3 &A, const mat3 &B )
     {
         mat3 tmp;
         tmp[0] = A[0]*B[0] + A[1]*B[1] + A[2]*B[2];
@@ -257,6 +266,40 @@ struct mat3
         tmp[6] = A[0]*B[6] + A[1]*B[7] + A[2]*B[8];
         tmp[7] = A[3]*B[6] + A[4]*B[7] + A[5]*B[8];
         tmp[8] = A[6]*B[6] + A[7]*B[7] + A[8]*B[8];
+        return tmp;
+    }
+
+    // Optimize A * transpose(B);
+    __host__ __device__ __forceinline__
+    static mat3 multiplyABt( const mat3 &A, const mat3 &B )
+    {
+        mat3 tmp;
+        tmp[0] = A[0]*B[0] + A[3]*B[3] + A[6]*B[6];
+        tmp[1] = A[1]*B[0] + A[4]*B[3] + A[7]*B[6];
+        tmp[2] = A[2]*B[0] + A[5]*B[3] + A[8]*B[6];
+        tmp[3] = A[0]*B[1] + A[3]*B[4] + A[6]*B[7];
+        tmp[4] = A[1]*B[1] + A[4]*B[4] + A[7]*B[7];
+        tmp[5] = A[2]*B[1] + A[5]*B[4] + A[8]*B[7];
+        tmp[6] = A[0]*B[2] + A[3]*B[5] + A[6]*B[8];
+        tmp[7] = A[1]*B[2] + A[4]*B[5] + A[7]*B[8];
+        tmp[8] = A[2]*B[2] + A[5]*B[5] + A[8]*B[8];
+        return tmp;
+    }
+
+    // Optimize A * D * transpose(B), where D is diagonal
+    __host__ __device__ __forceinline__
+    static mat3 multiplyADBt( const mat3 &A, const mat3 &D, const mat3 &B )
+    {
+        mat3 tmp;
+        tmp[0] = A[0]*B[0]*D[0] + A[3]*B[3]*D[4] + A[6]*B[6]*D[8];
+        tmp[1] = A[1]*B[0]*D[0] + A[4]*B[3]*D[4] + A[7]*B[6]*D[8];
+        tmp[2] = A[2]*B[0]*D[0] + A[5]*B[3]*D[4] + A[8]*B[6]*D[8];
+        tmp[3] = A[0]*B[1]*D[0] + A[3]*B[4]*D[4] + A[6]*B[7]*D[8];
+        tmp[4] = A[1]*B[1]*D[0] + A[4]*B[4]*D[4] + A[7]*B[7]*D[8];
+        tmp[5] = A[2]*B[1]*D[0] + A[5]*B[4]*D[4] + A[8]*B[7]*D[8];
+        tmp[6] = A[0]*B[2]*D[0] + A[3]*B[5]*D[4] + A[6]*B[8]*D[8];
+        tmp[7] = A[1]*B[2]*D[0] + A[4]*B[5]*D[4] + A[7]*B[8]*D[8];
+        tmp[8] = A[2]*B[2]*D[0] + A[5]*B[5]*D[4] + A[8]*B[8]*D[8];
         return tmp;
     }
 
