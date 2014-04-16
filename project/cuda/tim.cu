@@ -52,9 +52,18 @@ __host__ __device__ int getGridIndex( int i, int j, int k, Grid* grid)  {
 }
 
 
-__host__ __device__ void positionToGridIJK(vec3 pos, Grid *grid, glm::ivec3 &gridIJK){
+__host__ __device__ void positionToGridIJK(vec3 pos, Grid *grid, int &i, int &j, int &k){
     pos-=grid->pos;
     pos/=grid->h;
+    pos = vec3::round(pos);
+    i = (int) pos.x;
+    j = (int) pos.y;
+    k = (int) pos.z;
+}
+
+__host__ __device__ void positionToGridIJK(vec3 pos, Grid *grid, glm::ivec3 &gridIJK){
+    pos-=grid->pos;
+    pos /= grid->h;
     pos = vec3::round(pos);
     gridIJK = glm::ivec3((int) pos.x, (int) pos.y, (int) pos.z);
 }
@@ -73,7 +82,7 @@ __global__ void rasterizeParticles( Particle *particleData, Grid *grid, int *par
     int index = blockIdx.x*blockDim.x + threadIdx.x;
     Particle p = particleData[index];
     glm::ivec3 gridIJK;
-    positionToGridIJK(p.position, grid, gridIJK);
+    //positionToGridIJK(p.position, grid, gridIJK);
     int gridIndex = getGridIndex(gridIJK.x, gridIJK.y, gridIJK.z, grid);
     particleToCell[index] = gridIndex;
     particleOffsetInCell[index]=cellParticleCount[gridIndex]++;

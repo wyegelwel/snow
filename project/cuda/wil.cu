@@ -25,6 +25,7 @@ extern "C"  {
     void testColliding();
     void testColliderNormal();
     void testGridMath();
+    void timingTests();
 
 }
 
@@ -183,7 +184,7 @@ __global__ void computeCellMassVelocityAndForce(Particle *particleData, Grid *gr
 
     // Apply particles contribution of mass, velocity and force to surrounding nodes
     glm::ivec3 min = glm::max(glm::ivec3(0.0f), gridIJK-2);
-    glm::ivec3 max = glm::min(grid->dim, gridIJK+2); //+1 because we are working on nodes
+    glm::ivec3 max = glm::min(grid->dim, gridIJK+2);
     for (int i = min.x; i <= max.x; i++){
         for (int j = min.y; j <= max.y; j++){
             for (int k = min.z; k <= max.z; k++){
@@ -193,7 +194,7 @@ __global__ void computeCellMassVelocityAndForce(Particle *particleData, Grid *gr
 
                 float w;
                 vec3 wg;
-                weightAndGradient(((particle.position-nodePosition)/grid->h).toGLM(), w, wg);
+                weightAndGradient(((particle.position-nodePosition)/grid->h), w, wg);
 
                 atomicAdd(&node.mass, particle.mass*w);
                 atomicAdd(&node.velocity, particle.velocity*particle.mass*w);
@@ -733,7 +734,7 @@ void testGridMath(){
 }
 
 void timingTests(){
-    const int dim = 64;
+    const int dim = 128;
     ParticleGrid grid;
     grid.dim = glm::ivec3( dim, dim, dim );
     grid.h = 1.f/dim;
@@ -779,7 +780,8 @@ void timingTests(){
     floor.param = vec3(0,1,0);
     floor.type = HALF_PLANE;
 
-    ImplicitCollider colliders[1] = {floor};
+    ImplicitCollider colliders[] = {floor};
+    int nColliders = 1;
 
     printf( "    Allocating kernel resources...\n" ); fflush(stdout);
     Particle *devParticles;
@@ -789,6 +791,9 @@ void timingTests(){
     ImplicitCollider *devColliders;
     checkCudaErrors(cudaMalloc( &devParticles, nParticles*sizeof(Particle) ));
     checkCudaErrors(cudaMalloc( &devNodes, (dim+1)*(dim+1)*(dim+1)*sizeof(ParticleGrid::Node) ));
+    checkCudaErrors(cudaMalloc( &devGrid, sizeof(Grid) ));
+    checkCudaErrors(cudaMalloc( &devWorldParams, sizeof(WorldParams) ));
+    checkCudaErrors(cudaMalloc( &devColliders, nColliders*sizeof(ImplicitCollider) ));
 
     static const int blockSizes[] = { 32, 64, 128, 256, 512 };
     static const int nBlocks = 5;
@@ -799,23 +804,17 @@ void timingTests(){
         checkCudaErrors(cudaMemcpy( devNodes, nodes, (dim+1)*(dim+1)*(dim+1)*sizeof(ParticleGrid::Node), cudaMemcpyHostToDevice ));
         checkCudaErrors(cudaMemcpy( devGrid, &grid, sizeof(Grid), cudaMemcpyHostToDevice ));
         checkCudaErrors(cudaMemcpy( devWorldParams, &worldParams, sizeof(WorldParams), cudaMemcpyHostToDevice ));
-        checkCudaErrors(cudaMemcpy( devColliders, colliders, sizeof(ImplicitCollider), cudaMemcpyHostToDevice ));
+        checkCudaErrors(cudaMemcpy( devColliders, colliders, nColliders*sizeof(ImplicitCollider), cudaMemcpyHostToDevice ));
         int blockSize = blockSizes[i];
 //        int blockSize = 256;
         printf( "    Block size = %3d; ", blockSize ); fflush(stdout);
-//        TIME( " Launching full kernel... ", "finished\n",
-//          computeCellMassVelocityAndForce<<< nParticles / 512, 512 >>>(devParticles, devGrid, devWorldParams, devNodes);
-//          updateVelocities<<< grid->nodeCount() / 512, 512 >>>(devNodes, dt, devColliders, 1, devWorldParams, devGrid);
-//            checkCudaErrors(cudaDeviceSynchronize());
-//        );
-       // if ( error != cudaSuccess ) break;
-    }
 
-//    if ( error != cudaSuccess ) {
-//        printf( "    FAILED: %s\n", _cudaGetErrorEnum(error) );
-//    } else {
-//        printf( "    PASSED.\n" );
-//    }
+        TIME( " Launching full kernel... ", "finished\n",
+              computeCellMassVelocityAndForce<<< nParticles / blockSize, blockSize >>>(devParticles, devGrid, devWorldParams, devNodes);
+              //updateVelocities<<< grid.nodeCount() / blockSize, blockSize >>>(devNodes, dt, devColliders, nColliders, devWorldParams, devGrid);
+              checkCudaErrors(cudaDeviceSynchronize());
+        );
+    }
 
     printf( "    Freeing kernel resources...\n" ); fflush(stdout);
     checkCudaErrors(cudaFree( devParticles ));
