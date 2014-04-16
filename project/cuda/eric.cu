@@ -28,27 +28,27 @@ void weightingTestsHost();
 void svdTestsHost();
 }
 
-__device__ void printMat3(glm::mat3 mat) {
+__device__ void printMat3( const mat3 &mat ) {
     // prints by rows
     for (int j=0; j<3; ++j) // g3d stores column-major
     {
         for (int i=0; i<3; ++i)
         {
-            printf("%f   ", mat[i][j]);
+            printf("%f   ", mat[3*i+j]);
         }
         printf("\n");
     }
     printf("\n");
 }
 
-__device__ void printQuat(glm::quat q)
+__device__ void printQuat( const glm::quat &q )
 {
     printf("%f  %f  %f  %f\n", q.w,q.x,q.y,q.z);
     //std::cout << q.w << "  " << q.x << "  " << q.y  << "  " << q.z <<std::endl;
     //std::cout << q[3] << "  " << q[0] << "  " << q[1]  << "  " << q[2] <<std::endl;
 }
 
-__device__ inline void printMat3Failure(char * name, glm::mat3 got, glm::mat3 expected)
+__device__ inline void printMat3Failure( char * name, const mat3 &got, const mat3 &expected )
 {
     printf("%C GRADIENT: [FAILED] \n", name);
     printf("Expected: \n");
@@ -57,35 +57,25 @@ __device__ inline void printMat3Failure(char * name, glm::mat3 got, glm::mat3 ex
     printMat3(got);
 }
 
-inline bool epsilonNotEqualMat3(glm::mat3 A, glm::mat3 B)
+inline bool epsilonNotEqualMat3( const mat3 &A, const mat3 &B )
 {
-    for (int j=0;j<3;j++)
-    {
-        for (int i=0; i<3; i++)
-        {
-            if (fabs(A[i][j]-B[i][j]) >= EPSILON)
-            {
-                return true;
-            }
-        }
-    }
-    return false;
+    return !mat3::equals(A, B);
 }
 
-__global__ void svdTest(const glm::mat3 A)
+__global__ void svdTest( const mat3 A )
 {
     printf("original matrix\n");
     printMat3(A);
-    glm::mat3 U1;
-    glm::mat3 S;
-    glm::mat3 V;
-    glm::mat3 U2;
-    glm::mat3 P;
-    computeSVDandPD(A,U1,S,V,U2,P);
+    mat3 U1;
+    mat3 S;
+    mat3 V;
+    mat3 U2;
+    mat3 P;
+    computeSVDandPD( A, U1, S, V, U2, P );
 
-    glm::mat3 A_svd = U1*S*glm::transpose(V);
-    glm::mat3 diff = glm::transpose(A_svd-A) * (A_svd-A);
-    float norm = sqrtf( diff[0][0] + diff[1][1] + diff[2][2] );
+    mat3 A_svd = U1*S*mat3::transpose(V);
+    mat3 diff = mat3::transpose(A_svd-A) * (A_svd-A);
+    float norm = sqrtf( diff[0] + diff[4] + diff[8] );
 
     printf("SVD: U\n");
     printMat3(U1);
@@ -102,15 +92,13 @@ __global__ void svdTest(const glm::mat3 A)
     printMat3(P);
 
 
+
 }
 
 void svdTestsHost()
 {
     // multiple calls to svdTest
     glm::mat3 A;
-    glm::mat3 U_e;
-    glm::mat3 S_e;
-    glm::mat3 V_e;
     // TEST 1
     A = glm::mat3(-0.558253  ,  -0.0461681   ,  -0.505735,
                   -0.411397 ,    0.0365854   ,   0.199707,
@@ -119,6 +107,7 @@ void svdTestsHost()
 
     svdTest<<<1,1>>>(A);
     cudaDeviceSynchronize();
+
 }
 
 
@@ -208,7 +197,5 @@ void weightingTestsHost()
     wg_expected=glm::vec3 (-0.068856712,-0.13186487278,-0.192720697);
     weightTest(h,ijk,xp,w_expected,wg_expected);
 }
-
-
 
 #endif // ERIC_CU

@@ -4,10 +4,24 @@
 #
 #-------------------------------------------------
 
+QT       += core gui opengl xml
+DEFINES += GL_GLEXT_PROTOTYPES
+
+
+greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
+
 TEMPLATE = app
+TARGET = snow
+
 DEFINES += PROJECT_PATH=\\\"$$_PRO_FILE_PWD_\\\"
 
 SOURCES += \
+    main.cpp \
+    ui/mainwindow.cpp \
+    ui/viewpanel.cpp \
+    ui/userinput.cpp \
+    ui/infopanel.cpp \
+    viewport/viewport.cpp \
     sim/particle.cpp \
     geometry/mesh.cpp \
     io/objparser.cpp \
@@ -23,6 +37,12 @@ SOURCES += \
 
 
 HEADERS  += \
+    ui/mainwindow.h \
+    ui/viewpanel.h \
+    ui/infopanel.h \
+    ui/userinput.h \
+    viewport/camera.h \
+    viewport/viewport.h \
     common/common.h \
     sim/particle.h \
     cuda/functions.h \
@@ -43,44 +63,8 @@ HEADERS  += \
     io/sceneparser.h \
     #sim/AppSettings.h
 
-# CONFIG FOR GUI TARGET
-configGUI {
 
-    DEFINES += GL_GLEXT_PROTOTYPES
-    TARGET = snow
-    greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
-    QT       += core gui opengl xml
-    FORMS    += ui/mainwindow.ui
-
-    SOURCES += \
-        main.cpp \
-        ui/mainwindow.cpp \
-        ui/viewpanel.cpp \
-        ui/userinput.cpp \
-        ui/infopanel.cpp \
-        viewport/viewport.cpp \
-
-    HEADERS += \
-        ui/mainwindow.h \
-        ui/viewpanel.h \
-        ui/infopanel.h \
-        ui/userinput.h \
-        viewport/camera.h \
-        viewport/viewport.h \
-}
-
-# CONFIG FOR CONSOLE TARGET
-# disabled for the time being.
-# will be less cumbersome to just hit the render
-# button from GUI since we are using VBOs to store vertex
-# data.
-#configConsole {
-#    TARGET = snow_console
-#    QT += core xml
-#    SOURCES += \
-#        main_console.cpp
-#}
-
+FORMS    += ui/mainwindow.ui
 
 # GLM
 DEFINES += GLM_FORCE_RADIANS
@@ -92,9 +76,9 @@ QMAKE_CXXFLAGS += -std=c++11
 # CUDA stuff
 CUDA_SOURCES += cuda/snow.cu \
     cuda/mesh.cu \
-    cuda/wil.cu \
+#    cuda/wil.cu \
     cuda/max.cu \
-    cuda/tim.cu \
+#    cuda/tim.cu \
 #    cuda/eric.cu \
 
 CUDA_DIR = /contrib/projects/cuda5-toolkit
@@ -113,7 +97,10 @@ OTHER_FILES += \
     cuda/tim.cu \
     cuda/eric.cu \
     cuda/decomposition.cu \
-    cuda/weighting.cu
+    cuda/weighting.cu \
+    cuda/matrix.cu \
+    cuda/vector.cu \
+    cuda/quaternion.cu
 
 # GPU ARCH
 # this gets passed as the gpu-architecture flag to nvcc compiler

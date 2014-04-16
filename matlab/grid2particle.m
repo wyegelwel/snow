@@ -1,6 +1,12 @@
+%% SETUP
+
+clc;
 clear;
 
 alpha = 0.95;
+criticalCompression = 0.8;
+criticalStretch = 1.2;
+timeStep = 1;
 
 dim = 8;
 h = 1.0/dim;
@@ -51,6 +57,8 @@ weightGradient = @( dx ) sign(dx) .* [Nd(abs(dx(1)))*N(abs(dx(2)))*N(abs(dx(3)))
 % subplot( 1, 2, 2 );
 % plot( test, Ndtest ); shg;
 
+%% Velocity tests
+
 for iteration = 1:5
     disp( ['Iteration ' num2str(iteration)] );
     for p = 1:particleCount
@@ -94,3 +102,49 @@ for i = 1:particleCount
     disp('   ');
 end
 
+%% Deformation tests
+
+for p = 1:particleCount
+    velocityGradient = zeros(3, 3);
+    particlePos = (particles(p).position - pos)./h;
+    v_PIC = [0 0 0];
+    dv_FLIP = [0 0 0];
+    for i = 0:dim
+        dx = i - particlePos(1);
+        if ( abs(dx) >= 2 ); continue; end
+        for j = 0:dim
+            dy = j - particlePos(2);
+            if ( abs(dy) >= 2 ); continue; end
+            for k = 0:dim
+                dz = k - particlePos(3);
+                if ( abs(dz) >= 2 ); continue; end
+                index = i*dim*dim + j*dim + k + 1;
+                DX = [dx dy dz];
+                w = weight( DX );
+                wg = weightGradient( DX );
+                v_PIC = v_PIC + w*nodes(index).velocity;
+                dv_FLIP = dv_FLIP + w*nodes(index).velocityChange;
+                velocityGradient(2,:) = velocityGradient(2,:) + nodes(index).velocity(2) * wg;
+            end
+        end
+    end
+    particles(p).velocity = (1-alpha)*v_PIC + alpha*(particles(p).velocity+dv_FLIP);
+    
+    F = (diag([1 1 1]) + timeStep*velocityGradient) * particles(p).elasticF;
+    
+    [U, S, V] = svd(F);
+    for i=1:3
+        if S(i,i) > criticalStretch
+            S(i,i) = criticalStretch;
+        elseif S(i,i) < criticalCompression
+            S(i,i) = criticalCompression;
+        end
+    end
+    
+    particles(p).elasticF = U * S * V';
+    particles(p).plasticF = V * S^-1 * U' * particles(p).plasticF;
+    
+    disp( particles(p).plasticF );
+    disp( particles(p).elasticF );
+    
+end
