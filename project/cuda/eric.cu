@@ -92,7 +92,6 @@ __global__ void svdTest( const mat3 A )
     printMat3(P);
 
 
-
 }
 
 void svdTestsHost()

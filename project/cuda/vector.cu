@@ -16,9 +16,6 @@
 
 #include "common/math.h"
 
-
-
-
 struct vec3
 {
     union {
@@ -42,19 +39,10 @@ struct vec3
     vec3& operator = ( const vec3 &rhs ) { x = rhs.x; y = rhs.y; z = rhs.z; return *this; }
 
     __host__ __device__ __forceinline__
-    vec3( const glm::vec3 &v ) { x = v.x; y = v.y; z = v.z; }
-
-    __host__ __device__ __forceinline__
-    vec3& operator = ( const glm::vec3 &rhs ) { x = rhs.x; y = rhs.y; z = rhs.z; return *this; }
-
-    __host__ __device__ __forceinline__
     float& operator [] ( int i ) { return data[i]; }
 
     __host__ __device__ __forceinline__
     float operator [] ( int i ) const { return data[i]; }
-
-    __host__ __device__ __forceinline__
-    glm::vec3 toGLM() const { return glm::vec3( x, y, z ); }
 
     __host__ __device__ __forceinline__
     static float dot( const vec3 &a, const vec3 &b ) { return a.x*b.x + a.y*b.y + a.z*b.z; }
@@ -74,7 +62,7 @@ struct vec3
     static vec3 ceil( const vec3 &v ) { return vec3( ceilf(v.x), ceilf(v.y), ceilf(v.z) ); }
 
     __host__ __device__ __forceinline__
-    static vec3 abs( const vec3 &v ) { return vec3( fabs(v.x), fabs(v.y), fabs(v.z) ); }
+    static vec3 abs( const vec3 &v ) { return vec3( fabsf(v.x), fabsf(v.y), fabsf(v.z) ); }
 
     __host__ __device__ __forceinline__
     static vec3 round( const vec3 &v ) { return vec3( roundf(v.x), roundf(v.y), roundf(v.z) ); }
@@ -86,6 +74,12 @@ struct vec3
     //From http://stackoverflow.com/questions/1903954/is-there-a-standard-sign-function-signum-sgn-in-c-c
     __host__ __device__ __forceinline__
     static vec3 sign( const vec3 &v ) { return vec3(sign(v.x), sign(v.y), sign(v.z) );}
+
+    __host__ __device__ __forceinline__
+    static vec3 min( const vec3 &v, const vec3 &w ) { return vec3( fminf(v.x, w.x), fminf(v.y, w.y), fminf(v.z,w.z) ); }
+
+    __host__ __device__ __forceinline__
+    static vec3 max( const vec3 &v, const vec3 &w ) { return vec3( fmaxf(v.x, w.x), fmaxf(v.y, w.y), fmaxf(v.z,w.z) ); }
 
     __host__ __device__ __forceinline__
     static float length2( const vec3 &v ) { return v.x*v.x + v.y*v.y + v.z*v.z; }
@@ -131,8 +125,6 @@ struct vec3
 
     __host__ __device__ __forceinline__
     vec3 operator / ( float f ) const { float fi = 1.f/f; return vec3( x*fi, y*fi, z*fi ); }
-
-
 
 };
 
