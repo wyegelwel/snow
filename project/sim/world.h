@@ -5,6 +5,7 @@ struct WorldParams{
     float lambda; // first Lame parameter
     float mu; //second Lame paramter
     float xi; // Plastic hardening parameter
+    float coeffFriction; // Coefficient of friction
 };
 
 #endif // WORLD_H

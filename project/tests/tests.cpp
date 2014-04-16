@@ -20,6 +20,7 @@ extern "C"
     void weightingTestsHost();
     void svdTestsHost();
     void testColliding();
+    void testColliderNormal();
     void testGridMath();
 }
 
@@ -69,6 +70,7 @@ void Tests::runEricTests() {
 void Tests::runWilTests() {
     printf("running Wil Tests...\n");
     testColliding();
+    testColliderNormal();
     testGridMath();
     printf("done running Wil Tests\n");
 }

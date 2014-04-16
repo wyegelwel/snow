@@ -22,31 +22,32 @@
 
 extern "C"  {
     void testColliding();
+    void testColliderNormal();
     void testGridMath();
-}
 
+}
 
 // Collider
 #include <glm/geometric.hpp>
 #include "math.h"   // this imports the CUDA math library
 #include "sim/collider.h"
 
-
-typedef bool (*isCollidingFunc) (ImplicitCollider collider, glm::vec3 position);
+// isColliding functions
+typedef bool (*isCollidingFunc) (const ImplicitCollider &collider, const glm::vec3 &position);
 
 /**
  * A collision occurs when the point is on the OTHER side of the normal
  */
-__device__ bool isCollidingHalfPlane(glm::vec3 planePoint, glm::vec3 planeNormal, glm::vec3 position){
+__device__ bool isCollidingHalfPlane(const glm::vec3 &planePoint, const glm::vec3 &planeNormal, const glm::vec3 &position){
     glm::vec3 vecToPoint = position - planePoint;
-    return (glm::dot(vecToPoint, planeNormal) < 0);
+    return (glm::dot(vecToPoint, planeNormal) <= 0);
 }
 
 /**
  * Defines a halfplane such that collider.center is a point on the plane,
  * and collider.param is the normal to the plane.
  */
-__device__ bool isCollidingHalfPlaneImplicit(ImplicitCollider collider, glm::vec3 position){
+__device__ bool isCollidingHalfPlaneImplicit(const ImplicitCollider &collider, const glm::vec3 &position){
     return isCollidingHalfPlane(collider.center, collider.param, position);
 }
 
@@ -54,9 +55,9 @@ __device__ bool isCollidingHalfPlaneImplicit(ImplicitCollider collider, glm::vec
  * Defines a sphere such that collider.center is the center of the sphere,
  * and collider.param.x is the radius.
  */
-__device__ bool isCollidingSphereImplicit(ImplicitCollider collider, glm::vec3 position){
+__device__ bool isCollidingSphereImplicit(const ImplicitCollider &collider, const glm::vec3 &position){
     float radius = collider.param.x;
-    return (glm::length(position-collider.center) < radius);
+    return (glm::length(position-collider.center) <= radius);
 }
 
 
@@ -64,13 +65,57 @@ __device__ bool isCollidingSphereImplicit(ImplicitCollider collider, glm::vec3 p
 __device__ isCollidingFunc isCollidingFunctions[2] = {isCollidingHalfPlaneImplicit, isCollidingSphereImplicit};
 
 
-
-
 /**
  * General purpose function for handling colliders
  */
-__device__ bool isColliding(ImplicitCollider collider, glm::vec3 position){
+__device__ bool isColliding(const ImplicitCollider &collider, const glm::vec3 &position){
     return isCollidingFunctions[collider.type](collider, position);
+}
+
+
+// colliderNormal functions
+
+/**
+ * Returns the (normalized) normal of the collider at the position.
+ * Note: this function does NOT check that there is a collision at this point, and behavior is undefined if there is not.
+ */
+typedef void (*colliderNormalFunc) (const ImplicitCollider &collider, const glm::vec3 &position, glm::vec3 &normal);
+
+__device__ void colliderNormalSphere(const ImplicitCollider &collider, const glm::vec3 &position, glm::vec3 &normal){
+    normal = glm::normalize(position - collider.center);
+}
+
+__device__ void colliderNormalHalfPlane(const ImplicitCollider &collider, const glm::vec3 &position, glm::vec3 &normal){
+    normal = collider.param; //The halfplanes normal is stored in collider.param
+}
+
+/** array of colliderNormal functions. colliderNormalFunctions[collider.type] will be the correct function */
+__device__ colliderNormalFunc colliderNormalFunctions[2] = {colliderNormalHalfPlane, colliderNormalSphere};
+
+__device__ void colliderNormal(const ImplicitCollider &collider, const glm::vec3 &position, glm::vec3 &normal){
+    colliderNormalFunctions[collider.type](collider, position, normal);
+}
+
+__device__ void checkForAndHandleCollisions(ImplicitCollider *colliders, int numColliders, float coeffFriction, const glm::vec3 &position, glm::vec3 &velocity ){
+    for (int i = 0; i < numColliders; i++){
+        ImplicitCollider &collider = colliders[i];
+        if (isColliding(collider, position)){
+            glm::vec3 vRel = velocity - collider.velocity;
+            glm::vec3 normal;
+            colliderNormal(collider, position, normal);
+            float vn = glm::dot(vRel, normal);
+            if (vn < 0 ){ //Bodies are not separating and a collision must be applied
+                glm::vec3 vt = vRel - normal*vn;
+                float magVt = glm::length(vt);
+                if (magVt <= -coeffFriction*vn){ // tangential velocity not enough to overcome force of friction
+                    vRel = glm::vec3(0);
+                } else{
+                    vRel = (1+coeffFriction*vn/magVt)*vt;
+                }
+            }
+            velocity = vRel + collider.velocity;
+        }
+    }
 }
 
 // Grid math
@@ -151,6 +196,52 @@ __global__ void computeCellMassVelocityAndForce(Particle *particleData, Grid *gr
     }
 }
 
+/**
+ * Called on each grid node.
+ *
+ * Updates the velocities of each grid node based on forces and collisions
+ *
+ * In:
+ * nodes -- list of all nodes in the grid.
+ * dt -- delta time, time step of simulation
+ * colliders -- array of colliders in the scene.
+ * numColliders -- number of colliders in the scene
+ * worldParams -- Global parameters dealing with the physics of the world
+ * grid -- parameters defining the grid
+ *
+ * Out:
+ * nodes -- updated velocity and velocityChange
+ *
+ */
+__global__ void updateVelocities(ParticleGrid::Node *nodes, float dt, ImplicitCollider* colliders, int numColliders, WorldParams *worldParams, Grid *grid){
+    int nodeIdx = blockIdx.x*blockDim.x + threadIdx.x;
+    int gridI, gridJ, gridK;
+    gridIndexToIJK(nodeIdx, gridI, gridJ, gridK, grid);
+    ParticleGrid::Node &node = nodes[nodeIdx];
+    glm::vec3 nodePosition = glm::vec3(gridI, gridJ, gridK)*grid->h + grid->pos;
+
+    glm::vec3 tmpVelocity = node.velocity + dt*(node.force/node.mass);
+    checkForAndHandleCollisions(colliders, numColliders, worldParams->coeffFriction, nodePosition, tmpVelocity);
+    node.velocityChange = tmpVelocity - node.velocity;
+    node.velocity = tmpVelocity;
+}
+
+/**
+ * Updates the grid's nodes for this time step. First computes the mass, velocity and force acting on the grid
+ * using a kernel over the particles and then updates the velocity in a second kernel over the grid nodes.
+ * @param particleData
+ * @param grid
+ * @param worldParams
+ * @param nodes
+ * @param dt
+ * @param colliders
+ * @param numColliders
+ */
+void gridMath(Particle *particleData, int numParticles, Grid *grid, WorldParams *worldParams, ParticleGrid::Node *nodes,
+              float dt, ImplicitCollider* colliders, int numColliders){
+    computeCellMassVelocityAndForce<<< numParticles / 512, 512 >>>(particleData, grid, worldParams, nodes);
+    updateVelocities<<< grid->nodeCount() / 512, 512 >>>(nodes, dt, colliders, numColliders, worldParams, grid);
+}
 
 
 // Begin testing code:
@@ -193,32 +284,32 @@ __global__ void testHalfPlaneColliding(){
 
 __global__ void testSphereColliding(){
     printf("\nTesting sphere colliding:\n");
-    ImplicitCollider SpherePlane;
-    SpherePlane.center = glm::vec3(0,0,0);
-    SpherePlane.param = glm::vec3(1,0,0);
-    SpherePlane.type = SPHERE;
+    ImplicitCollider sphereCollider;
+    sphereCollider.center = glm::vec3(0,0,0);
+    sphereCollider.param = glm::vec3(1,0,0);
+    sphereCollider.type = SPHERE;
 
-    if (isColliding(SpherePlane, glm::vec3(1,1,1))){ //expect no collision
+    if (isColliding(sphereCollider, glm::vec3(1,1,1))){ //expect no collision
         printf("\t[FAILED]: Simple non-colliding test\n");
     } else{
         printf("\t[PASSED]: Simple non-colliding test\n");
     }
-    if (!isColliding(SpherePlane, glm::vec3(.5,0,0))){ // expect collision
+    if (!isColliding(sphereCollider, glm::vec3(.5,0,0))){ // expect collision
         printf("\t[FAILED]: Simple colliding test\n");
     } else{
         printf("\t[PASSED]: Simple colliding test\n");
     }
 
-    SpherePlane.center = glm::vec3(0,10,0);
-    SpherePlane.param = glm::vec3(3.2,0,0);
-    SpherePlane.type = HALF_PLANE;
+    sphereCollider.center = glm::vec3(0,10,0);
+    sphereCollider.param = glm::vec3(3.2,0,0);
+    sphereCollider.type = SPHERE;
 
-    if (isColliding(SpherePlane, glm::vec3(0,0,0))){ //expect no collision
+    if (isColliding(sphereCollider, glm::vec3(0,0,0))){ //expect no collision
         printf("\t[FAILED]: Non-colliding test \n");
     } else{
         printf("\t[PASSED]: Non-colliding test \n");
     }
-    if (!isColliding(SpherePlane, glm::vec3(-1,10,-1))){ // expect collision
+    if (!isColliding(sphereCollider, glm::vec3(-1,10,-1))){ // expect collision
         printf("\t[FAILED]: Colliding test\n");
     } else{
         printf("\t[PASSED]: Colliding test\n");
@@ -231,6 +322,84 @@ __global__ void testSphereColliding(){
 void testColliding(){
     testHalfPlaneColliding<<<1,1>>>();
     testSphereColliding<<<1,1>>>();
+    cudaDeviceSynchronize();
+}
+
+__host__ __device__ bool operator==(const glm::vec3 &vecA, const glm::vec3 &vecB)
+{
+   const double epsilion = 0.0001;  // choose something apprpriate.
+
+   return    std::fabs(vecA[0] -vecB[0]) < epsilion
+          && std::fabs(vecA[1] -vecB[1]) < epsilion
+          && std::fabs(vecA[2] -vecB[2]) < epsilion;
+}
+
+__global__ void testHalfPlaneColliderNormal(){
+    printf("\nTesting half plane colliderNormal:\n");
+    ImplicitCollider halfPlane;
+    halfPlane.center = glm::vec3(0,0,0);
+    halfPlane.param = glm::vec3(0,1,0);
+    halfPlane.type = HALF_PLANE;
+
+
+    glm::vec3 normal;
+    glm::vec3 expected = glm::vec3(0,1,0);
+    colliderNormal(halfPlane, glm::vec3(1,-.001, 1), normal);
+    if (normal == expected){
+        printf("\t[PASSED]: Simple colliderNormal test on half plane \n");
+    } else{
+        printf("\t[FAILED]: Simple colliderNormal test on halfplane \n");
+    }
+
+    halfPlane.center = glm::vec3(0,10,0);
+    halfPlane.param = glm::vec3(1,1,0);
+    halfPlane.type = HALF_PLANE;
+
+    expected = glm::vec3(1,1,0);
+    colliderNormal(halfPlane, glm::vec3(0,9.999, 0), normal);
+    if (expected == normal){
+        printf("\t[PASSED]: colliderNormal test on half plane \n");
+    } else{
+        printf("\t[FAILED]: colliderNormal test on halfplane \n");
+    }
+
+    printf("Done testing half plane colliderNormal\n\n");
+}
+
+__global__ void testSphereColliderNormal(){
+    printf("\nTesting sphere colliderNormal:\n");
+    ImplicitCollider sphereCollider;
+    sphereCollider.center = glm::vec3(0,0,0);
+    sphereCollider.param = glm::vec3(1,0,0);
+    sphereCollider.type = SPHERE;
+
+    glm::vec3 normal;
+    glm::vec3 expected = glm::normalize(glm::vec3(1.0f));
+    colliderNormal(sphereCollider, glm::vec3(.1f), normal);
+    if (normal == expected){
+        printf("\t[PASSED]: Simple colliderNormal test\n");
+    } else{
+        printf("\t[FAILED]: Simple colliderNormal test\n");
+    }
+
+    sphereCollider.center = glm::vec3(0,10,0);
+    sphereCollider.param = glm::vec3(3.2,0,0);
+    sphereCollider.type = SPHERE;
+
+    expected = glm::vec3(0,1,0);
+    colliderNormal(sphereCollider, glm::vec3(0,11,0), normal);
+    if (normal == expected){
+        printf("\t[PASSED]: colliderNormal test \n");
+    } else{
+       printf("\t[FAILED]: colliderNormal test \n");
+    }
+
+    printf("Done testing sphere colliderNormal\n\n");
+}
+
+void testColliderNormal(){
+    testHalfPlaneColliderNormal<<<1,1>>>();
+    testSphereColliderNormal<<<1,1>>>();
     cudaDeviceSynchronize();
 }
 
@@ -308,6 +477,164 @@ __global__ void testComputeSigma(){
 
     printf("\tDone testing compute sigma \n");
 }
+
+
+
+__global__ void testCheckForAndHandleCollisions(){
+    printf("\tTesting checkAndHandleCollisions\n");
+    glm::vec3 position = glm::vec3(0,0,0);
+    glm::vec3 velocity = glm::vec3(0,-1,-1);
+
+    ImplicitCollider floor;
+    floor.center = glm::vec3(0,0,0);
+    floor.param = glm::vec3(0,1,0);
+    floor.type = HALF_PLANE;
+
+    ImplicitCollider colliders[1] = {floor};
+
+    float coeffFriction = .5;
+
+    checkForAndHandleCollisions(colliders, 1, coeffFriction, position, velocity);
+    glm::vec3 expected = glm::vec3(0,0,-.5);
+
+    if (velocity == expected){
+        printf("\t\t[PASSED]: Simple checkAndHandleCollisions test\n");
+    } else{
+        printf("\t\t[FAILED]: Simple checkAndHandleCollisions test\n");
+        printf("\t\t\tActual: (%f, %f, %f)  Expected: (%f, %f, %f)\n", velocity.x, velocity.y, velocity.z, expected.x, expected.y, expected.z);
+    }
+
+    velocity = glm::vec3(0,-1,-1);
+    coeffFriction = 100000;
+    checkForAndHandleCollisions(colliders, 1, coeffFriction, position, velocity);
+    expected = glm::vec3(0,0,0);
+
+    if (velocity == expected){
+        printf("\t\t[PASSED]: Simple high friction checkAndHandleCollisions test\n");
+    } else{
+        printf("\t\t[FAILED]: Simple high friction checkAndHandleCollisions test\n");
+        printf("\t\t\tActual: (%f, %f, %f)  Expected: (%f, %f, %f)\n", velocity.x, velocity.y, velocity.z, expected.x, expected.y, expected.z);
+    }
+
+    ImplicitCollider sphere;
+    sphere.center = glm::vec3(0,5,0);
+    sphere.param = glm::vec3(1,1,0);
+    sphere.type = SPHERE;
+
+    ImplicitCollider colliders2[2] = {floor, sphere};
+
+    position = glm::vec3(0,4,0);
+    velocity = glm::vec3(.5,1,-1);
+    coeffFriction = .5;
+    checkForAndHandleCollisions(colliders2, 2, coeffFriction, position, velocity);
+    expected = glm::vec3(.2764,0,-.5528);
+
+    if (velocity == expected){
+        printf("\t\t[PASSED]: Simple multiple colliders checkAndHandleCollisions test\n");
+    } else{
+        printf("\t\t[FAILED]: Simple multiple colliders checkAndHandleCollisions test\n");
+        printf("\t\t\tActual: (%f, %f, %f)  Expected: (%f, %f, %f)\n", velocity.x, velocity.y, velocity.z, expected.x, expected.y, expected.z);
+    }
+
+    position = glm::vec3(0,4,0);
+    velocity = glm::vec3(.5,-1,-1);
+    coeffFriction = .5;
+    checkForAndHandleCollisions(colliders2, 2, coeffFriction, position, velocity);
+    expected = glm::vec3(.5,-1,-1);
+
+    if (velocity == expected){
+        printf("\t\t[PASSED]: Simple bodies are separating checkAndHandleCollisions test\n");
+    } else{
+        printf("\t\t[FAILED]: Simple bodies are separating checkAndHandleCollisions test\n");
+        printf("\t\t\tActual: (%f, %f, %f)  Expected: (%f, %f, %f)\n", velocity.x, velocity.y, velocity.z, expected.x, expected.y, expected.z);
+    }
+
+    position = glm::vec3(0,100,0);
+    velocity = glm::vec3(.5,-1,-1);
+    coeffFriction = .5;
+    checkForAndHandleCollisions(colliders2, 2, coeffFriction, position, velocity);
+    expected = glm::vec3(.5,-1,-1);
+
+    if (velocity == expected){
+        printf("\t\t[PASSED]: Simple no collision checkAndHandleCollisions test\n");
+    } else{
+        printf("\t\t[FAILED]: Simple no collision checkAndHandleCollisions test\n");
+        printf("\t\t\tActual: (%f, %f, %f)  Expected: (%f, %f, %f)\n", velocity.x, velocity.y, velocity.z, expected.x, expected.y, expected.z);
+    }
+
+    printf("\tDone testing checkAndHandleCollisions\n");
+    
+}
+
+
+//__global__ void updateVelocities(ParticleGrid::Node *nodes, float dt, ImplicitCollider* colliders,
+//                                  int numColliders, WorldParams *worldParams, Grid *grid){
+//    int nodeIdx = blockIdx.x*blockDim.x + threadIdx.x;
+//    int gridI, gridJ, gridK;
+//    gridIndexToIJK(nodeIdx, gridI, gridJ, gridK, grid);
+//    ParticleGrid::Node &node = nodes[nodeIdx];
+//    glm::vec3 nodePosition = glm::vec3(gridI, gridJ, gridK)*grid->h + grid->pos;
+
+//    glm::vec3 tmpVelocity = node.velocity + dt*(node.force/node.mass);
+//    checkForAndHandleCollisions(colliders, numColliders, worldParams->coeffFriction, nodePosition, tmpVelocity);
+//    node.velocityChange = tmpVelocity - node.velocity;
+//    node.velocity = tmpVelocity;
+//}
+
+//__global__ void updateVelocitiesTest(){
+//    printf("\tTesting updateVelocities");
+
+//    Grid grid;
+//    grid.dim = glm::vec3(1,0,0);
+//    grid.h = 1;
+
+//    float dt = 1;
+
+//    ParticleGrid::Node nodes[2];
+//    //nodes[0].position = glm::vec3(0,0,0), implicitly by index
+//    nodes[0].mass = 1;
+//    nodes[0].force = glm::vec3(1,1,1);
+//    nodes[0].velocity = glm::vec3(0,1,0);
+
+//    //nodes[1].position = glm::vec3(1,0,0), implicitly by index
+//    nodes[1].mass = 2;
+//    nodes[1].force = glm::vec3(0,4,0);
+//    nodes[1].velocity = glm::vec3(0,0,0);
+
+
+//    ImplicitCollider sphere;
+//    sphere.center = glm::vec3(1,1,0);
+//    sphere.param = glm::vec3(1,0,0);
+//    sphere.type = SPHERE;
+//    ImplicitCollider colliders[1] = {sphere};
+
+//    WorldParams wp;
+//    wp.coeffFriction = .5;
+
+
+//    updateVelocities<<<2,1>>>(nodes, dt, colliders, 1, &wp, &grid);
+
+//    glm::vec3 node0VExpected = glm::vec3(1,2,1);
+//    if (nodes[0].velocity == node0VExpected){
+//        printf("\t\t[PASSED]: Simple no collision updateVelocities test\n");
+//    } else{
+//        printf("\t\t[FAILED]: Simple no collision updateVelocities test\n");
+//        glm::vec3 expected = node0VExpected;
+//        glm::vec3 velocity = nodes[0].velocity;
+//        printf("\t\t\tActual: (%f, %f, %f)  Expected: (%f, %f, %f)\n", velocity.x, velocity.y, velocity.z, expected.x, expected.y, expected.z);
+//    }
+
+//    glm::vec3 node1VExpected = glm::vec3(0,0,0);
+//    if (nodes[1].velocity == node0VExpected){
+//        printf("\t\t[PASSED]: Simple no collision updateVelocities test\n");
+//    } else{
+//        printf("\t\t[FAILED]: Simple no collision updateVelocities test\n");
+//        glm::vec3 expected = node1VExpected;
+//        glm::vec3 velocity = nodes[1].velocity;
+//        printf("\t\t\tActual: (%f, %f, %f)  Expected: (%f, %f, %f)\n", velocity.x, velocity.y, velocity.z, expected.x, expected.y, expected.z);
+//    }
+//    printf("\tDone testing updateVelocities");
+//}
 
 //Particle *particleData, Grid *grid, ParticleGrid::Node *nodes, WorldParams *worldParams
 
@@ -387,12 +714,84 @@ void testGridMath(){
     cudaFree(dev_nodes);
 
     checkCudaErrors(cudaDeviceSynchronize());
-
-
-
-
     printf("\tDone testing computeCellMassVelocityAndForce()\n");
 
+
+    testCheckForAndHandleCollisions<<<1,1>>>();
+    checkCudaErrors(cudaDeviceSynchronize());
+
+
+    printf("\tTesting updateVelocities\n");
+
+    grid.dim = glm::vec3(1,0,0);
+    grid.h = 1;
+
+    float dt = 1;
+
+    ParticleGrid::Node nodes2[2];
+    //nodes[0].position = glm::vec3(0,0,0), implicitly by index
+    nodes2[0].mass = 1;
+    nodes2[0].force = glm::vec3(1,1,1);
+    nodes2[0].velocity = glm::vec3(0,1,0);
+
+    //nodes[1].position = glm::vec3(1,0,0), implicitly by index
+    nodes2[1].mass = 2;
+    nodes2[1].force = glm::vec3(0,4,0);
+    nodes2[1].velocity = glm::vec3(0,0,0);
+
+
+    ImplicitCollider sphere;
+    sphere.center = glm::vec3(1,1,0);
+    sphere.param = glm::vec3(1,0,0);
+    sphere.type = SPHERE;
+    ImplicitCollider colliders[1] = {sphere};
+
+    wp.coeffFriction = .5;
+
+    ImplicitCollider *dev_colliders;
+
+    checkCudaErrors(cudaMalloc((void**) &dev_colliders, sizeof(ImplicitCollider)));
+    checkCudaErrors(cudaMemcpy(dev_colliders,&colliders,sizeof(ImplicitCollider),cudaMemcpyHostToDevice));
+
+    checkCudaErrors(cudaMalloc((void**) &dev_grid, sizeof(Grid)));
+    checkCudaErrors(cudaMemcpy(dev_grid,&grid,sizeof(Grid),cudaMemcpyHostToDevice));
+
+    checkCudaErrors(cudaMalloc((void**) &dev_wp, sizeof(WorldParams)));
+    checkCudaErrors(cudaMemcpy(dev_wp,&wp,sizeof(WorldParams),cudaMemcpyHostToDevice));
+
+    checkCudaErrors(cudaMalloc((void**) &dev_nodes, grid.nodeCount()*sizeof(ParticleGrid::Node)));
+    checkCudaErrors(cudaMemcpy(dev_nodes,&nodes2,grid.nodeCount()*sizeof(ParticleGrid::Node),cudaMemcpyHostToDevice));
+
+    updateVelocities<<<2,1>>>(dev_nodes, dt, dev_colliders, 1, dev_wp, dev_grid);
+
+    checkCudaErrors(cudaMemcpy(nodes2,dev_nodes,grid.nodeCount()*sizeof(ParticleGrid::Node),cudaMemcpyDeviceToHost));
+
+    glm::vec3 node0VExpected = glm::vec3(1,2,1);
+    if (nodes2[0].velocity == node0VExpected){
+        printf("\t\t[PASSED]: Simple no collision updateVelocities test\n");
+    } else{
+        printf("\t\t[FAILED]: Simple no collision updateVelocities test\n");
+        glm::vec3 expected = node0VExpected;
+        glm::vec3 velocity = nodes2[0].velocity;
+        printf("\t\t\tActual: (%f, %f, %f)  Expected: (%f, %f, %f)\n", velocity.x, velocity.y, velocity.z, expected.x, expected.y, expected.z);
+    }
+
+    glm::vec3 node1VExpected = glm::vec3(0,0,0);
+    if (nodes2[1].velocity == node1VExpected){
+        printf("\t\t[PASSED]: Simple no collision updateVelocities test\n");
+    } else{
+        printf("\t\t[FAILED]: Simple no collision updateVelocities test\n");
+        glm::vec3 expected = node1VExpected;
+        glm::vec3 velocity = nodes2[1].velocity;
+        printf("\t\t\tActual: (%f, %f, %f)  Expected: (%f, %f, %f)\n", velocity.x, velocity.y, velocity.z, expected.x, expected.y, expected.z);
+    }
+
+    cudaFree(dev_colliders);
+    cudaFree(dev_grid);
+    cudaFree(dev_wp);
+    cudaFree(dev_nodes);
+
+    printf("\tDone testing updateVelocities");
 
     printf("Done testing grid math\n");
 
