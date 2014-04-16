@@ -11,17 +11,30 @@
 #ifndef PARTICLE_H
 #define PARTICLE_H
 
-#include <glm/vec3.hpp>
-#include <glm/mat3x3.hpp>
+#ifdef CUDA_INCLUDE
+    #include "cuda/vector.cu"
+    #include "cuda/matrix.cu"
+#else
+    #include <glm/vec3.hpp>
+    #include <glm/mat3x3.hpp>
+#endif
 
 struct Particle
 {
-    glm::vec3 position;
-    glm::vec3 velocity;
+#ifdef CUDA_INCLUDE
+    typedef vec3 vector_type;
+    typedef mat3 matrix_type;
+#else
+    typedef glm::vec3 vector_type;
+    typedef glm::mat3 matrix_type;
+#endif
+
+    vector_type position;
+    vector_type velocity;
     float mass;
     float volume;
-    glm::mat3 elasticF;
-    glm::mat3 plasticF;
+    matrix_type elasticF;
+    matrix_type plasticF;
 #ifndef CUDA_INCLUDE
     Particle() : elasticF(1.f), plasticF(1.f) {}
 #endif

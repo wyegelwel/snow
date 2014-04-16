@@ -12,11 +12,12 @@
 #define GRID_H
 
 #include "glm/vec3.hpp"
+#include "cuda/vector.cu"
 
 struct Grid
 {
     glm::ivec3 dim;
-    glm::vec3 pos;
+    vec3 pos;
     float h;
 
     inline glm::ivec3 nodeDim() const {return dim+1;}

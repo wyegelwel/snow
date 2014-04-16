@@ -11,6 +11,8 @@
 #ifndef FUNCTIONS_H
 #define FUNCTIONS_H
 
+typedef unsigned int GLuint;
+struct cudaGraphicsResource;
 struct Grid;
 struct Particle;
 

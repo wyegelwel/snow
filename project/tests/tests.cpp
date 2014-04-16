@@ -20,6 +20,8 @@ extern "C"
     void weightingTestsHost();
     void svdTestsHost();
     void testColliding();
+    void testColliderNormal();
+    void grid2ParticlesTests();
     void testGridMath();
 }
 
@@ -54,26 +56,28 @@ void Tests::runTests(char *argv[])  {
 
 void Tests::runTimTests()  {
     printf("running Tim Tests...\n");
-    //cumulativeSumTests();
-    //groupParticlesTests();
+//    cumulativeSumTests();
+//    groupParticlesTests();
     printf("done running Tim Tests\n");
 }
 
 void Tests::runEricTests() {
     printf("running Eric Tests...\n");
-    //svdTestsHost();
-    //weightingTestsHost();
+//    svdTestsHost();
+//    weightingTestsHost();
     printf("done running Eric Tests\n");
 }
 
 void Tests::runWilTests() {
     printf("running Wil Tests...\n");
-    testColliding();
-    testGridMath();
+//    testColliderNormal();
+//    testColliding();
+//    testGridMath();
     printf("done running Wil Tests\n");
 }
 
 void Tests::runMaxTests() {
     printf("\nRunning Max Tests...\n");
+    grid2ParticlesTests();
     printf("Done running Max Tests.\n");
 }

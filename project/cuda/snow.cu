@@ -36,7 +36,7 @@ void unregisterVBO( cudaGraphicsResource *resource )
 __global__ void snow_kernel( float time, Particle *particles )
 {
     int index = blockIdx.x*blockDim.x + threadIdx.x;
-    glm::vec3 pn = glm::normalize( particles[index].position );
+    vec3 pn = vec3::normalize( particles[index].position );
     particles[index].position += 0.05f*sinf(6*time)*pn;
 }
 

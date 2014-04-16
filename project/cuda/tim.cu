@@ -52,10 +52,10 @@ __host__ __device__ int getGridIndex( int i, int j, int k, Grid* grid)  {
 }
 
 
-__host__ __device__ void positionToGridIJK(glm::vec3 pos, Grid *grid, glm::ivec3 &gridIJK){
+__host__ __device__ void positionToGridIJK(vec3 pos, Grid *grid, glm::ivec3 &gridIJK){
     pos-=grid->pos;
     pos/=grid->h;
-    pos = glm::round(pos);
+    pos = vec3::round(pos);
     gridIJK = glm::ivec3((int) pos.x, (int) pos.y, (int) pos.z);
 }
 

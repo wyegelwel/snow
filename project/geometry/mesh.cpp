@@ -12,6 +12,7 @@
 
 #include <GL/gl.h>
 #include <glm/geometric.hpp>
+#include <glm/mat4x4.hpp>
 #include <glm/gtc/random.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
@@ -68,8 +69,8 @@ Mesh::computeNormals()
         const Vertex &v0 = m_vertices[tri[0]];
         const Vertex &v1 = m_vertices[tri[1]];
         const Vertex &v2 = m_vertices[tri[2]];
-        Normal n = glm::cross(v1-v0, v2-v0);
-        triAreas[i] = glm::length(n)/2.f;
+        Normal n = vec3::cross(v1-v0, v2-v0);
+        triAreas[i] = vec3::length(n)/2.f;
         triNormals[i] = 2.f*n/triAreas[i];
         // Record triangle membership for each vertex
         vertexMembership[tri[0]] += i;
@@ -174,7 +175,7 @@ Mesh::buildVBO()
     deleteVBO();
 
     // Create flat array of non-indexed triangles
-    glm::vec3 *data = new glm::vec3[6*getNumTris()];
+    vec3 *data = new vec3[6*getNumTris()];
     for ( int i = 0, index = 0; i < getNumTris(); ++i ) {
         const Tri &tri = m_tris[i];
         data[index++] = m_vertices[tri[0]];
@@ -188,7 +189,7 @@ Mesh::buildVBO()
     // Build OpenGL VBO
     glGenBuffers( 1, &m_glVBO );
     glBindBuffer( GL_ARRAY_BUFFER, m_glVBO );
-    glBufferData( GL_ARRAY_BUFFER, 6*getNumTris()*sizeof(glm::vec3), data, GL_STATIC_DRAW );
+    glBufferData( GL_ARRAY_BUFFER, 6*getNumTris()*sizeof(vec3), data, GL_STATIC_DRAW );
     glBindBuffer( GL_ARRAY_BUFFER, 0 );
 
     // Register with CUDA
@@ -224,8 +225,8 @@ Mesh::getWorldBBox( const glm::mat4 &transform ) const
     BBox box;
     for ( int i = 0; i < getNumVertices(); ++i ) {
         const Vertex &v = m_vertices[i];
-        glm::vec4 point = transform * glm::vec4( v, 1.f );
-        box += glm::vec3(point.x, point.y, point.z);
+        glm::vec4 point = transform * glm::vec4( v.x, v.y, v.z, 1.f );
+        box += vec3( point.x, point.y, point.z );
     }
     return box;
 }

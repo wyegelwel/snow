@@ -19,42 +19,46 @@
 #include <helper_cuda.h>
 #include <helper_cuda_gl.h>
 
-#include "glm/common.hpp"
-#include "glm/geometric.hpp"
+#include "cuda/vector.cu"
 
 #define CUDA_INCLUDE
 #include "common/common.h"
 #include "common/math.h"
 #include "cuda/functions.h"
-#include "geometry/mesh.h"
 #include "sim/particle.h"
 #include "geometry/grid.h"
+
+struct Tri {
+    vec3 v0, n0;
+    vec3 v1, n1;
+    vec3 v2, n2;
+};
 
 /*
  * Moller, T, and Trumbore, B. Fast, Minimum Storage Ray/Triangle Intersection.
  */
-__device__ bool intersectTri( const glm::vec3 &rayO, const glm::vec3 &rayD,
-                              const glm::vec3 &v0, const glm::vec3 &v1, const glm::vec3 &v2,
+__device__ bool intersectTri( const vec3 &rayO, const vec3 &rayD,
+                              const vec3 &v0, const vec3 &v1, const vec3 &v2,
                               float &t )
 {
-    glm::vec3 e0 = v1 - v0;
-    glm::vec3 e1 = v2 - v0;
+    vec3 e0 = v1 - v0;
+    vec3 e1 = v2 - v0;
 
-    glm::vec3 pVec = glm::cross( rayD, e1 );
-    float det = glm::dot( e0, pVec );
+    vec3 pVec = vec3::cross( rayD, e1 );
+    float det = vec3::dot( e0, pVec );
     if ( fabsf(det) < 1e-8 ) return false;
 
     float invDet = 1.f / det;
 
-    glm::vec3 tVec = rayO - v0;
-    float u = glm::dot( tVec, pVec ) * invDet;
+    vec3 tVec = rayO - v0;
+    float u = vec3::dot( tVec, pVec ) * invDet;
     if ( u < 0.f || u > 1.f ) return false;
 
-    glm::vec3 qVec = glm::cross( tVec, e0 );
-    float v = glm::dot( rayD, qVec ) * invDet;
+    vec3 qVec = vec3::cross( tVec, e0 );
+    float v = vec3::dot( rayD, qVec ) * invDet;
     if ( v < 0.f || v > 1.f ) return false;
 
-    t = glm::dot( e1, qVec ) * invDet;
+    t = vec3::dot( e1, qVec ) * invDet;
     return t > 0.f;
 }
 
@@ -68,8 +72,8 @@ __global__ void voxelizeMeshKernel( Tri *tris, int triCount, Grid grid, bool *fl
     if ( y >= dim.y ) return;
 
     // Shoot ray in z-direction
-    glm::vec3 origin = grid.pos + grid.h * glm::vec3( x+0.5f, y+0.5f, 0.f );
-    glm::vec3 direction = glm::vec3( 0.f, 0.f, 1.f );
+    vec3 origin = grid.pos + grid.h * vec3( x+0.5f, y+0.5f, 0.f );
+    vec3 direction = vec3( 0.f, 0.f, 1.f );
 
     // Flag surface-intersecting voxels
     float t;
@@ -119,9 +123,9 @@ __global__ void fillMeshVoxelsKernel( curandState *states, unsigned int seed, Gr
     unsigned int z = i - y*dim.z - x*dim.y*dim.z;
 
     // Generate random point in voxel cube
-    glm::vec3 r = glm::vec3( curand_uniform(&localState), curand_uniform(&localState), curand_uniform(&localState) );
-    glm::vec3 min = grid.pos + grid.h * glm::vec3( x, y, z );
-    glm::vec3 max = min + glm::vec3( grid.h, grid.h, grid.h );
+    vec3 r = vec3( curand_uniform(&localState), curand_uniform(&localState), curand_uniform(&localState) );
+    vec3 min = grid.pos + grid.h * vec3( x, y, z );
+    vec3 max = min + vec3( grid.h, grid.h, grid.h );
     particles[tid].position = min + r*(max-min);
 }
 
