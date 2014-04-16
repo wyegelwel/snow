@@ -112,15 +112,15 @@ void svdTestsHost()
 
 /// EVERYTHING BELOW THIS IS RELATED TO THE WEIGHTING FUNCTIONS
 
-__global__ void weightTestKernel(float h, glm::vec3 ijk, glm::vec3 xp, float w_expected, glm::vec3 wg_expected)
+__global__ void weightTestKernel(float h, vec3 ijk, vec3 xp, float w_expected, vec3 wg_expected)
 {
     // generate some points
-    glm::vec3 g = ijk*h; // grid
-    glm::vec3 dx = glm::abs(xp-g);
+    vec3 g = ijk*h; // grid
+    vec3 dx = vec3::abs(xp-g);
 
     float w;
     weight(dx,h,w);
-    glm::vec3 wg;
+    vec3 wg;
     weightGradient(xp,dx,h,wg);
 
     // TODO - compare the values
@@ -150,7 +150,7 @@ __global__ void weightTestKernel(float h, glm::vec3 ijk, glm::vec3 xp, float w_e
 }
 
 
-void weightTest(float h, glm::vec3 ijk, glm::vec3 xp, float w_expected, glm::vec3 wg_expected)
+void weightTest(float h, vec3 ijk, vec3 xp, float w_expected, vec3 wg_expected)
 {
     weightTestKernel<<<1,1>>>(h,ijk,xp,w_expected,wg_expected);
     cudaDeviceSynchronize();
@@ -162,38 +162,38 @@ void weightingTestsHost()
     printf("beginning tests...\n");
 
     float h,w_expected;
-    glm::vec3 ijk, xp,wg_expected;
+    vec3 ijk, xp,wg_expected;
 
     // TEST 1
     h = .1;
-    ijk=glm::vec3(0,0,0);
-    xp=glm::vec3(0,0,0);
+    ijk=vec3(0,0,0);
+    xp=vec3(0,0,0);
     w_expected =  0.2962962;
-    wg_expected=glm::vec3 (0,0,0);
+    wg_expected=vec3 (0,0,0);
     weightTest(h,ijk,xp,w_expected,wg_expected);
 
     // TEST 2
     h = .013;
-    ijk=glm::vec3(12,10,3);
-    xp=glm::vec3(4,4,.1);
+    ijk=vec3(12,10,3);
+    xp=vec3(4,4,.1);
     w_expected = 0;
-    wg_expected=glm::vec3 (0,0,0);
+    wg_expected=vec3 (0,0,0);
     weightTest(h,ijk,xp,w_expected,wg_expected);
 
     // TEST 3
     h=1;
-    ijk=glm::vec3(5,5,5);
-    xp=glm::vec3(5,4.5,4.9);
+    ijk=vec3(5,5,5);
+    xp=vec3(5,4.5,4.9);
     w_expected = 0.2099282;
-    wg_expected=glm::vec3(0,-0.2738194,-0.05909722);
+    wg_expected=vec3(0,-0.2738194,-0.05909722);
     weightTest(h,ijk,xp,w_expected,wg_expected);
 
     // TEST 4
     h=1;
-    ijk=glm::vec3(1,2,3);
-    xp=glm::vec3(1.1,2.2,3.3);
+    ijk=vec3(1,2,3);
+    xp=vec3(1.1,2.2,3.3);
     w_expected = 0.2445964;
-    wg_expected=glm::vec3 (-0.068856712,-0.13186487278,-0.192720697);
+    wg_expected=vec3 (-0.068856712,-0.13186487278,-0.192720697);
     weightTest(h,ijk,xp,w_expected,wg_expected);
 }
 
