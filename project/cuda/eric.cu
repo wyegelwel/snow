@@ -92,15 +92,13 @@ __global__ void svdTest( const mat3 A )
     printMat3(P);
 
 
+
 }
 
 void svdTestsHost()
 {
     // multiple calls to svdTest
     glm::mat3 A;
-    glm::mat3 U_e;
-    glm::mat3 S_e;
-    glm::mat3 V_e;
     // TEST 1
     A = glm::mat3(-0.558253  ,  -0.0461681   ,  -0.505735,
                   -0.411397 ,    0.0365854   ,   0.199707,

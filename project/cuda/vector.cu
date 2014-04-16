@@ -30,7 +30,7 @@ struct vec3
     vec3() { x = 0.f; y = 0.f; z = 0.f; }
 
     __host__ __device__ __forceinline__
-    vec3( float a, float b, float c ) { x = a; y = b; z = c; }
+    vec3( float xx, float yy, float zz ) { x = xx; y = yy; z = zz; }
 
     __host__ __device__ __forceinline__
     vec3( const vec3 &v ) { x = v.x; y = v.y; z = v.z; }
@@ -43,6 +43,12 @@ struct vec3
 
     __host__ __device__ __forceinline__
     vec3& operator = ( const glm::vec3 &rhs ) { x = rhs.x; y = rhs.y; z = rhs.z; return *this; }
+
+    __host__ __device__ __forceinline__
+    float& operator [] ( int i ) { return data[i]; }
+
+    __host__ __device__ __forceinline__
+    float operator [] ( int i ) const { return data[i]; }
 
     __host__ __device__ __forceinline__
     glm::vec3 toGLM() const { return glm::vec3( x, y, z ); }

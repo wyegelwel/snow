@@ -100,6 +100,7 @@ OTHER_FILES += \
     cuda/weighting.cu \
     cuda/matrix.cu \
     cuda/vector.cu \
+    cuda/quaternion.cu
 
 # GPU ARCH
 # this gets passed as the gpu-architecture flag to nvcc compiler

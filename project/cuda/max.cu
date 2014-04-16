@@ -255,6 +255,9 @@ __global__ void matrixTestKernel()
     mat3 expected = mat3::transpose(mat3(80, 20, 90, 40, 10, 45, 8, 2, 9));
     TESTTHIS( mat3::equals(expected, M) );
 
+    printf( "    Testing determinant: " );
+    TESTTHIS( mat3::determinant(mat3(4,0,2,0,2,0,1,0,1)) == 4.f );
+
     printf( "    FAILED %d TESTS (OUT OF %d)\n", failed, failed+passed );
 
 }
@@ -500,8 +503,8 @@ __host__ void timeTests()
     for ( int i = 0; i < nBlocks; ++i ) {
         error = cudaMemcpy( devParticles, particles, nParticles*sizeof(Particle), cudaMemcpyHostToDevice );
         error = cudaMemcpy( devNodes, nodes, (dim+1)*(dim+1)*(dim+1)*sizeof(ParticleGrid::Node), cudaMemcpyHostToDevice );
-        int blockSize = blockSizes[i];
-//        int blockSize = 320;
+//        int blockSize = blockSizes[i];
+        int blockSize = 256;
         printf( "    Block size = %3d; ", blockSize ); fflush(stdout);
         TIME( " Launching full kernel... ", "finished\n",
             updateParticlesFromGrid<<< (nParticles+blockSize-1)/blockSize, blockSize >>>( devParticles, grid, devNodes, 1e-5, 0.8f, 1.2f, 0.95f );
@@ -521,7 +524,6 @@ __host__ void timeTests()
     cudaFree( devNodes );
     delete [] particles;
     delete [] nodes;
-
 }
 
 __host__ void grid2ParticlesTests()
@@ -535,6 +537,9 @@ __host__ void grid2ParticlesTests()
     timeTests();
 
     printf( "Done.\n" );
+
+
+
 }
 
 #endif // MAX_CU

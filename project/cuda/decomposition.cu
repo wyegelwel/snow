@@ -16,41 +16,15 @@
 
 #include "common/math.h"
 
-#define GLM_FORCE_RADIANS
-#include "glm/matrix.hpp"
-#include "glm/mat3x3.hpp"
-#include "glm/vec3.hpp"
-#include "glm/gtc/matrix_access.hpp"
-#include "glm/gtc/quaternion.hpp"
-#include "glm/gtc/type_ptr.hpp"
 #include "cuda/matrix.cu"
+#include "cuda/vector.cu"
+#include "cuda/quaternion.cu"
 
 #define GAMMA 5.828427124 // FOUR_GAMMA_SQUARED = sqrt(8)+3;
 #define CSTAR 0.923879532 // cos(pi/8)
 #define SSTAR 0.3826834323 // sin(p/8)
 
-extern "C"
-{
-    void svdTestsHost();
-}
-
-// Optimize C = glm::transpose(A) * B
-__host__ __device__ inline void multTransposeL( const glm::mat3 &A, const glm::mat3 &B, glm::mat3 &C )
-{
-    glm::mat3 _C;
-    _C[0][0] = A[0][0]*B[0][0] + A[0][1]*B[0][1] + A[0][2]*B[0][2];
-    _C[1][0] = A[0][0]*B[1][0] + A[0][1]*B[1][1] + A[0][2]*B[1][2];
-    _C[2][0] = A[0][0]*B[2][0] + A[0][1]*B[2][1] + A[0][2]*B[2][2];
-    _C[0][1] = A[1][0]*B[0][0] + A[1][1]*B[0][1] + A[1][2]*B[0][2];
-    _C[1][1] = A[1][0]*B[1][0] + A[1][1]*B[1][1] + A[1][2]*B[1][2];
-    _C[2][1] = A[1][0]*B[2][0] + A[1][1]*B[2][1] + A[1][2]*B[2][2];
-    _C[0][2] = A[2][0]*B[0][0] + A[2][1]*B[0][1] + A[2][2]*B[0][2];
-    _C[1][2] = A[2][0]*B[1][0] + A[2][1]*B[1][1] + A[2][2]*B[1][2];
-    _C[2][2] = A[2][0]*B[2][0] + A[2][1]*B[2][1] + A[2][2]*B[2][2];
-    C = _C;
-}
-
-__host__ __device__ void jacobiConjugation( int p, int q, mat3 &S, glm::quat &qV )
+__host__ __device__ void jacobiConjugation( int p, int q, mat3 &S, quat &qV )
 {
     // eliminate off-diagonal entries Spq, Sqp
     float ch = 2.f * (S[0]-S[4]), ch2 = ch*ch;
@@ -64,14 +38,11 @@ __host__ __device__ void jacobiConjugation( int p, int q, mat3 &S, glm::quat &qV
     float scale = ch*ch + sh*sh;
     float a = (ch2-sh2) / scale;
     float b = (2.f*sh*ch) / scale;
-//    glm::mat3 Q;
-//    Q[0][0] = a;  Q[1][0] = -b;
-//    Q[0][1] = b;  Q[1][1] = a;
     mat3 Q( a, b, 0, -b, a, 0, 0, 0, 1 );
 
     // perform the conjugation to annihilate S = Q' S Q
     S = mat3::multiplyTransposeL( Q, S ) * Q;
-    glm::vec3 tmp( qV.x, qV.y, qV.z );
+    vec3 tmp( qV.x, qV.y, qV.z );
     tmp *= sh;
     sh *= qV.w;
     // original
@@ -81,8 +52,10 @@ __host__ __device__ void jacobiConjugation( int p, int q, mat3 &S, glm::quat &qV
     // (p,q) = ((0,1),(1,2),(0,2)), n = (0,1,2)
     int n = 2*q-p-2;
     int x = n;
-    int y = (n+1)%3;
-    int z = (n+2)%3;
+//    int y = (n+1) % 3;
+//    int z = (n+2) % 3;
+    int y = ( n == 2 ) ? 0 : n+1;
+    int z = ( n > 0 ) ? n-1 : 2;
     qV[z] += sh;
     qV.w -= tmp[z];
     qV[x] += tmp[y];
@@ -100,7 +73,7 @@ __host__ __device__ void jacobiConjugation( int p, int q, mat3 &S, glm::quat &qV
  * matrix S, diagonalize it also returns the cumulative
  * rotation as a quaternion.
  */
-__host__ __device__ void jacobiEigenanalysis( mat3 &S, glm::quat &qV )
+__host__ __device__ void jacobiEigenanalysis( mat3 &S, quat &qV )
 {
     qV = glm::quat(1,0,0,0);
     for ( int sweep = 0; sweep < 4; ++sweep ) {
@@ -115,7 +88,7 @@ __host__ __device__ void jacobiEigenanalysis( mat3 &S, glm::quat &qV )
 }
 
 // glm::toMat3 doesn't work in CUDA
-__host__ __device__ void toMat3( const glm::quat &q, mat3 &M )
+__host__ __device__ __forceinline__ void toMat3( const quat &q, mat3 &M )
 {
     float qxx = q.x*q.x;
     float qyy = q.y*q.y;
@@ -225,15 +198,17 @@ __host__ __device__ void QRDecomposition( const mat3 &B, mat3 &Q, mat3 &R )
 
     // QR decomposition of 3x3 matrices using Givens rotations to
     // eliminate elements B21, B31, B32
-    glm::quat qQ; // cumulative rotation
-    glm::quat qU; // each Givens rotation in quaternion form
+    quat qQ; // cumulative rotation
+    quat qU; // each Givens rotation in quaternion form
+
     mat3 U;
     float ch, sh;
 
     // first givens rotation
     QRGivensQuaternion( R[0], R[1], ch, sh );
-    qU = glm::quat( ch, 0, 0, sh );
-    toMat3( qU, U );
+    qU = quat( ch, 0, 0, sh );
+    U = mat3::fromQuat(qU);
+//    toMat3( qU, U );
     R = mat3::multiplyTransposeL( U, R );
 
     // update cumulative rotation
@@ -241,8 +216,9 @@ __host__ __device__ void QRDecomposition( const mat3 &B, mat3 &Q, mat3 &R )
 
     // second givens rotation
     QRGivensQuaternion( R[0], R[2], ch, sh );
-    qU = glm::quat( ch, 0, -sh, 0 );
-    toMat3( qU, U );
+    qU = quat( ch, 0, -sh, 0 );
+    U = mat3::fromQuat(qU);
+//    toMat3( qU, U );
     R = mat3::multiplyTransposeL( U, R );
 
     // update cumulative rotation
@@ -250,15 +226,17 @@ __host__ __device__ void QRDecomposition( const mat3 &B, mat3 &Q, mat3 &R )
 
     // third Givens rotation
     QRGivensQuaternion( R[4], R[5], ch, sh );
-    qU = glm::quat( ch, sh, 0, 0 );
-    toMat3( qU, U );
+    qU = quat( ch, sh, 0, 0 );
+    U = mat3::fromQuat(qU);
+//    toMat3( qU, U );
     R = mat3::multiplyTransposeL( U, R );
 
     // update cumulative rotation
     qQ *= qU;
 
     // qQ now contains final rotation for Q
-    toMat3( qQ, Q );
+    Q = mat3::fromQuat(qQ);
+//    toMat3( qQ, Q );
 }
 
 /*
@@ -272,10 +250,10 @@ __host__ __device__ void computeSVD( const mat3 &A, mat3 &W, mat3 &S, mat3 &V )
     mat3 ATA = mat3::multiplyTransposeL( A, A );
 
 /// 2. Symmetric Eigenanlysis
-    glm::quat qV;
+    quat qV;
     jacobiEigenanalysis( ATA, qV );
-    toMat3( qV, V );
-//    glm::mat3 B = A * V; // B = AV = WS
+    V = mat3::fromQuat(qV);
+//    toMat3( qV, V );
     mat3 B = A * V;
 
 /// 3. Sorting the singular values (find V)

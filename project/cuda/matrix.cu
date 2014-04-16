@@ -21,43 +21,7 @@
 #include "glm/gtc/type_ptr.hpp"
 
 #include "cuda/vector.cu"
-
-// Optimize C = glm::transpose(A) * B
-__device__ __forceinline__ void multiplyTransposeL( const glm::mat3 &A, const glm::mat3 &B, glm::mat3 &C )
-{
-    glm::mat3 _C;
-    float *c = glm::value_ptr(_C);
-    const float *a = glm::value_ptr(A);
-    const float *b = glm::value_ptr(B);
-    c[0] = a[0]*b[0] + a[1]*b[1] + a[2]*b[2];
-    c[1] = a[3]*b[0] + a[4]*b[1] + a[5]*b[2];
-    c[2] = a[6]*b[0] + a[7]*b[1] + a[8]*b[2];
-    c[3] = a[0]*b[3] + a[1]*b[4] + a[2]*b[5];
-    c[4] = a[3]*b[3] + a[4]*b[4] + a[5]*b[5];
-    c[5] = a[6]*b[3] + a[7]*b[4] + a[8]*b[5];
-    c[6] = a[0]*b[6] + a[1]*b[7] + a[2]*b[8];
-    c[7] = a[3]*b[6] + a[4]*b[7] + a[5]*b[8];
-    c[8] = a[6]*b[6] + a[7]*b[7] + a[8]*b[8];
-    C = _C;
-}
-
-__device__ __forceinline__ void multiply( const glm::mat3 &A, const glm::mat3 &B, glm::mat3 &C )
-{
-    glm::mat3 _C;
-    float *c = glm::value_ptr(_C);
-    const float *a = glm::value_ptr(A);
-    const float *b = glm::value_ptr(B);
-    c[0] = a[0]*b[0] + a[3]*b[1] + a[6]*b[2];
-    c[1] = a[1]*b[0] + a[4]*b[1] + a[7]*b[2];
-    c[2] = a[2]*b[0] + a[5]*b[1] + a[8]*b[2];
-    c[3] = a[0]*b[3] + a[3]*b[4] + a[6]*b[5];
-    c[4] = a[1]*b[3] + a[4]*b[4] + a[7]*b[5];
-    c[5] = a[2]*b[3] + a[5]*b[4] + a[8]*b[5];
-    c[6] = a[0]*b[6] + a[3]*b[7] + a[6]*b[8];
-    c[7] = a[1]*b[6] + a[4]*b[7] + a[7]*b[8];
-    c[8] = a[2]*b[6] + a[5]*b[7] + a[8]*b[8];
-    C = _C;
-}
+#include "cuda/quaternion.cu"
 
 struct mat3
 {
@@ -115,7 +79,8 @@ struct mat3
         return *this;
     }
 
-    __host__ __device__ static bool equals( const mat3 &A, const mat3 &B )
+    __host__ __device__
+    static bool equals( const mat3 &A, const mat3 &B )
     {
         for ( int i = 0; i < 9; ++i ) {
             if ( NEQF(A[0], B[0]) ) {
@@ -286,9 +251,36 @@ struct mat3
     }
 
     __host__ __device__ __forceinline__
-    static mat3 multiplyTransposeR( const mat3 &A, const mat3 &B )
+    static float determinant( const mat3 &M )
     {
-        return A * transpose(B);
+        return M[0]*(M[4]*M[8]-M[7]*M[5]) -
+               M[3]*(M[1]*M[8]-M[7]*M[2]) +
+               M[6]*(M[1]*M[5]-M[4]*M[2]);
+    }
+
+    __host__ __device__ __forceinline__
+    static mat3 fromQuat( const quat &q )
+    {
+        float qxx = q.x*q.x;
+        float qyy = q.y*q.y;
+        float qzz = q.z*q.z;
+        float qxz = q.x*q.z;
+        float qxy = q.x*q.y;
+        float qyz = q.y*q.z;
+        float qwx = q.w*q.x;
+        float qwy = q.w*q.y;
+        float qwz = q.w*q.z;
+        mat3 M;
+        M[0] = 1.f - 2.f*(qyy+qzz);
+        M[1] = 2.f * (qxy+qwz);
+        M[2] = 2.f * (qxz-qwy);
+        M[3] = 2.f * (qxy-qwz);
+        M[4] = 1.f - 2.f*(qxx+qzz);
+        M[5] = 2.f * (qyz+qwx);
+        M[6] = 2.f * (qxz+qwy);
+        M[7] = 2.f * (qyz-qwx);
+        M[8] = 1.f - 2.f*(qxx+qyy);
+        return M;
     }
 
 };
