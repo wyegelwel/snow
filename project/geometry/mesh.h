@@ -13,14 +13,6 @@
 
 #include "common/types.h"
 
-#ifdef CUDA_INCLUDE
-    struct Tri {
-        glm::vec3 v0, n0;
-        glm::vec3 v1, n1;
-        glm::vec3 v2, n2;
-    };
-#else // CUDA_INCLUDE
-
 #include <QVector>
 #include <QString>
 
@@ -123,7 +115,5 @@ private:
     void renderVBO();
 
 };
-
-#endif // CUDA_INCLUDE
 
 #endif // MESH_H

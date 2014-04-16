@@ -44,8 +44,8 @@ __device__ void processGridVelocities( Particle &particle, const Grid &grid, con
 
     // Compute neighborhood of particle in grid
     vec3 gridIndex = (pos - grid.pos) / h,
-         gridMax = vec3::floor( gridIndex + glm::vec3(2,2,2) ),
-         gridMin = vec3::ceil( gridIndex - glm::vec3(2,2,2) );
+         gridMax = vec3::floor( gridIndex + vec3(2,2,2) ),
+         gridMin = vec3::ceil( gridIndex - vec3(2,2,2) );
     glm::ivec3 maxIndex = glm::clamp( VEC2IVEC(gridMax), glm::ivec3(0,0,0), grid.dim ),
                minIndex = glm::clamp( VEC2IVEC(gridMin), glm::ivec3(0,0,0), grid.dim );
 
@@ -59,7 +59,7 @@ __device__ void processGridVelocities( Particle &particle, const Grid &grid, con
     int rowSize = dim.z+1;
     int pageSize = (dim.y+1)*rowSize;
     for ( int i = minIndex.x; i <= maxIndex.x; ++i ) {
-        glm::vec3 d, s;
+        vec3 d, s;
         d.x = i - gridIndex.x;
         d.x *= ( s.x = ( d.x < 0 ) ? -1.f : 1.f );
         int pageOffset = i*pageSize;
@@ -72,7 +72,7 @@ __device__ void processGridVelocities( Particle &particle, const Grid &grid, con
                 d.z *= ( s.z = ( d.z < 0 ) ? -1.f : 1.f );
                 const ParticleGrid::Node &node = nodes[rowOffset+k];
                 float w;
-                glm::vec3 wg;
+                vec3 wg;
                 weightAndGradient( s, d, w, wg );
                 velocityGradient += mat3::outerProduct( node.velocity, wg );
                 // Particle velocities
@@ -81,7 +81,6 @@ __device__ void processGridVelocities( Particle &particle, const Grid &grid, con
             }
         }
     }
-
     particle.velocity = (1.f-alpha)*v_PIC + alpha*(particle.velocity+dv_FLIP);
 }
 
@@ -278,7 +277,7 @@ __host__ void valueTests()
     ParticleGrid grid;
     grid.dim = glm::ivec3( dim, dim, dim );
     grid.h = 1.f/dim;
-    grid.pos = glm::vec3(0,0,0);
+    grid.pos = vec3(0,0,0);
 
     int nParticles = dim*dim*dim;
     printf( "    Generating %d particles (%.2f MB)...\n",
@@ -289,10 +288,10 @@ __host__ void valueTests()
         for ( int j = 0; j < dim; ++j ) {
             for ( int k = 0; k < dim; ++k ) {
                 Particle particle;
-                particle.position = grid.pos + grid.h*glm::vec3( i+0.5f, j+0.5f, k+0.5f );
-                particle.velocity = glm::vec3( 0.f, -0.124f, 0.f );
-                particle.elasticF = glm::mat3(1.f);
-                particle.plasticF = glm::mat3(1.f);
+                particle.position = grid.pos + grid.h*vec3( i+0.5f, j+0.5f, k+0.5f );
+                particle.velocity = vec3( 0.f, -0.124f, 0.f );
+                particle.elasticF = mat3(1.f);
+                particle.plasticF = mat3(1.f);
                 particles[i*dim*dim+j*dim+k] = particle;
             }
         }
@@ -306,12 +305,13 @@ __host__ void valueTests()
         for ( int j = 0; j <= dim; ++j ) {
             for ( int k = 0; k <= dim; ++k ) {
                 ParticleGrid::Node node;
-                node.velocity = glm::vec3( 0.f, -0.125f, 0.f );
-                node.velocityChange = glm::vec3( 0.f, -0.001f, 0.f );
+                node.velocity = vec3( 0.f, -0.125f, 0.f );
+                node.velocityChange = vec3( 0.f, -0.001f, 0.f );
                 nodes[i*(dim+1)*(dim+1)+j*(dim+1)+k] = node;
             }
         }
     }
+
 
     printf( "    Allocating kernel resources...\n" ); fflush(stdout);
     Particle *devParticles;
@@ -407,10 +407,10 @@ __host__ void valueTests()
         for ( int j = 0; j < dim; ++j ) {
             for ( int k = 0; k < dim; ++k ) {
                 Particle particle;
-                particle.position = grid.pos + grid.h*glm::vec3( i+0.5f, j+0.5f, k+0.5f );
-                particle.velocity = glm::vec3( 0.f, -0.124, 0.f );
-                particle.elasticF = glm::mat3(1.f);
-                particle.plasticF = glm::mat3(1.f);
+                particle.position = grid.pos + grid.h*vec3( i+0.5f, j+0.5f, k+0.5f );
+                particle.velocity = vec3( 0.f, -0.124, 0.f );
+                particle.elasticF = mat3(1.f);
+                particle.plasticF = mat3(1.f);
                 particles[i*dim*dim+j*dim+k] = particle;
             }
         }
@@ -459,7 +459,7 @@ __host__ void timeTests()
     ParticleGrid grid;
     grid.dim = glm::ivec3( dim, dim, dim );
     grid.h = 1.f/dim;
-    grid.pos = glm::vec3(0,0,0);
+    grid.pos = vec3(0,0,0);
 
     int nParticles = 5000*32;
     printf( "    Generating %d particles (%.2f MB)...\n",
@@ -468,10 +468,10 @@ __host__ void timeTests()
     Particle *particles = new Particle[nParticles];
     for ( int i = 0; i < nParticles; ++i ) {
         Particle particle;
-        particle.position = grid.pos + glm::vec3( urand(), urand(), urand() );
-        particle.velocity = glm::vec3( 0.f, -0.124f, 0.f );
-        particle.elasticF = glm::mat3(1.f);
-        particle.plasticF = glm::mat3(1.f);
+        particle.position = grid.pos + vec3( urand(), urand(), urand() );
+        particle.velocity = vec3( 0.f, -0.124f, 0.f );
+        particle.elasticF = mat3(1.f);
+        particle.plasticF = mat3(1.f);
         particles[i] = particle;
     }
 
@@ -483,8 +483,8 @@ __host__ void timeTests()
         for ( int j = 0; j <= dim; ++j ) {
             for ( int k = 0; k <= dim; ++k ) {
                 ParticleGrid::Node node;
-                node.velocity = glm::vec3( 0.f, -0.125f, 0.f );
-                node.velocityChange = glm::vec3( 0.f, -0.001f, 0.f );
+                node.velocity = vec3( 0.f, -0.125f, 0.f );
+                node.velocityChange = vec3( 0.f, -0.001f, 0.f );
                 nodes[i*(dim+1)*(dim+1)+j*(dim+1)+k] = node;
             }
         }
@@ -497,7 +497,7 @@ __host__ void timeTests()
     error = cudaMalloc( &devParticles, nParticles*sizeof(Particle) );
     error = cudaMalloc( &devNodes, (dim+1)*(dim+1)*(dim+1)*sizeof(ParticleGrid::Node) );
 
-    static const int blockSizes[] = { 32, 64, 96, 128, 160, 192, 224, 256, 288, 320, 352, 384, 416, 448, 480, 512 };
+//    static const int blockSizes[] = { 32, 64, 96, 128, 160, 192, 224, 256, 288, 320, 352, 384, 416, 448, 480, 512 };
     static const int nBlocks = 16;
 
     for ( int i = 0; i < nBlocks; ++i ) {
