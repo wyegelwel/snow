@@ -14,6 +14,9 @@
 /**
  * @brief class that handles simulation and update of the ParticleSystem.
  * Simulates the ParticleSystem without drawing
+ *
+ * Run in a separate thread than ViewPort to provide more interactivity.
+ *
  */
 
 #include <QFile>
@@ -36,6 +39,9 @@ public:
      * Runs the simulation
      */
     void start();
+
+    void pause();
+    void resume();
 
     /**
      * calls MitsubaExporter class to serialize volume data

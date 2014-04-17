@@ -79,3 +79,9 @@ SceneNode::getCTM()
     }
     return m_ctm;
 }
+
+QList<SceneNode*>
+SceneNode::getChildren()
+{
+    return m_children;
+}

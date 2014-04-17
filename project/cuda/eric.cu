@@ -16,10 +16,6 @@
 #include <cuda_runtime.h> // prevents syntax errors on __global__ and __device__, among other things
 
 #include "common/math.h"
-#define GLM_FORCE_RADIANS
-#include "glm/gtc/quaternion.hpp"
-#include "glm/gtx/quaternion.hpp"
-
 #include "cuda/decomposition.cu"
 #include "cuda/weighting.cu"
 
@@ -66,19 +62,15 @@ __global__ void svdTest( const mat3 A )
 {
     printf("original matrix\n");
     printMat3(A);
-    mat3 U1;
-    mat3 S;
-    mat3 V;
-    mat3 U2;
-    mat3 P;
-    computeSVDandPD( A, U1, S, V, U2, P );
+    mat3 W, S, V, R;
+    computeSVDandPD( A, W, S, V, R );
 
-    mat3 A_svd = U1*S*mat3::transpose(V);
+    mat3 A_svd = W*S*mat3::transpose(V);
     mat3 diff = mat3::transpose(A_svd-A) * (A_svd-A);
     float norm = sqrtf( diff[0] + diff[4] + diff[8] );
 
     printf("SVD: U\n");
-    printMat3(U1);
+    printMat3(W);
     printf("SVD: S\n");
     printMat3(S);
     printf("SVD: V\n");
@@ -87,26 +79,46 @@ __global__ void svdTest( const mat3 A )
     printMat3(A_svd);
     printf("SVD: ||U*S*V' - A|| = %g\n\n", norm);
     printf("Polar: U\n");
-    printMat3(U2);
-    printf("Polar: P\n");
-    printMat3(P);
-
+    printMat3(R);
 
 }
+
+__global__ void svdTimeTest( const mat3 A, int iterations )
+{
+    for ( int i = 0; i < iterations; ++i ) {
+        mat3 W, S, V, R;
+        computeSVDandPD( A, W, S, V, R );
+    }
+}
+
+#include "common/common.h"
 
 void svdTestsHost()
 {
     // multiple calls to svdTest
-    glm::mat3 A;
+    mat3 A;
     // TEST 1
-    A = glm::mat3(-0.558253  ,  -0.0461681   ,  -0.505735,
-                  -0.411397 ,    0.0365854   ,   0.199707,
-                  0.285389  ,   -0.313789   ,   0.200189);
-    A = glm::transpose(A);
+    A = mat3(-0.558253  ,  -0.0461681   ,  -0.505735,
+             -0.411397 ,    0.0365854   ,   0.199707,
+              0.285389  ,   -0.313789   ,   0.200189);
+    A = mat3::transpose(A);
 
     svdTest<<<1,1>>>(A);
     cudaDeviceSynchronize();
 
+    printf( "Running TIMING tests...\n" );
+    fflush(stdout);
+
+    int iterations = 10000;
+    timeval start, end;
+    gettimeofday( &start, NULL );
+    svdTimeTest<<<1,1>>>(A, iterations);
+    cudaDeviceSynchronize();
+    gettimeofday( &end, NULL );
+
+    float ms = 1000.f*(end.tv_sec-start.tv_sec) + 0.001f*(end.tv_usec-start.tv_usec);
+    printf( "Done in %.2f seconds, %.3f ms per iteration.\n\n", ms/1000.f, ms/iterations );
+    fflush(stdout);
 }
 
 

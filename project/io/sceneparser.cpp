@@ -15,3 +15,13 @@
 SceneParser::SceneParser()
 {
 }
+
+void SceneParser::read(QString fname, Scene *scene)
+{
+
+}
+
+void SceneParser::write(QString fname, Scene *scene)
+{
+
+}

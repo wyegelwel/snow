@@ -14,11 +14,14 @@
 #include <QGLWidget>
 #include <QTimer>
 #include <QElapsedTimer>
+#include <QFile>
+#include <QDir>
 
 class InfoPanel;
 class Viewport;
 class Scene;
-class ParticleSystem;
+class Engine;
+class SceneNode;
 
 class ViewPanel : public QGLWidget
 {
@@ -30,10 +33,9 @@ public:
     ViewPanel( QWidget *parent );
     virtual ~ViewPanel();
 
-    void pauseDrawing();
-    void resumeDrawing();
     void saveToFile(QString fname);
     void loadFromFile(QString fname);
+    void renderOffline(QString file_prefix);
 
 public slots:
 
@@ -48,6 +50,21 @@ public slots:
     virtual void mouseMoveEvent( QMouseEvent *event );
     virtual void mouseReleaseEvent( QMouseEvent *event );
 
+    void pause();
+    void resume();
+
+    /// TODO - the following functionalities will eventually be migrated to the
+    /// multi-threaded Engine class.
+    // we probably want the simulation to not start automatically
+    // so the user has a chance to move stuff around in the scene
+    void start();
+
+    // resets the simulation.
+    void reset();
+
+    // Filling
+    void fillSelectedMesh();
+
 private:
 
     QTimer m_ticker;
@@ -56,7 +73,7 @@ private:
     InfoPanel *m_infoPanel;
     Viewport *m_viewport;
 
-    ParticleSystem *m_particles;
+    Engine *m_engine;
     Scene *m_scene;
 
     // set true to draw a little XYZ axis in the corner

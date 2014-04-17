@@ -30,6 +30,8 @@ public:
     void clearRenderables();
     void addRenderable( Renderable *renderable );
 
+    QList<SceneNode*> getChildren();
+
     virtual void render();
 
     glm::mat4 getCTM();

@@ -21,8 +21,14 @@
 #include "geometry/mesh.h"
 #include "scene/scene.h"
 #include "scene/scenenode.h"
+#include "sim/engine.h"
 #include "sim/particle.h"
 #include "ui/infopanel.h"
+#include "ui/uisettings.h"
+
+/// TEMPORARY
+#include "io/sceneparser.h"
+#include "io/mitsubaexporter.h"
 
 #define FPS 65
 
@@ -35,10 +41,10 @@ ViewPanel::ViewPanel( QWidget *parent )
 
     m_infoPanel = new InfoPanel(this);
     m_infoPanel->setInfo( "FPS", "XXXXXX" );
-
     m_drawAxis = true;
-    m_scene = new Scene;
 
+    m_scene = new Scene;
+    m_engine = new Engine;
 }
 
 ViewPanel::~ViewPanel()
@@ -88,20 +94,22 @@ ViewPanel::initializeGL()
     OBJParser::load( PROJECT_PATH "/data/models/teapot.obj", meshes );
     for ( int i = 0; i < meshes.size(); ++i )
         node->addRenderable( meshes[i] );
+    m_scene->root()->addChild( node );
 
     this->makeCurrent();
 
-    m_particles = new ParticleSystem;
-    meshes[0]->fill( *m_particles, 256*512, 0.1f );
-    node->addRenderable( m_particles );
-    m_infoPanel->setInfo( "Particles", QString::number(m_particles->particles().size()) );
+    ParticleSystem *particles = new ParticleSystem;
+    meshes[0]->fill( *particles, 256*512, 0.1f );
+    m_scene->root()->addRenderable( particles );
+    m_engine->setParticleSystem( particles );
 
-    m_scene->root()->addChild( node );
+    m_infoPanel->setInfo( "Particles", QString::number(particles->size()) );
 
     // Render ticker
     assert( connect(&m_ticker, SIGNAL(timeout()), this, SLOT(update())) );
     m_ticker.start( 1000/FPS );
     m_timer.start();
+
 }
 
 float t = 0.f;
@@ -121,22 +129,20 @@ ViewPanel::paintGL()
 
     } m_viewport->pop();
 
-    // we still might want to manipulate scene before starting the simulation
-    m_particles->update( t += 1.f/FPS );
-
     float fps = 1000.f / m_timer.restart();
     m_infoPanel->setInfo( "FPS", QString::number(fps, 'f', 2), false );
     m_infoPanel->render();
-
 }
 
 void
 ViewPanel::mousePressEvent( QMouseEvent *event )
 {
     UserInput::update(event);
-    if ( UserInput::leftMouse() ) m_viewport->setState( Viewport::TUMBLING );
-    else if ( UserInput::rightMouse() ) m_viewport->setState( Viewport::ZOOMING );
-    else if ( UserInput::middleMouse() ) m_viewport->setState( Viewport::PANNING );
+    if ( UserInput::ctrlKey() ) {
+        if ( UserInput::leftMouse() ) m_viewport->setState( Viewport::TUMBLING );
+        else if ( UserInput::rightMouse() ) m_viewport->setState( Viewport::ZOOMING );
+        else if ( UserInput::middleMouse() ) m_viewport->setState( Viewport::PANNING );
+    }
 }
 
 void
@@ -154,14 +160,71 @@ ViewPanel::mouseReleaseEvent( QMouseEvent *event )
 }
 
 
-// UI methods to pause/resume drawing
-// we might want to do this when doing non-viewing stuff
-void ViewPanel::pauseDrawing()
+// UI methods to pause/resume drawing and simulation
+// we might want to do this when doing non-viewing stuff, like opening new files
+void ViewPanel::pause()
 {
     m_ticker.stop();
+//    m_engine->pause();
 }
 
-void ViewPanel::resumeDrawing()
+void ViewPanel::resume()
 {
-    m_ticker.start();
+    m_ticker.start(1000/FPS);
+    m_timer.restart();
+//    m_engine->resume();
+}
+
+
+/// temporary hack: I'm calling the SceneParser from here for the file saving
+/// and offline rendering. Ideally this would be handled by the Engine class.
+void ViewPanel::saveToFile(QString fname)
+{
+    // write - not done, do this out later
+    SceneParser::write(fname, m_scene);
+}
+
+void ViewPanel::loadFromFile(QString fname)
+{
+    // read - not done, figure this out later
+    SceneParser::read(fname, m_scene);
+}
+
+void ViewPanel::renderOffline(QString file_prefix)
+{
+    /**
+     * the exporter handles scene by scene so here, we tell the simulation to start over
+     * then call exportScene every frame
+     */
+    reset();
+    // step the simulation 1/24 of a second at a time.
+
+//    for (int s=0; s<1; s++)
+//    {
+//        for (int f=0; f<24; f++)
+//        {
+//            MitsubaExporter::exportScene(file_prefix, f, m_scene);
+//        }
+//    }
+
+    // for now, just export the first frame
+    MitsubaExporter::exportScene(file_prefix, 0, m_scene);
+}
+
+void ViewPanel::start()
+{
+    m_engine->start();
+}
+
+void ViewPanel::reset()
+{
+
+}
+
+void ViewPanel::fillSelectedMesh()
+{
+    // If there's a selection, do mesh->fill...
+    int nParticles = UiSettings::fillNumParticles();
+    float resolution = UiSettings::fillResolution();
+    // mesh->fill( *(m_engine->particleSystem()), nParticles, resolution );
 }

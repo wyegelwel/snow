@@ -22,9 +22,9 @@
  */
 
 #include <iostream>
+#include <QString>
 
-class SceneNode;
-class WorldParams;
+class Scene;
 
 class SceneParser
 {
@@ -45,7 +45,7 @@ public:
      * // now add root, params to your scene.
      *
      */
-    static void read(std::string fname, SceneNode * &node, WorldParams &params);
+    static void read(QString fname, Scene * scene);
 
     /**
      * writes the data to XML format. Use case: we set up a simulation in the GUI
@@ -57,7 +57,7 @@ public:
      * SceneParser::write("myscene.xml", SceneNode * node);
      *
      */
-    static void write();
+    static void write(QString fname, Scene * scene);
 
 };
 

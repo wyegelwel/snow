@@ -7,7 +7,6 @@
 QT       += core gui opengl xml
 DEFINES += GL_GLEXT_PROTOTYPES
 
-
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 TEMPLATE = app
@@ -34,6 +33,7 @@ SOURCES += \
     sim/engine.cpp \
     io/sceneparser.cpp \
     #sim/AppSettings.cpp \
+    ui/uisettings.cpp
 
 
 HEADERS  += \
@@ -62,7 +62,8 @@ HEADERS  += \
     sim/engine.h \
     io/sceneparser.h \
     #sim/AppSettings.h
-
+    ui/databinding.h \
+    ui/uisettings.h
 
 FORMS    += ui/mainwindow.ui
 
@@ -114,7 +115,6 @@ NVCCFLAGS = --compiler-options -fno-strict-aliasing -use_fast_math --ptxas-optio
 
 # Prepare the extra compiler configuration (taken from the nvidia forum - i'm not an expert in this part)
 CUDA_INC = $$join(INCLUDEPATH,' -I','-I',' ') -I$$_PRO_FILE_PWD_
-
 
 # compile CUDA kernels using nvcc
 cuda.commands = $$CUDA_DIR/bin/nvcc -m64 -g -G -arch=$$CUDA_ARCH -c $$NVCCFLAGS $$CUDA_INC $$LIBS  ${QMAKE_FILE_NAME} -o ${QMAKE_FILE_OUT} \
