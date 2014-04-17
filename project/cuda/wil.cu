@@ -141,8 +141,8 @@ __host__ __device__ void computeSigma(Particle &particle, WorldParams *worldPara
     float Jpp = mat3::determinant(Fp);
     float Jep = mat3::determinant(Fe);
 
-    mat3 Re, Se;
-    computePD(Fe, Re, Se);
+    mat3 Re;
+    computePD(Fe, Re);
 
     float muFp = worldParams->mu*exp(worldParams->xi*(1-Jpp));
     float lambdaFp = worldParams->lambda*exp(worldParams->xi*(1-Jpp));
@@ -702,12 +702,12 @@ void testComputeCellMassVelocityAndForceComplex(){
 
 
 
-    computeCellMassVelocityAndForce<<<NUM_PARTICLES, 1>>>(dev_particles, dev_grid, dev_wp, dev_nodes);
+//    computeCellMassVelocityAndForce<<<NUM_PARTICLES, 1>>>(dev_particles, dev_grid, dev_wp, dev_nodes);
 
-//    computeParticleGridTempData<<< NUM_PARTICLES, 1 >>>(dev_particles, dev_grid, dev_wp, devPTGD);
-//    dim3 blockDim = dim3(NUM_PARTICLES);
-//    dim3 threadDim = dim3(1, 64);
-//    computeCellMassVelocityAndForceFast<<< blockDim, threadDim >>>(dev_particles, dev_grid, devPTGD, dev_nodes);
+    computeParticleGridTempData<<< NUM_PARTICLES, 1 >>>(dev_particles, dev_grid, dev_wp, devPTGD);
+    dim3 blockDim = dim3(NUM_PARTICLES);
+    dim3 threadDim = dim3(1, 64);
+    computeCellMassVelocityAndForceFast<<< blockDim, threadDim >>>(dev_particles, dev_grid, devPTGD, dev_nodes);
 
     checkCudaErrors(cudaMemcpy(nodes,dev_nodes,grid.nodeCount()*sizeof(ParticleGrid::Node),cudaMemcpyDeviceToHost));
 
