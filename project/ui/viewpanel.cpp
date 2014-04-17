@@ -24,9 +24,9 @@
 #include "sim/particle.h"
 #include "ui/infopanel.h"
 
-// temporary hack:
-
-
+/// TEMPORARY
+#include "io/sceneparser.h"
+#include "io/mitsubaexporter.h"
 
 #define FPS 65
 
@@ -131,9 +131,6 @@ ViewPanel::paintGL()
 
     // TODO - as a cheap hack we'll have the renderer spit out the
 
-
-
-
     float fps = 1000.f / m_timer.restart();
     m_infoPanel->setInfo( "FPS", QString::number(fps, 'f', 2), false );
     m_infoPanel->render();
@@ -176,7 +173,28 @@ void ViewPanel::resumeDrawing()
     m_ticker.start();
 }
 
-void ViewPanel::renderOffline(QString outputDir)
-{
 
+/// temporary hack: I'm calling the SceneParser from here for the file saving
+/// and offline rendering. Ideally this would be handled by the Engine class.
+void ViewPanel::saveToFile(QString fname)
+{
+    // write - not done, do this out later
+    SceneParser::write(fname, m_scene);
+}
+
+void ViewPanel::loadFromFile(QString fname)
+{
+    // read - not done, figure this out later
+    SceneParser::read(fname, m_scene);
+}
+
+void ViewPanel::renderOffline(QString file_prefix)
+{
+    /**
+     * the exporter handles scene by scene so here, we tell the simulation to start over
+     * then call exportScene every frame
+     */
+
+    // for now, just export the first frame
+    MitsubaExporter::exportScene(file_prefix, 0, m_scene);
 }

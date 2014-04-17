@@ -55,6 +55,8 @@
     <property name="title">
      <string>Simulate</string>
     </property>
+    <addaction name="actionPause"/>
+    <addaction name="actionResume"/>
     <addaction name="actionRenderOffline"/>
    </widget>
    <addaction name="menuFile"/>
@@ -87,10 +89,20 @@
   </action>
   <action name="actionRenderOffline">
    <property name="text">
-    <string>Render Offline</string>
+    <string>Export Mitsuba</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+R</string>
+   </property>
+  </action>
+  <action name="actionPause">
+   <property name="text">
+    <string>Pause</string>
+   </property>
+  </action>
+  <action name="actionResume">
+   <property name="text">
+    <string>Resume</string>
    </property>
   </action>
  </widget>
@@ -101,6 +113,10 @@
    <extends>QWidget</extends>
    <header>ui/viewpanel.h</header>
    <container>1</container>
+   <slots>
+    <slot>pauseDrawing()</slot>
+    <slot>resumeDrawing()</slot>
+   </slots>
   </customwidget>
  </customwidgets>
  <resources/>
@@ -137,9 +153,58 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>actionPause</sender>
+   <signal>triggered()</signal>
+   <receiver>viewPanel</receiver>
+   <slot>pauseDrawing()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>399</x>
+     <y>306</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>actionResume</sender>
+   <signal>triggered()</signal>
+   <receiver>viewPanel</receiver>
+   <slot>resumeDrawing()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>399</x>
+     <y>306</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>actionRenderOffline</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>renderOffline()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>399</x>
+     <y>299</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>saveToFile()</slot>
   <slot>loadFromFile()</slot>
+  <slot>renderOffline()</slot>
  </slots>
 </ui>

@@ -21,6 +21,7 @@ class InfoPanel;
 class Viewport;
 class Scene;
 class ParticleSystem;
+class SceneNode;
 
 class ViewPanel : public QGLWidget
 {
@@ -32,11 +33,9 @@ public:
     ViewPanel( QWidget *parent );
     virtual ~ViewPanel();
 
-    void pauseDrawing();
-    void resumeDrawing();
     void saveToFile(QString fname);
     void loadFromFile(QString fname);
-    void renderOffline(QString outputDir);
+    void renderOffline(QString file_prefix);
 
 public slots:
 
@@ -50,6 +49,9 @@ public slots:
     virtual void mousePressEvent( QMouseEvent *event );
     virtual void mouseMoveEvent( QMouseEvent *event );
     virtual void mouseReleaseEvent( QMouseEvent *event );
+
+    void pauseDrawing();
+    void resumeDrawing();
 
 private:
 

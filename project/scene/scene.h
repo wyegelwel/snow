@@ -14,7 +14,6 @@
 class SceneNode;
 
 
-
 class Scene
 {
 
@@ -29,7 +28,7 @@ public:
 
 
 private:
-
+    //WorldParams m_params; // parameters of the simulation.
     SceneNode *m_root;
 
 };

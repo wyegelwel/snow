@@ -33,24 +33,29 @@ void MainWindow::loadFromFile()
 {
     // pause sim
     ui->viewPanel->pauseDrawing();
-
-    QString fname = QFileDialog::getOpenFileName(this, QString("Open Scene"), QString());
+    QDir sceneDir("../project/data/scenes");
+    sceneDir.makeAbsolute();
+    QString fname = QFileDialog::getOpenFileName(this, QString("Open Scene"), sceneDir.absolutePath());
     std::cout << fname.toStdString() << std::endl;
     //ui->viewPanel->loadFromFile(fname);
-
 }
 
 void MainWindow::saveToFile()
 {
-    QString fname = QFileDialog::getSaveFileName(this, QString("Save Scene"), QString());
-    //ui->viewPanel->savetoFile(fname);
+    ui->viewPanel->pauseDrawing();
+    QDir sceneDir("../project/data/scenes");
+    sceneDir.makeAbsolute();
+    QString fname = QFileDialog::getSaveFileName(this, QString("Save Scene"), sceneDir.absolutePath());
+    //ui->viewPanel->saveToFile(fname);
+    ui->viewPanel->resumeDrawing();
 }
 
 void MainWindow::renderOffline()
 {
-    QFileDialog dialog(this);
-    dialog.setFileMode(QFileDialog::Directory);
-    QString dirname = dialog.getOpenFileName(this,QString("Output Directory"));
-
-    ui->viewPanel->renderOffline(dirname);
+    ui->viewPanel->pauseDrawing();
+    QDir sceneDir("~/offline_renders");
+    sceneDir.makeAbsolute();
+    QString fprefix = QFileDialog::getSaveFileName(this, QString("Save Scene"), sceneDir.absolutePath());
+    ui->viewPanel->renderOffline(fprefix);
 }
+
