@@ -14,9 +14,8 @@
 #include <cuda.h>
 #include <cuda_runtime.h>
 
-#include "glm/common.hpp"
-
 #include "vector.cu"
+
 /*
  * 1D B-spline falloff
  * d is the distance from the point to the node center,
@@ -30,7 +29,7 @@
     __typeof__ (d) _d = (d);                                                        \
    ( ( 0 <= _d && _d < 1 ) * ( .5*_d*_d*_d - _d*_d + 2.f/3.f ) +                    \
      ( 1 <= _d && _d < 2 ) * ( -1.f/6.f*_d*_d*_d + _d*_d - 2*_d + 4.f/3.f ) );      \
-})
+})                                                                                  \
 
 /*
  * sets w = interpolation weights (w_ip)
@@ -57,7 +56,7 @@ __host__ __device__ __forceinline__ void weight( vec3 &dx, float &w )
     __typeof__ (d) _d = (d);                                                       \
     ( ( 0 <= _d && _d < 1 ) * ( 1.5f*_d*_d - 2*_d ) +                              \
       ( 1 <= _d && _d < 2 ) * ( -.5*_d*_d + 2*_d - 2 ) );                          \
-})
+})                                                                                 \
 
 /*
  * returns gradient of interpolation weights  \grad{w_ip}

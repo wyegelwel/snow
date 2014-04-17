@@ -88,7 +88,8 @@ __device__ void updateParticleDeformationGradients( Particle &particle, const ma
                                                     float criticalCompression, float criticalStretch )
 {
     // Temporarily assign all deformation to elastic portion
-    mat3 F = (mat3(1.f) + timeStep*velocityGradient) * particle.elasticF;
+//    mat3 F = (mat3(1.f) + timeStep*velocityGradient) * particle.elasticF;
+    mat3 F = mat3::addIdentity(timeStep*velocityGradient) * particle.elasticF;
 
     // Clamp the singular values
     mat3 W, S, Sinv, V;
@@ -102,8 +103,8 @@ __device__ void updateParticleDeformationGradients( Particle &particle, const ma
                  0.f, 0.f, 1.f/S[8] );
 
     // Compute final deformation components
-    particle.elasticF = W * S * mat3::transpose(V);
-    particle.plasticF = V * Sinv * mat3::transpose(W) * particle.plasticF;
+    particle.elasticF = mat3::multiplyADBt( W, S, V );
+    particle.plasticF = mat3::multiplyADBt( V, Sinv, W ) * particle.plasticF;
 }
 
 __device__ void checkForCollisions( Particle &particle )
@@ -246,7 +247,7 @@ __global__ void matrixTestKernel()
     TESTTHIS( mat3::equals(At, mat3::transpose(A)) );
 
     printf( "    Testing multiplyTransposeL: " );
-    TESTTHIS( mat3::equals(mat3::multiplyTransposeL(A, B), mat3::transpose(A)*B) );
+    TESTTHIS( mat3::equals(mat3::multiplyAtB(A, B), mat3::transpose(A)*B) );
 
     printf( "    Testing outer product: " );
     vec3 v( 10, 5, 1 ), w( 8, 2, 9 );

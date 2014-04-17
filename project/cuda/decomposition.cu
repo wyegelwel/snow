@@ -18,14 +18,11 @@
 #include "common/math.h"
 
 #include "cuda/matrix.cu"
-#include "cuda/vector.cu"
-#include "cuda/quaternion.cu"
 
 #define GAMMA 5.828427124 // FOUR_GAMMA_SQUARED = sqrt(8)+3;
 #define CSTAR 0.923879532 // cos(pi/8)
 #define SSTAR 0.3826834323 // sin(p/8)
 
-//__host__ __device__ void jacobiConjugation( int p, int q, mat3 &S, quat &qV )
 __host__ __device__ void jacobiConjugation( int x, int y, int z, mat3 &S, quat &qV )
 {
     // eliminate off-diagonal entries Spq, Sqp
@@ -37,13 +34,13 @@ __host__ __device__ void jacobiConjugation( int x, int y, int z, mat3 &S, quat &
     sh = flag ? w*sh : SSTAR; sh2 = sh*sh;
 
     // build rotation matrix Q
-    float scale = 1.f / (ch*ch + sh*sh);
+    float scale = 1.f / (ch2 + sh2);
     float a = (ch2-sh2) * scale;
     float b = (2.f*sh*ch) * scale;
     float a2 = a*a, b2 = b*b, ab = a*b;
 
-    // Use what we know about Q to simplify S = Q' * S * Q,
-    // and re-arranging step (see commented code at the end)
+    // Use what we know about Q to simplify S = Q' * S * Q
+    // and the re-arranging step.
     float s0 = a2*S[0] + 2*ab*S[1] + b2*S[4];
     float s2 = a*S[2] + b*S[5];
     float s3 = (a2-b2)*S[1] + ab*(S[4]-S[0]);
@@ -54,29 +51,15 @@ __host__ __device__ void jacobiConjugation( int x, int y, int z, mat3 &S, quat &
               s5, s8, s2,
               s3, s2, s0 );
 
-    vec3 tmp( qV.x, qV.y, qV.z );
-    tmp *= sh;
+    vec3 tmp( sh*qV.x, sh*qV.y, sh*qV.z );
     sh *= qV.w;
     // original
     qV *= ch;
 
-    // terrible hack, this arranges such that for
-    // (p,q) = ((0,1),(1,2),(0,2)), n = (0,1,2)
-//    int n = 2*q-p-2;
-//    int x = n;
-//    int y = (n+1) % 3;
-//    int z = (n+2) % 3;
-//    int y = ( n == 2 ) ? 0 : n+1;
-//    int z = ( n > 0 ) ? n-1 : 2;
     qV[z] += sh;
     qV.w -= tmp[z];
     qV[x] += tmp[y];
     qV[y] -= tmp[x];
-
-//    // re-arrange matrix for next iteration
-//    S = mat3( S[4], S[5], S[3],
-//              S[5], S[8], S[2],
-//              S[3], S[2], S[0] );
 }
 
 /*
@@ -85,44 +68,25 @@ __host__ __device__ void jacobiConjugation( int x, int y, int z, mat3 &S, quat &
  * matrix S, diagonalize it also returns the cumulative
  * rotation as a quaternion.
  */
-__host__ __device__ void jacobiEigenanalysis( mat3 &S, quat &qV )
+__host__ __device__ __forceinline__ void jacobiEigenanalysis( mat3 &S, quat &qV )
 {
-    qV = glm::quat(1,0,0,0);
-    for ( int sweep = 0; sweep < 4; ++sweep ) {
-        // we wish to eliminate the maximum off-diagonal element
-        // on every iteration, but cycling over all 3 possible rotations
-        // in fixed order (p,q) = (1,2) , (2,3), (1,3) still has
-        // asymptotic convergence
-//        jacobiConjugation( 0, 1, S, qV );
-//        jacobiConjugation( 1, 2, S, qV );
-//        jacobiConjugation( 0, 2, S, qV );
-        jacobiConjugation( 0, 1, 2, S, qV );
-        jacobiConjugation( 1, 2, 0, S, qV );
-        jacobiConjugation( 2, 0, 1, S, qV );
-    }
-}
+    qV = glm::quat( 1,0,0,0 );
 
-// glm::toMat3 doesn't work in CUDA
-__host__ __device__ __forceinline__ void toMat3( const quat &q, mat3 &M )
-{
-    float qxx = q.x*q.x;
-    float qyy = q.y*q.y;
-    float qzz = q.z*q.z;
-    float qxz = q.x*q.z;
-    float qxy = q.x*q.y;
-    float qyz = q.y*q.z;
-    float qwx = q.w*q.x;
-    float qwy = q.w*q.y;
-    float qwz = q.w*q.z;
-    M[0] = 1.f - 2.f*(qyy+qzz);
-    M[1] = 2.f * (qxy+qwz);
-    M[2] = 2.f * (qxz-qwy);
-    M[3] = 2.f * (qxy-qwz);
-    M[4] = 1.f - 2.f*(qxx+qzz);
-    M[5] = 2.f * (qyz+qwx);
-    M[6] = 2.f * (qxz+qwy);
-    M[7] = 2.f * (qyz-qwx);
-    M[8] = 1.f - 2.f*(qxx+qyy);
+    jacobiConjugation( 0, 1, 2, S, qV );
+    jacobiConjugation( 1, 2, 0, S, qV );
+    jacobiConjugation( 2, 0, 1, S, qV );
+
+    jacobiConjugation( 0, 1, 2, S, qV );
+    jacobiConjugation( 1, 2, 0, S, qV );
+    jacobiConjugation( 2, 0, 1, S, qV );
+
+    jacobiConjugation( 0, 1, 2, S, qV );
+    jacobiConjugation( 1, 2, 0, S, qV );
+    jacobiConjugation( 2, 0, 1, S, qV );
+
+    jacobiConjugation( 0, 1, 2, S, qV );
+    jacobiConjugation( 1, 2, 0, S, qV );
+    jacobiConjugation( 2, 0, 1, S, qV );
 }
 
 #define condSwap( COND, X, Y )          \
@@ -139,7 +103,7 @@ __host__ __device__ __forceinline__ void toMat3( const quat &q, mat3 &M )
     Y = COND ? _X_ : Y;                 \
 }
 
-__host__ __device__ void sortSingularValues( mat3 &B, mat3 &V )
+__host__ __device__ __forceinline__ void sortSingularValues( mat3 &B, mat3 &V )
 {
     // used in step 2
     vec3 b1 = B.column(0); vec3 v1 = V.column(0);
@@ -169,7 +133,7 @@ __host__ __device__ void sortSingularValues( mat3 &B, mat3 &V )
     V = mat3( v1, v2, v3 );
 }
 
-__host__ __device__ void QRGivensQuaternion( float a1, float a2, float &ch, float &sh )
+__host__ __device__ __forceinline__ void QRGivensQuaternion( float a1, float a2, float &ch, float &sh )
 {
     // a1 = pivot point on diagonal
     // a2 = lower triangular entry we want to annihilate
@@ -192,49 +156,50 @@ __host__ __device__ void QRDecomposition( const mat3 &B, mat3 &Q, mat3 &R )
     // QR decomposition of 3x3 matrices using Givens rotations to
     // eliminate elements B21, B31, B32
     quat qQ; // cumulative rotation
-    quat qU; // each Givens rotation in quaternion form
-
     mat3 U;
-    float ch, sh;
+    float ch, sh, s0, s1;
 
     // first givens rotation
     QRGivensQuaternion( R[0], R[1], ch, sh );
-    qU = quat( ch, 0, 0, sh );
 
-    U = mat3(1.f);
-    U[0] = 1-2*sh*sh;  U[3] = -2*sh*ch;
-    U[1] = -U[3];      U[4] = U[0];
+    s0 = 1-2*sh*sh;
+    s1 = 2*sh*ch;
+    U = mat3(  s0, s1, 0,
+              -s1, s0, 0,
+                0,  0, 1 );
 
-    R = mat3::multiplyTransposeL( U, R );
+    R = mat3::multiplyAtB( U, R );
 
     // update cumulative rotation
-    qQ *= qU;
+    qQ = quat( ch*qQ.w-sh*qQ.z, ch*qQ.x+sh*qQ.y, ch*qQ.y-sh*qQ.x, sh*qQ.w+ch*qQ.z );
 
     // second givens rotation
     QRGivensQuaternion( R[0], R[2], ch, sh );
-    qU = quat( ch, 0, -sh, 0 );
 
-    U = mat3(1.f);
-    U[0] = 1-2*sh*sh;   U[6] = -2*ch*sh;
-    U[2] = -U[6];       U[8] = U[0];
+    s0 = 1-2*sh*sh;
+    s1 = 2*sh*ch;
+    U = mat3(  s0, 0, s1,
+                0, 1,  0,
+              -s1, 0, s0 );
 
-    R = mat3::multiplyTransposeL( U, R );
+    R = mat3::multiplyAtB( U, R );
 
     // update cumulative rotation
-    qQ *= qU;
+    qQ = quat( ch*qQ.w+sh*qQ.y, ch*qQ.x+sh*qQ.z, ch*qQ.y-sh*qQ.w, ch*qQ.z-sh*qQ.x );
 
     // third Givens rotation
     QRGivensQuaternion( R[4], R[5], ch, sh );
-    qU = quat( ch, sh, 0, 0 );
 
-    U = mat3(1.f);
-    U[4] = 1-2*sh*sh;   U[7] = -2*ch*sh;
-    U[5] = -U[7];       U[8] = U[4];
+    s0 = 1-2*sh*sh;
+    s1 = 2*sh*ch;
+    U = mat3( 1,   0,  0,
+              0,  s0, s1,
+              0, -s1, s0 );
 
-    R = mat3::multiplyTransposeL( U, R );
+    R = mat3::multiplyAtB( U, R );
 
     // update cumulative rotation
-    qQ *= qU;
+    qQ = quat( ch*qQ.w-sh*qQ.x, sh*qQ.w+ch*qQ.x, ch*qQ.y+sh*qQ.z, ch*qQ.z-sh*qQ.y );
 
     // qQ now contains final rotation for Q
     Q = mat3::fromQuat(qQ);
@@ -245,16 +210,15 @@ __host__ __device__ void QRDecomposition( const mat3 &B, mat3 &Q, mat3 &R )
  * matrices with minimal branching and elementary floating point operations
  * Computes SVD of 3x3 matrix A = W * S * V'
  */
-__host__ __device__ void computeSVD( const mat3 &A, mat3 &W, mat3 &S, mat3 &V )
+__host__ __device__ __forceinline__ void computeSVD( const mat3 &A, mat3 &W, mat3 &S, mat3 &V )
 {
     // normal equations matrix
-    mat3 ATA = mat3::multiplyTransposeL( A, A );
+    mat3 ATA = mat3::multiplyAtB( A, A );
 
 /// 2. Symmetric Eigenanlysis
     quat qV;
     jacobiEigenanalysis( ATA, qV );
     V = mat3::fromQuat(qV);
-//    toMat3( qV, V );
     mat3 B = A * V;
 
 /// 3. Sorting the singular values (find V)
@@ -271,15 +235,13 @@ __host__ __device__ void computeSVD( const mat3 &A, mat3 &W, mat3 &S, mat3 &V )
  * S is symmetric positive semidefinite
  * Can get Polar Decomposition from SVD, see first section of http://en.wikipedia.org/wiki/Polar_decomposition
  */
-__host__ __device__ void computePD( const mat3 &A, mat3 &U, mat3 &P )
+__host__ __device__ void computePD( const mat3 &A, mat3 &R )
 {
     // U is unitary matrix (i.e. orthogonal/orthonormal)
     // P is positive semidefinite Hermitian matrix
     mat3 W, S, V;
     computeSVD( A, W, S, V );
-    mat3 Vt = mat3::transpose(V);
-    U = W * Vt;
-    P = V * S * Vt;
+    R = mat3::multiplyABt( W, V );
 }
 
 /*
@@ -287,14 +249,12 @@ __host__ __device__ void computePD( const mat3 &A, mat3 &U, mat3 &P )
  * re-computing USV for polar.
  * here is a function that returns all the relevant values
  * SVD : A = W * S * V'
- * PD : A = U * P
+ * PD : A = R * E
  */
-__host__ __device__ void computeSVDandPD( const mat3 &A, mat3 &W, mat3 &S, mat3 &V, mat3 &U, mat3 &P )
+__host__ __device__ void computeSVDandPD( const mat3 &A, mat3 &W, mat3 &S, mat3 &V, mat3 &R )
 {
     computeSVD( A, W, S, V );
-    mat3 Vt = mat3::transpose(V);
-    U = W * Vt;
-    P = V * S * Vt;
+    R = mat3::multiplyABt( W, V );
 }
 
 #endif // DECOMPOSITION_H
