@@ -61,29 +61,29 @@ private:
     /**
      * adds snow container OBJ to XML tree
      */
-    void addSnowVolume(QDomElement &node);
+    void addSnowVolume(QDomDocument &doc, QDomElement &node);
 
     /**
      * adds <medium> tag to XML tree. Also calls exportVolumeData to write out volume.
      * calls exportVolumeData, then if successful, links to the .vol file
      */
-    void writeMedium(QDomElement &node);
+    void addMedium(QDomDocument &doc, QDomElement &node);
 
     /**
      * exports the integrator presets
      */
-    void addRenderer(QDomElement &node);
+    void addRenderer(QDomDocument &doc, QDomElement &node);
 
     /**
      * outputs camera into XML format for Mitsuba
      * TODO
      */
-    void addCamera(QDomElement &node);
+    void addCamera(QDomDocument &doc, QDomElement &node);
 
     /**
      * adds collider to XML tree
      */
-    void addCollider(QDomElement &node);
+    void addCollider(QDomDocument &doc, QDomElement &node);
 
 
 

@@ -12,6 +12,7 @@
 #include <QFile>
 
 #include <iostream>
+#include "scene/scenenode.h"
 
 MitsubaExporter::MitsubaExporter()
 {
@@ -65,12 +66,11 @@ void MitsubaExporter::exportScene(QString fprefix, int frame, Scene *scene)
      * Exports Single Frame of Scene to Mitsuba format.
      *
      * Traverses the scene graph and converts colliders to basic Mitsuba primitives
-     * filled objects are loaded OBJs, and the snow is a heterogenous medium.
+     * filled objects are loaded OBJs, and the snow is a heterogenous medium-type volume data
      *
      */
     //QString fname = fprefix + QString("_") + QString::number(frame,);
     QString fname = QString("%1_%2.xml").arg(fprefix, QString("%1").arg(frame,4,'d',0,'0'));
-    //std::cout << fname.toStdString() << std::endl;
     QDomDocument document;
 
     // xml header
@@ -79,35 +79,16 @@ void MitsubaExporter::exportScene(QString fprefix, int frame, Scene *scene)
 
     // root element
     QDomElement sceneNode = document.createElement("scene");
-    sceneNode.setAttribute("version", "0.5.0"); {
-        // integrator settings
-        QDomElement integratorNode = document.createElement("integrator");
-        integratorNode.setAttribute("maxDepth", "8");
-        sceneNode.appendChild(integratorNode);
-
-        // TODO - copy over the Camera attributes to a sensor node
-        QDomElement sensorNode = document.createElement("sensor");
-        sensorNode.setAttribute("type","perspective"); {
-            QDomElement fd = document.createElement("float");
-            fd.setAttribute("focusDistance", "1.25668");
-            sensorNode.appendChild(fd);
-
-            QDomElement fov = document.createElement("float");
-            fov.setAttribute("fov", "45.8402");
-            sensorNode.appendChild(fov);
-
-            QDomElement fovAxis = document.createElement("string");
-            fovAxis.setAttribute("fovAxis","x");
-            sensorNode.appendChild(fovAxis);
-
-            // transform node
-            // sampler node
-            // film node
-
-        }
-        sceneNode.appendChild(sensorNode);
-    }
+    sceneNode.setAttribute("version", "0.5.0");
     document.appendChild(sceneNode);
+
+    //addRenderer(document, sceneNode);
+    //addCamera(document, sceneNode);
+
+    // now traverse the scene graph for renderables.
+//    for (int i=0; i<scene->root())
+
+
 
     /// NOTE: it appears that shapes are not nested in the Mitsuba format.
     /// so we have to compute CTM for each shape node?
@@ -138,7 +119,7 @@ void MitsubaExporter::exportScene(QString fprefix, int frame, Scene *scene)
 
 }
 
-void MitsubaExporter::addCollider(QDomElement &node)
+void MitsubaExporter::addCollider(QDomDocument &doc, QDomElement &node)
 {
 //    <shape type="obj">
 //		<!-- Shiny floor -->
@@ -164,14 +145,19 @@ void MitsubaExporter::addCollider(QDomElement &node)
 
 }
 
-void MitsubaExporter::addRenderer(QDomElement &node)
+void MitsubaExporter::addRenderer(QDomDocument &doc, QDomElement &node)
 {
 //    <integrator type="volpath_simple">
 //		<integer name="maxDepth" value="8"/>
 //	</integrator>
+    // integrator settings
+//    QDomElement integratorNode = document.createElement("integrator");
+//    integratorNode.setAttribute("maxDepth", "8");
+//    node.appendChild(integratorNode);
 }
 
-void MitsubaExporter::addSnowVolume(QDomElement &node)
+
+void MitsubaExporter::addMedium(QDomDocument &doc, QDomElement &node)
 {
 
 //    <medium type="heterogeneous" id="smoke">
@@ -196,8 +182,7 @@ void MitsubaExporter::addSnowVolume(QDomElement &node)
 
 }
 
-
-void MitsubaExporter::addCamera(QDomElement &node)
+void MitsubaExporter::addCamera(QDomDocument &doc, QDomElement &node)
 {
 //    <sensor type="perspective">
 //		<float name="focusDistance" value="1.25668"/>
@@ -220,4 +205,27 @@ void MitsubaExporter::addCamera(QDomElement &node)
 //			<rfilter type="gaussian"/>
 //		</film>
 //	</sensor>
+
+
+//    QDomElement sensorNode = document.createElement("sensor");
+//    sensorNode.setAttribute("type","perspective"); {
+//        QDomElement fd = document.createElement("float");
+//        fd.setAttribute("focusDistance", "1.25668");
+//        sensorNode.appendChild(fd);
+
+//        QDomElement fov = document.createElement("float");
+//        fov.setAttribute("fov", "45.8402");
+//        sensorNode.appendChild(fov);
+
+//        QDomElement fovAxis = document.createElement("string");
+//        fovAxis.setAttribute("fovAxis","x");
+//        sensorNode.appendChild(fovAxis);
+
+        // transform node
+        // sampler node
+        // film node
+
+//    }
+//    sceneNode.appendChild(sensorNode);
+
 }

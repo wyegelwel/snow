@@ -192,10 +192,19 @@ void ViewPanel::renderOffline(QString file_prefix)
      * then call exportScene every frame
      */
     reset();
+    // step the simulation 1/24 of a second at a time.
+
+//    for (int s=0; s<1; s++)
+//    {
+//        for (int f=0; f<24; f++)
+//        {
+//            MitsubaExporter::exportScene(file_prefix, f, m_scene);
+//        }
+//    }
+
     // for now, just export the first frame
     MitsubaExporter::exportScene(file_prefix, 0, m_scene);
 }
-
 
 void ViewPanel::start()
 {
@@ -206,7 +215,6 @@ void ViewPanel::start()
 
 void ViewPanel::reset()
 {
-    // TODO - need to re-init GL
     m_ticker.stop();
     t = 0.f;
     m_scene->root()->clearChildren();
