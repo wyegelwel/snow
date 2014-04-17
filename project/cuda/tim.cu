@@ -38,18 +38,27 @@ void PGTest1();
 
 }
 
-__host__ __device__ void gridIndexToIJK(int idx, int &i, int &j, int &k, Grid *grid){
-    glm::ivec3 dim = grid->dim + 1; // +1 for nodes
-    i = idx / (dim.y*dim.z);
-    idx = idx % (dim.y*dim.z);
-    j = idx / dim.z;
-    k = idx % dim.z;
+
+
+__host__ __device__ void gridIndexToIJK(int idx, int &i, int &j, int &k,const  glm::ivec3 &nodeDim){
+    i = idx / (nodeDim.y*nodeDim.z);
+    idx = idx % (nodeDim.y*nodeDim.z);
+    j = idx / nodeDim.z;
+    k = idx % nodeDim.z;
 }
 
-__host__ __device__ int getGridIndex( int i, int j, int k, Grid* grid)  {
-    glm::ivec3 dim = grid->dim + 1; // +1 for nodes
-    return (i*(dim.y*dim.z) + j*(dim.z) + k);
+__host__ __device__ int getGridIndex( int i, int j, int k, const glm::ivec3 &nodeDim)  {
+    return (i*(nodeDim.y*nodeDim.z) + j*(nodeDim.z) + k);
 }
+
+__host__ __device__ void gridIndexToIJK(int idx, const  glm::ivec3 &nodeDim, glm::ivec3 &IJK){
+    gridIndexToIJK(idx, IJK.x, IJK.y, IJK.z, nodeDim);
+}
+
+__host__ __device__ int getGridIndex( const glm::ivec3 &IJK, const glm::ivec3 &nodeDim)  {
+    return getGridIndex(IJK.x, IJK.y, IJK.z, nodeDim);
+}
+
 
 
 __host__ __device__ void positionToGridIJK(vec3 pos, Grid *grid, int &i, int &j, int &k){
@@ -61,7 +70,7 @@ __host__ __device__ void positionToGridIJK(vec3 pos, Grid *grid, int &i, int &j,
     k = (int) pos.z;
 }
 
-__host__ __device__ void positionToGridIJK(vec3 pos, Grid *grid, glm::ivec3 &gridIJK){
+__host__ __device__ void positionToGridIJK(vec3 &pos, Grid *grid, glm::ivec3 &gridIJK){
     pos-=grid->pos;
     pos /= grid->h;
     pos = vec3::round(pos);
@@ -83,7 +92,7 @@ __global__ void rasterizeParticles( Particle *particleData, Grid *grid, int *par
     Particle p = particleData[index];
     glm::ivec3 gridIJK;
     //positionToGridIJK(p.position, grid, gridIJK);
-    int gridIndex = getGridIndex(gridIJK.x, gridIJK.y, gridIJK.z, grid);
+    int gridIndex = getGridIndex(gridIJK.x, gridIJK.y, gridIJK.z, grid->dim+1);
     particleToCell[index] = gridIndex;
     particleOffsetInCell[index]=cellParticleCount[gridIndex]++;
 }
