@@ -55,8 +55,10 @@
     <property name="title">
      <string>Simulate</string>
     </property>
+    <addaction name="actionStart"/>
     <addaction name="actionPause"/>
     <addaction name="actionResume"/>
+    <addaction name="actionReset"/>
     <addaction name="actionRenderOffline"/>
    </widget>
    <addaction name="menuFile"/>
@@ -105,6 +107,16 @@
     <string>Resume</string>
    </property>
   </action>
+  <action name="actionStart">
+   <property name="text">
+    <string>Start</string>
+   </property>
+  </action>
+  <action name="actionReset">
+   <property name="text">
+    <string>Reset</string>
+   </property>
+  </action>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <customwidgets>
@@ -116,6 +128,8 @@
    <slots>
     <slot>pauseDrawing()</slot>
     <slot>resumeDrawing()</slot>
+    <slot>start()</slot>
+    <slot>reset()</slot>
    </slots>
   </customwidget>
  </customwidgets>
@@ -198,6 +212,38 @@
     <hint type="destinationlabel">
      <x>399</x>
      <y>299</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>actionStart</sender>
+   <signal>triggered()</signal>
+   <receiver>viewPanel</receiver>
+   <slot>start()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>399</x>
+     <y>306</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>actionReset</sender>
+   <signal>triggered()</signal>
+   <receiver>viewPanel</receiver>
+   <slot>reset()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>399</x>
+     <y>306</y>
     </hint>
    </hints>
   </connection>

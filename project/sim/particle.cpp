@@ -33,16 +33,7 @@ ParticleSystem::clear()
 
 void
 ParticleSystem::render()
-{    /**
-     * adds snow container OBJ to XML tree
-     */
-    void addSnowVolume(QDomElement &node);
-
-    /**
-     * adds <medium> tag to XML tree. Also calls exportVolumeData to write out volume.
-     * calls exportVolumeData, then if successful, links to the .vol file
-     */
-    void writeMedium(QDomElement &node);
+{
     if ( !hasVBO() ) buildVBO();
 
     glPushAttrib( GL_LIGHTING_BIT );

@@ -53,6 +53,15 @@ public slots:
     void pauseDrawing();
     void resumeDrawing();
 
+    /// TODO - the following functionalities will eventually be migrated to the
+    /// multi-threaded Engine class.
+    // we probably want the simulation to not start automatically
+    // so the user has a chance to move stuff around in the scene
+    void start();
+
+    // resets the simulation.
+    void reset();
+
 private:
 
     QTimer m_ticker;

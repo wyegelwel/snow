@@ -104,8 +104,7 @@ ViewPanel::initializeGL()
 
     // Render ticker
     assert( connect(&m_ticker, SIGNAL(timeout()), this, SLOT(update())) );
-    m_ticker.start( 1000/FPS );
-    m_timer.start();
+
 }
 
 float t = 0.f;
@@ -130,11 +129,9 @@ ViewPanel::paintGL()
 
 
     // TODO - as a cheap hack we'll have the renderer spit out the
-
     float fps = 1000.f / m_timer.restart();
     m_infoPanel->setInfo( "FPS", QString::number(fps, 'f', 2), false );
     m_infoPanel->render();
-
 }
 
 void
@@ -162,7 +159,7 @@ ViewPanel::mouseReleaseEvent( QMouseEvent *event )
 
 
 // UI methods to pause/resume drawing
-// we might want to do this when doing non-viewing stuff
+// we might want to do this when doing non-viewing stuff, like opening new files
 void ViewPanel::pauseDrawing()
 {
     m_ticker.stop();
@@ -194,7 +191,24 @@ void ViewPanel::renderOffline(QString file_prefix)
      * the exporter handles scene by scene so here, we tell the simulation to start over
      * then call exportScene every frame
      */
-
+    reset();
     // for now, just export the first frame
     MitsubaExporter::exportScene(file_prefix, 0, m_scene);
+}
+
+
+void ViewPanel::start()
+{
+    // starts the simulation
+    m_ticker.start( 1000/FPS );
+    m_timer.start();
+}
+
+void ViewPanel::reset()
+{
+    // TODO - need to re-init GL
+    m_ticker.stop();
+    t = 0.f;
+    m_scene->root()->clearChildren();
+    initializeGL();
 }
