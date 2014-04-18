@@ -81,7 +81,12 @@ SceneNode::getCTM()
 }
 
 QList<SceneNode*>
-SceneNode::getChildren()
+SceneNode::allNodes()
 {
-    return m_children;
+    QList<SceneNode*> list;
+    for (int i=0; i<m_children.size();++i)
+    {
+        list.append(m_children[i]->allNodes());
+    }
+    return list;
 }

@@ -192,18 +192,20 @@ void ViewPanel::renderOffline(QString file_prefix)
      * then call exportScene every frame
      */
     reset();
+    Camera * cam = m_viewport->getCamera();
     // step the simulation 1/24 of a second at a time.
 
 //    for (int s=0; s<1; s++)
 //    {
 //        for (int f=0; f<24; f++)
 //        {
-//            MitsubaExporter::exportScene(file_prefix, f, m_scene);
+//            MitsubaExporter::exportScene(file_prefix, f, m_scene, cam);
 //        }
 //    }
 
     // for now, just export the first frame
-    MitsubaExporter::exportScene(file_prefix, 0, m_scene);
+    //MitsubaExporter::exportScene(file_prefix, 0, m_scene,);
+
 }
 
 void ViewPanel::start()

@@ -30,7 +30,9 @@ public:
     void clearRenderables();
     void addRenderable( Renderable *renderable );
 
-    QList<SceneNode*> getChildren();
+    /// traverses scene and collapses all scene nodes
+    /// into a flat list.
+    QList<SceneNode*> allNodes();
 
     virtual void render();
 
