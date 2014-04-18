@@ -13,11 +13,16 @@
 #ifndef MITSUBAEXPORTER_H
 #define MITSUBAEXPORTER_H
 
-#include "geometry/bbox.h"
-#include "scene/scene.h"
-#include "sim/particle.h"
+
 #include <QString>
 #include <QtXml>
+
+class Scene;
+class Camera;
+class BBox;
+class Particle;
+class ParticleGrid;
+
 //class MitsubaRenderSettings
 //{
 //    // TODO - populate with general render settings
@@ -38,13 +43,11 @@ class MitsubaExporter
 public:
     MitsubaExporter();
 
-
-
     /**
      * @brief exports scene at a particular time frame to a MITSUBA-renderable file format.
      * writes sceneNode and all of its children (i.e. pass in m_scene->root() to render the whole scene)
      */
-    static void exportScene(QString fprefix, int frame, Scene * scene);
+    void exportScene(QString fprefix, int frame, Scene * scene, Camera * camera);
 private:
     /**
      * @brief exports particle system at a single time frame to a .vol file
@@ -56,36 +59,45 @@ private:
      * TODO - need to
      *
      */
-    void exportVolumeData(QString fprefix, BBox bounds);
+    void exportVolumeData(QString fprefix, BBox bounds, ParticleGrid * grid);
 
-    /**
-     * adds snow container OBJ to XML tree
-     */
-    void addSnowVolume(QDomDocument &doc, QDomElement &node);
 
     /**
      * adds <medium> tag to XML tree. Also calls exportVolumeData to write out volume.
      * calls exportVolumeData, then if successful, links to the .vol file
      */
-    void addMedium(QDomDocument &doc, QDomElement &node);
+    void addMedium(QDomElement &node);
 
     /**
      * exports the integrator presets
      */
-    void addRenderer(QDomDocument &doc, QDomElement &node);
+    void addRenderer(QDomElement &node);
 
     /**
      * outputs camera into XML format for Mitsuba
      * TODO
      */
-    void addCamera(QDomDocument &doc, QDomElement &node);
+    void addCamera(QDomElement &node, Camera * camera);
 
     /**
-     * adds collider to XML tree
+     * adds generic obj node as child of node under doc.
+     * used by addCollider and addSnowContainer
      */
-    void addCollider(QDomDocument &doc, QDomElement &node);
+    void addOBJ(QDomElement &node, QString objfile);
+
+    /**
+     * adds collider OBJ to XML tree
+     */
+    void addCollider(QDomElement &node);
+
+    /**
+     * adds snow container OBJ to XML tree
+     */
+    void addSnowContainer(QDomElement &node);
 
 
+    QDomDocument m_document;
+    QString      m_filename;
 
 };
 
