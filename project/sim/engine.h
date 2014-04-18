@@ -56,6 +56,8 @@ public:
 
     int numParticles();
 
+    ParticleSystem* particleSystem();
+
 private:
     ParticleSystem *m_particles;
     Scene *m_scene;

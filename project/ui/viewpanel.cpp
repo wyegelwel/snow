@@ -88,22 +88,22 @@ ViewPanel::initializeGL()
 
     // Scene
 
-    SceneNode *node = new SceneNode;
+//    SceneNode *node = new SceneNode;
 
-    QList<Mesh*> meshes;
-    OBJParser::load( PROJECT_PATH "/data/models/teapot.obj", meshes );
-    for ( int i = 0; i < meshes.size(); ++i )
-        node->addRenderable( meshes[i] );
-    m_scene->root()->addChild( node );
+//    QList<Mesh*> meshes;
+//    OBJParser::load( PROJECT_PATH "/data/models/teapot.obj", meshes );
+//    for ( int i = 0; i < meshes.size(); ++i )
+//        node->addRenderable( meshes[i] );
+//    m_scene->root()->addChild( node );
 
-    this->makeCurrent();
+//    this->makeCurrent();
 
-    ParticleSystem *particles = new ParticleSystem;
-    meshes[0]->fill( *particles, 256*512, 0.1f );
-    m_scene->root()->addRenderable( particles );
-    m_engine->setParticleSystem( particles );
+//    ParticleSystem *particles = new ParticleSystem;
+//    meshes[0]->fill( *particles, 256*512, 0.1f );
+//    m_scene->root()->addRenderable( particles );
+//    m_engine->setParticleSystem( particles );
 
-    m_infoPanel->setInfo( "Particles", QString::number(particles->size()) );
+//    m_infoPanel->setInfo( "Particles", QString::number(particles->size()) );
 
     // Render ticker
     assert( connect(&m_ticker, SIGNAL(timeout()), this, SLOT(update())) );
@@ -221,10 +221,27 @@ void ViewPanel::reset()
 
 }
 
+void ViewPanel::generateNewMesh(const QString &f)  {
+    SceneNode *node = new SceneNode;
+
+    QList<Mesh*> meshes;
+    OBJParser::load(f, meshes );
+    for ( int i = 0; i < meshes.size(); ++i )
+        node->addRenderable( meshes[i] );
+    m_scene->root()->addChild( node );
+    m_selectedMesh = meshes[0];
+}
+
 void ViewPanel::fillSelectedMesh()
 {
     // If there's a selection, do mesh->fill...
-    int nParticles = UiSettings::fillNumParticles();
-    float resolution = UiSettings::fillResolution();
-    // mesh->fill( *(m_engine->particleSystem()), nParticles, resolution );
+    if(m_selectedMesh)  {
+        int nParticles = UiSettings::fillNumParticles();
+        float resolution = UiSettings::fillResolution();
+        ParticleSystem *particles = m_engine->particleSystem();
+        m_selectedMesh->fill( *particles, nParticles, resolution );
+        m_scene->root()->addRenderable(particles );
+
+        m_infoPanel->setInfo( "Particles", QString::number(particles->size()) );
+    }
 }

@@ -100,6 +100,7 @@ Mesh::computeNormals()
 void
 Mesh::render()
 {
+
     if ( !hasVBO() ) {
         buildVBO();
     }

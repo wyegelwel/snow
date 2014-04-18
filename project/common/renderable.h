@@ -17,6 +17,7 @@ public:
     Renderable() {}
     virtual ~Renderable() {}
     virtual void render() {}
+    bool renderOnSim = true;
 };
 
 #endif // RENDERABLE_H
