@@ -22,19 +22,29 @@ class MainWindow : public QMainWindow
     Q_OBJECT
 
 public slots:
+
     /// saves snow simulation parameters / colliders etc. to file
     void saveToFile();
+
     /// loads snow simulation parameters from file
     void loadFromFile();
+
     /// restarts simulation and exports to offline renderer.
     void renderOffline();
 
+    void importMesh();
+
 public:
-    explicit MainWindow(QWidget *parent = 0);
+
+    explicit MainWindow( QWidget *parent = 0 );
     ~MainWindow();
-    
+
 private:
+
     Ui::MainWindow *ui;
+
+    void setupUI();
+
 };
 
 #endif // MAINWINDOW_H

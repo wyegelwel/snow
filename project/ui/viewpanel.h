@@ -16,11 +16,12 @@
 #include <QElapsedTimer>
 #include <QFile>
 #include <QDir>
+#include "geometry/mesh.h"
 
 class InfoPanel;
 class Viewport;
 class Scene;
-class ParticleSystem;
+class Engine;
 class SceneNode;
 
 class ViewPanel : public QGLWidget
@@ -50,8 +51,8 @@ public slots:
     virtual void mouseMoveEvent( QMouseEvent *event );
     virtual void mouseReleaseEvent( QMouseEvent *event );
 
-    void pauseDrawing();
-    void resumeDrawing();
+    void pause();
+    void resume();
 
     /// TODO - the following functionalities will eventually be migrated to the
     /// multi-threaded Engine class.
@@ -62,6 +63,11 @@ public slots:
     // resets the simulation.
     void reset();
 
+    // Filling
+    void fillSelectedMesh();
+
+    void generateNewMesh(const QString &f);
+
 private:
 
     QTimer m_ticker;
@@ -70,11 +76,13 @@ private:
     InfoPanel *m_infoPanel;
     Viewport *m_viewport;
 
-    ParticleSystem *m_particles;
+    Engine *m_engine;
     Scene *m_scene;
 
     // set true to draw a little XYZ axis in the corner
     bool m_drawAxis;
+
+    Mesh *m_selectedMesh;
 };
 
 #endif // VIEWPANEL_H

@@ -56,6 +56,11 @@ int Engine::numParticles()
     return m_particles->particles().size();
 }
 
+ParticleSystem* Engine::particleSystem()  {
+    m_particles = new ParticleSystem;
+    return m_particles;
+}
+
 //float t = 0.f;
 void Engine::update()
 {
