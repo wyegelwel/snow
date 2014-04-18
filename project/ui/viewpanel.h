@@ -16,6 +16,7 @@
 #include <QElapsedTimer>
 #include <QFile>
 #include <QDir>
+#include "geometry/mesh.h"
 
 class InfoPanel;
 class Viewport;
@@ -65,6 +66,8 @@ public slots:
     // Filling
     void fillSelectedMesh();
 
+    void generateNewMesh(const QString &f);
+
 private:
 
     QTimer m_ticker;
@@ -78,6 +81,8 @@ private:
 
     // set true to draw a little XYZ axis in the corner
     bool m_drawAxis;
+
+    Mesh *m_selectedMesh;
 };
 
 #endif // VIEWPANEL_H

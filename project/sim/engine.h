@@ -88,6 +88,8 @@ public slots:
 
     void update();
 
+    ParticleSystem* particleSystem();
+
 private:
 
     QTimer m_ticker;

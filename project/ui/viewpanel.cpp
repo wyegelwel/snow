@@ -227,10 +227,27 @@ void ViewPanel::reset()
 
 }
 
+void ViewPanel::generateNewMesh(const QString &f)  {
+    SceneNode *node = new SceneNode;
+
+    QList<Mesh*> meshes;
+    OBJParser::load(f, meshes );
+    for ( int i = 0; i < meshes.size(); ++i )
+        node->addRenderable( meshes[i] );
+    m_scene->root()->addChild( node );
+    m_selectedMesh = meshes[0];
+}
+
 void ViewPanel::fillSelectedMesh()
 {
     // If there's a selection, do mesh->fill...
-    int nParticles = UiSettings::fillNumParticles();
-    float resolution = UiSettings::fillResolution();
-    // mesh->fill( *(m_engine->particleSystem()), nParticles, resolution );
+    if(m_selectedMesh)  {
+        int nParticles = UiSettings::fillNumParticles();
+        float resolution = UiSettings::fillResolution();
+        ParticleSystem *particles = m_engine->particleSystem();
+        m_selectedMesh->fill( *particles, nParticles, resolution );
+        m_scene->root()->addRenderable(particles );
+
+        m_infoPanel->setInfo( "Particles", QString::number(particles->size()) );
+    }
 }

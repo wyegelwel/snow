@@ -70,9 +70,9 @@ void MainWindow::renderOffline()
 void MainWindow::importMesh()
 {
     ui->viewPanel->pause();
-    QString filename = QFileDialog::getSaveFileName(this, "Select mesh to import.", QString(), "*.obj");
+    QString filename = QFileDialog::getOpenFileName(this, "Select mesh to import.", PROJECT_PATH "/data/models", "*.obj");
     if ( !filename.isEmpty() ) {
-        // DO SOMETHING
+        ui->viewPanel->generateNewMesh(filename);
     }
     ui->viewPanel->resume();
 }
@@ -89,4 +89,3 @@ void MainWindow::setupUI()
     FloatBinding::bindSpinBox( ui->fillResolutionSpinbox, UiSettings::fillResolution(), this );
     IntBinding::bindSpinBox( ui->fillNumParticlesSpinbox, UiSettings::fillNumParticles(), this );
 }
-
