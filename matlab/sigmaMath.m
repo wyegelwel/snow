@@ -15,7 +15,7 @@ lFp = lambda*exp(xi*(1-Jpp));
 
 [P, S, Q] = svd(Fe);
 Re = P*Q';
-sigmaT = (2*uFp/Jp)*(Fe-Re)*Fe'+(lFp/Jp)*(Jep - 1)*Jep*eye(3);
+sigmaT = (2*uFp)*(Fe-Re)*Fe'+(lFp)*(Jep - 1)*Jep*eye(3);
 sigma = sigmaT'
 
 % Complex test
@@ -35,7 +35,7 @@ lFp = lambda*exp(xi*(1-Jpp));
 
 [P, S, Q] = svd(Fe);
 Re = P*Q';
-sigmaT = (2*uFp/Jp)*(Fe-Re)*Fe'+(lFp/Jp)*(Jepp - 1)*Jep*eye(3);
+sigmaT = (2*uFp)*(Fe-Re)*Fe'+(lFp)*(Jep - 1)*Jep*eye(3);
 sigma = sigmaT'
 
 % More complex test
@@ -57,5 +57,5 @@ lFp = lambda*exp(xi*(1-Jpp))
 
 [P, S, Q] = svd(Fe);
 Re = P*Q';
-sigmaT = (2*uFp/Jp)*(Fe-Re)*Fe'+(lFp/Jp)*(Jep - 1)*Jep*eye(3);
+sigmaT = (2*uFp)*(Fe-Re)*Fe'+(lFp)*(Jep - 1)*Jep*eye(3);
 sigma = sigmaT'

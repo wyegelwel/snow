@@ -25,6 +25,7 @@ extern "C"  {
     void testColliding();
     void testColliderNormal();
     void testGridMath();
+    void timingTests();
 
 }
 
@@ -139,15 +140,14 @@ __host__ __device__ void computeSigma(Particle &particle, WorldParams *worldPara
 
     float Jpp = mat3::determinant(Fp);
     float Jep = mat3::determinant(Fe);
-    float Jp = Jpp*Jep;
 
-    mat3 Re, Se;
-    computePD(Fe, Re, Se);
+    mat3 Re;
+    computePD(Fe, Re);
 
     float muFp = worldParams->mu*exp(worldParams->xi*(1-Jpp));
     float lambdaFp = worldParams->lambda*exp(worldParams->xi*(1-Jpp));
 
-    sigma = (2*muFp/Jp)*(Fe-Re)*mat3::transpose(Fe)+(lambdaFp/Jp)*(Jep-1)*Jep*mat3(1.0f) * (Jp*particle.volume);
+    sigma = (2*muFp*(Fe-Re)*mat3::transpose(Fe)+lambdaFp*(Jep-1)*Jep*mat3(1.0f)) * (particle.volume);
 }
 
 
@@ -175,25 +175,26 @@ __global__ void computeCellMassVelocityAndForce(Particle *particleData, Grid *gr
     int particleIdx = blockIdx.x*blockDim.x + threadIdx.x;
     Particle &particle = particleData[particleIdx];
 
-    glm::ivec3 gridIJK;
-    positionToGridIJK(particle.position, grid, gridIJK); // NOTE: since we are working with nodes, we may need to reconcile grid.dim and size of nodes at some point
-
     mat3 sigma;
     computeSigma(particle, worldParams, sigma);
 
+    vec3 particleGridPos = (particle.position - grid->pos)/grid->h;
+    glm::ivec3 min = glm::ivec3(std::ceil(particleGridPos.x - 2), std::ceil(particleGridPos.y - 2), std::ceil(particleGridPos.z - 2));
+    glm::ivec3 max = glm::ivec3(std::floor(particleGridPos.x + 2), std::floor(particleGridPos.y + 2), std::floor(particleGridPos.z + 2));
+
+
     // Apply particles contribution of mass, velocity and force to surrounding nodes
-    glm::ivec3 min = glm::max(glm::ivec3(0.0f), gridIJK-2);
-    glm::ivec3 max = glm::min(grid->dim, gridIJK+2); //+1 because we are working on nodes
+    min = glm::max(glm::ivec3(0.0f), min);
+    max = glm::min(grid->dim, max);
     for (int i = min.x; i <= max.x; i++){
         for (int j = min.y; j <= max.y; j++){
             for (int k = min.z; k <= max.z; k++){
-                vec3 nodePosition = vec3(i, j, k)*grid->h + grid->pos;
-                int currIdx = getGridIndex(i, j, k, grid);
+                int currIdx = getGridIndex(i, j, k, grid->dim+1);
                 ParticleGrid::Node &node = nodes[currIdx];
 
                 float w;
                 vec3 wg;
-                weightAndGradient(((particle.position-nodePosition)/grid->h).toGLM(), w, wg);
+                weightAndGradient(particleGridPos - vec3(i, j, k), w, wg);
 
                 atomicAdd(&node.mass, particle.mass*w);
                 atomicAdd(&node.velocity, particle.velocity*particle.mass*w);
@@ -201,6 +202,68 @@ __global__ void computeCellMassVelocityAndForce(Particle *particleData, Grid *gr
             }
         }
     }
+}
+
+
+__host__ __device__ __forceinline__
+bool withinBoundsInclusive( const float &v, const float &min, const float &max ) { return (v >= min && v <= max); }
+
+__host__ __device__ __forceinline__
+bool withinBoundsInclusive( const glm::ivec3 &v, const glm::ivec3 &min, const glm::ivec3 &max ) { return  withinBoundsInclusive(v.x, min.x, max.x)
+                                                                                                            && withinBoundsInclusive(v.y, min.y, max.y)
+                                                                                                            && withinBoundsInclusive(v.z, min.z, max.z);}
+struct ParticleGridTempData{
+    mat3 sigma;
+    vec3 particleGridPos;
+};
+
+__global__ void computeParticleGridTempData(Particle *particleData, Grid *grid, WorldParams *worldParams, ParticleGridTempData *particleGridTempData){
+    int particleIdx = blockIdx.x*blockDim.x + threadIdx.x;
+    Particle &particle = particleData[particleIdx];
+    ParticleGridTempData &pgtd = particleGridTempData[particleIdx];
+
+
+//    vec3 particleGridPos = (particle.position - grid->pos)/grid->h;
+//    pgtd.gridIJK = glm::ivec3((int) particleGridPos.x, (int) particleGridPos.y, (int) particleGridPos.z);
+    pgtd.particleGridPos = (particle.position - grid->pos)/grid->h;
+    computeSigma(particle, worldParams, pgtd.sigma);
+}
+
+/**
+ * Called on each particle.
+ *
+ * Each particle adds it's mass, velocity and force contribution to the grid nodes within 2h of itself.
+ *
+ * In:
+ * particleData -- list of particles
+ * grid -- Stores grid paramters
+ * worldParams -- Global parameters dealing with the physics of the world
+ *
+ * Out:
+ * nodes -- list of every node in grid ((dim.x+1)*(dim.y+1)*(dim.z+1))
+ *
+ */
+__global__ void computeCellMassVelocityAndForceFast(Particle *particleData, Grid *grid, ParticleGridTempData *particleGridTempData, ParticleGrid::Node *nodes){
+    int particleIdx = blockIdx.y*blockDim.y + blockIdx.x*blockDim.x + threadIdx.x;
+    Particle &particle = particleData[particleIdx];
+    ParticleGridTempData &pgtd = particleGridTempData[particleIdx];
+
+    glm::ivec3 currIJK;
+    gridIndexToIJK(threadIdx.y, glm::ivec3(4,4,4), currIJK);
+    currIJK.x += (int) pgtd.particleGridPos.x - 1; currIJK.y += (int) pgtd.particleGridPos.y - 1; currIJK.z += (int) pgtd.particleGridPos.z - 1;
+
+    if (withinBoundsInclusive(currIJK, glm::ivec3(0,0,0), grid->dim)){
+        ParticleGrid::Node &node = nodes[getGridIndex(currIJK, grid->dim+1)];
+
+        float w;
+        vec3 wg;
+        vec3 nodePosition(currIJK.x, currIJK.y, currIJK.z);
+        weightAndGradient(pgtd.particleGridPos-nodePosition, w, wg);
+
+        atomicAdd(&node.mass, particle.mass*w);
+        atomicAdd(&node.velocity, particle.velocity*particle.mass*w);
+        atomicAdd(&node.force, pgtd.sigma*wg);
+     }
 }
 
 /**
@@ -223,9 +286,11 @@ __global__ void computeCellMassVelocityAndForce(Particle *particleData, Grid *gr
 __global__ void updateVelocities(ParticleGrid::Node *nodes, float dt, ImplicitCollider* colliders, int numColliders, WorldParams *worldParams, Grid *grid){
     int nodeIdx = blockIdx.x*blockDim.x + threadIdx.x;
     int gridI, gridJ, gridK;
-    gridIndexToIJK(nodeIdx, gridI, gridJ, gridK, grid);
+    gridIndexToIJK(nodeIdx, gridI, gridJ, gridK, grid->dim+1);
     ParticleGrid::Node &node = nodes[nodeIdx];
     vec3 nodePosition = vec3(gridI, gridJ, gridK)*grid->h + grid->pos;
+
+    node.velocity /= node.mass; //Have to normalize velocity by mass to conserve momentum
 
     vec3 tmpVelocity = node.velocity + dt*(node.force/node.mass);
     checkForAndHandleCollisions(colliders, numColliders, worldParams->coeffFriction, nodePosition, tmpVelocity);
@@ -245,9 +310,13 @@ __global__ void updateVelocities(ParticleGrid::Node *nodes, float dt, ImplicitCo
  * @param numColliders
  */
 void gridMath(Particle *particleData, int numParticles, Grid *grid, WorldParams *worldParams, ParticleGrid::Node *nodes,
-              float dt, ImplicitCollider* colliders, int numColliders){
-    computeCellMassVelocityAndForce<<< numParticles / 512, 512 >>>(particleData, grid, worldParams, nodes);
-    updateVelocities<<< grid->nodeCount() / 512, 512 >>>(nodes, dt, colliders, numColliders, worldParams, grid);
+              float dt, ImplicitCollider* colliders, int numColliders, ParticleGridTempData *devPTGD){
+    int threadCount = 256;
+    computeParticleGridTempData<<< numParticles / threadCount , threadCount >>>(particleData, grid, worldParams, devPTGD);
+    dim3 blockDim = dim3(numParticles / threadCount / 8, numParticles / threadCount / 8);
+    dim3 threadDim = dim3(threadCount/64, 64);
+    computeCellMassVelocityAndForceFast<<< blockDim, threadDim >>>(particleData, grid, devPTGD, nodes);
+    updateVelocities<<< grid->nodeCount() / 256, 256 >>>(nodes, dt, colliders, numColliders, worldParams, grid);
 }
 
 
@@ -414,11 +483,25 @@ __device__ float maxNorm(mat3 m){
     float norm = -INFINITY;
     for (int row = 0; row < 3; row++){
         for (int col = 0; col < 3; col++){
-            norm=max(norm,m[col*3+row]); //note glm is column major
+            norm=max(norm,fabs(m[col*3+row])); //note glm is column major
         }
     }
     return norm;
 }
+
+__device__ void printMat3( const mat3 &mat ) {
+    // prints by rows
+    for (int j=0; j<3; ++j) // g3d stores column-major
+    {
+        for (int i=0; i<3; ++i)
+        {
+            printf("%f   ", mat[3*i+j]);
+        }
+        printf("\n");
+    }
+    printf("\n");
+}
+
 
 __global__ void testComputeSigma(){
     printf("\tTesting compute sigma \n");
@@ -426,6 +509,7 @@ __global__ void testComputeSigma(){
     p.mass = 1;
     p.elasticF = mat3(1.0f);
     p.plasticF = mat3(1.0f);
+    p.volume = 1;
 
     WorldParams wp;
     wp.mu = 1;
@@ -451,9 +535,9 @@ __global__ void testComputeSigma(){
 
     computeSigma(p, &wp, sigma);
 
-    expected = mat3( 1.8908,    0.4159,    0.5951,
-                     0.4159,    0.5851,   -0.7004,
-                     0.5951,   -0.7004,   1.4499);
+    expected = mat3( 130.7990,    4.5751,    6.5458,
+                     4.5751,  116.4363,  -7.7044,
+                     6.5458,   -7.7044,  125.9489);
 
     if (maxNorm(expected-sigma) < 1e-4){
         printf("\t\t[PASSED]: Complex compute sigma\n");
@@ -472,14 +556,14 @@ __global__ void testComputeSigma(){
 
     computeSigma(p, &wp, sigma);
 
-    expected = mat3(-15.9287, 0.0000, 0,
-                         0, -15.9287, 0,
-                         0,  0, -15.9287);
+    expected = mat3( -0.8462,    0.0000,         0,
+                     0.0000,   -0.8462,        0,
+                          0,         0,   -0.8462);
 
     if (maxNorm(expected-sigma) < 1e-4){
-        printf("\t\t[PASSED]: Complex compute sigma\n");
+        printf("\t\t[PASSED]: More complex compute sigma\n");
     } else{
-        printf("\t\t[FAILED]: Complex compute sigma\n");
+        printf("\t\t[FAILED]: More complex compute sigma\n");
     }
 
     printf("\tDone testing compute sigma \n");
@@ -575,10 +659,92 @@ __global__ void testCheckForAndHandleCollisions(){
 
 #define NUM_PARTICLES 2
 
-void testGridMath(){
-    printf("\nTesting grid math\n");
-    testComputeSigma<<<1,1>>>();
-    cudaDeviceSynchronize();
+void testComputeCellMassVelocityAndForceComplex(){
+    Particle particles[NUM_PARTICLES];
+    for (int i = 0; i < NUM_PARTICLES; i++){
+        particles[i].mass = i+1;
+        particles[i].elasticF = mat3(1.0f);//Won't try more complicated values because we test sigma computation elsewhere
+        particles[i].plasticF = mat3(1.0f);
+        particles[i].velocity = vec3(i+1);
+        particles[i].position = vec3(i);
+        particles[i].volume = i+1;
+    }
+
+    Grid grid;
+    grid.dim = glm::ivec3(5,5,5);
+    grid.h = 1;
+    grid.pos = vec3(-2,-2,-2);
+
+    WorldParams wp;
+    wp.lambda = wp.mu = wp.xi = 1;
+
+    ParticleGrid::Node nodes[grid.nodeCount()];
+
+    Particle *dev_particles;
+    Grid *dev_grid;
+    WorldParams *dev_wp;
+    ParticleGrid::Node *dev_nodes;
+    ParticleGridTempData *devPTGD;
+
+    checkCudaErrors(cudaMalloc((void**) &dev_particles, NUM_PARTICLES*sizeof(Particle)));
+    checkCudaErrors(cudaMemcpy(dev_particles,particles,NUM_PARTICLES*sizeof(Particle),cudaMemcpyHostToDevice));
+
+    checkCudaErrors(cudaMalloc((void**) &dev_grid, sizeof(Grid)));
+    checkCudaErrors(cudaMemcpy(dev_grid,&grid,sizeof(Grid),cudaMemcpyHostToDevice));
+
+    checkCudaErrors(cudaMalloc((void**) &dev_wp, sizeof(WorldParams)));
+    checkCudaErrors(cudaMemcpy(dev_wp,&wp,sizeof(WorldParams),cudaMemcpyHostToDevice));
+
+    checkCudaErrors(cudaMalloc((void**) &dev_nodes, grid.nodeCount()*sizeof(ParticleGrid::Node)));
+    checkCudaErrors(cudaMemcpy(dev_nodes,&nodes,grid.nodeCount()*sizeof(ParticleGrid::Node),cudaMemcpyHostToDevice));
+
+    checkCudaErrors(cudaMalloc( &devPTGD, NUM_PARTICLES*sizeof(ParticleGridTempData)));
+
+
+
+//    computeCellMassVelocityAndForce<<<NUM_PARTICLES, 1>>>(dev_particles, dev_grid, dev_wp, dev_nodes);
+
+    computeParticleGridTempData<<< NUM_PARTICLES, 1 >>>(dev_particles, dev_grid, dev_wp, devPTGD);
+    dim3 blockDim = dim3(NUM_PARTICLES);
+    dim3 threadDim = dim3(1, 64);
+    computeCellMassVelocityAndForceFast<<< blockDim, threadDim >>>(dev_particles, dev_grid, devPTGD, dev_nodes);
+
+    checkCudaErrors(cudaMemcpy(nodes,dev_nodes,grid.nodeCount()*sizeof(ParticleGrid::Node),cudaMemcpyDeviceToHost));
+
+    //I only check masses because the rest are derived from the same way mass is. The only one that is different is
+    // force which I check the sigma function separately
+    //These values are from the computeMasses.m file with this initial setup
+    float expectedMasses[] ={0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.00462962962962964,0.0185185185185185,0.00462962962962964,0,0,0,0.0185185185185185,0.0740740740740741,0.0185185185185185,0,0,0,0.00462962962962964,0.0185185185185185,0.00462962962962964,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.0185185185185185,0.0740740740740741,0.0185185185185185,0,0,0,0.0740740740740741,0.305555555555556,0.111111111111111,0.00925925925925927,0,0,0.0185185185185185,0.111111111111111,0.166666666666667,0.0370370370370371,0,0,0,0.00925925925925927,0.0370370370370371,0.00925925925925927,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.00462962962962964,0.0185185185185185,0.00462962962962964,0,0,0,0.0185185185185185,0.111111111111111,0.166666666666667,0.0370370370370371,0,0,0.00462962962962964,0.166666666666667,0.597222222222222,0.148148148148148,0,0,0,0.0370370370370371,0.148148148148148,0.0370370370370371,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.00925925925925927,0.0370370370370371,0.00925925925925927,0,0,0,0.0370370370370371,0.148148148148148,0.0370370370370371,0,0,0,0.00925925925925927,0.0370370370370371,0.00925925925925927,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+};
+    bool failed = false;
+    for (int i =0; i < grid.nodeCount(); i++){
+        int I,J,K;
+        gridIndexToIJK(i, I, J, K, grid.dim+1);
+        ParticleGrid::Node node = nodes[i];
+        if ( std::abs(expectedMasses[i] - node.mass) > 1e-4){
+            printf("\t\tActual mass (%f) didn't equal expected mass (%f) for node: (%d, %d, %d)\n", node.mass, expectedMasses[i], I,J,K);
+            failed = true;
+        }
+        //printf("Node: ( %d, %d, %d), mass: %f\n", I,J,K, node.mass);
+    }
+    if (failed){
+        printf("\t\t[FAILED]: Complex computeCellMassVelocityAndForce() test\n");
+    }else{
+        printf("\t\t[PASSED]: Complex computeCellMassVelocityAndForce() test\n");
+    }
+
+
+    cudaFree(dev_particles);
+    cudaFree(dev_grid);
+    cudaFree(dev_wp);
+    cudaFree(dev_nodes);
+
+    checkCudaErrors(cudaDeviceSynchronize());
+}
+
+#define NUM_PARTICLES 2
+
+void testComputeCellMassVelocityAndForce(){
     printf("\tTesting computeCellMassVelocityAndForce()\n");
     Particle particles[NUM_PARTICLES];
     for (int i = 0; i < NUM_PARTICLES; i++){
@@ -604,6 +770,7 @@ void testGridMath(){
     Grid *dev_grid;
     WorldParams *dev_wp;
     ParticleGrid::Node *dev_nodes;
+    ParticleGridTempData *devPTGD;
 
     checkCudaErrors(cudaMalloc((void**) &dev_particles, NUM_PARTICLES*sizeof(Particle)));
     checkCudaErrors(cudaMemcpy(dev_particles,particles,NUM_PARTICLES*sizeof(Particle),cudaMemcpyHostToDevice));
@@ -617,7 +784,16 @@ void testGridMath(){
     checkCudaErrors(cudaMalloc((void**) &dev_nodes, grid.nodeCount()*sizeof(ParticleGrid::Node)));
     checkCudaErrors(cudaMemcpy(dev_nodes,&nodes,grid.nodeCount()*sizeof(ParticleGrid::Node),cudaMemcpyHostToDevice));
 
-    computeCellMassVelocityAndForce<<<NUM_PARTICLES, 1>>>(dev_particles, dev_grid, dev_wp, dev_nodes);
+    checkCudaErrors(cudaMalloc( &devPTGD, NUM_PARTICLES*sizeof(ParticleGridTempData)));
+
+
+
+    //computeCellMassVelocityAndForce<<<NUM_PARTICLES, 1>>>(dev_particles, dev_grid, dev_wp, dev_nodes);
+
+    computeParticleGridTempData<<< NUM_PARTICLES, 1 >>>(dev_particles, dev_grid, dev_wp, devPTGD);
+    dim3 blockDim = dim3(NUM_PARTICLES);
+    dim3 threadDim = dim3(1, 64);
+    computeCellMassVelocityAndForceFast<<< blockDim, threadDim >>>(dev_particles, dev_grid, devPTGD, dev_nodes);
 
     checkCudaErrors(cudaMemcpy(nodes,dev_nodes,grid.nodeCount()*sizeof(ParticleGrid::Node),cudaMemcpyDeviceToHost));
 
@@ -628,7 +804,7 @@ void testGridMath(){
     bool failed = false;
     for (int i =0; i < grid.nodeCount(); i++){
         int I,J,K;
-        gridIndexToIJK(i, I, J, K, &grid);
+        gridIndexToIJK(i, I, J, K, grid.dim+1);
         ParticleGrid::Node node = nodes[i];
         if ( std::abs(expectedMasses[i] - node.mass) > 1e-4){
             printf("\t\tActual mass (%f) didn't equal expected mass (%f) for node: (%d, %d, %d)\n", node.mass, expectedMasses[i], I,J,K);
@@ -649,15 +825,16 @@ void testGridMath(){
     cudaFree(dev_nodes);
 
     checkCudaErrors(cudaDeviceSynchronize());
+
+    testComputeCellMassVelocityAndForceComplex();
     printf("\tDone testing computeCellMassVelocityAndForce()\n");
+}
 
 
-    testCheckForAndHandleCollisions<<<1,1>>>();
-    checkCudaErrors(cudaDeviceSynchronize());
-
-
+void testUpdateVelocities(){
     printf("\tTesting updateVelocities\n");
 
+    Grid grid;
     grid.dim = glm::ivec3(1,0,0);
     grid.h = 1;
 
@@ -681,9 +858,13 @@ void testGridMath(){
     sphere.type = SPHERE;
     ImplicitCollider colliders[1] = {sphere};
 
+    WorldParams wp;
     wp.coeffFriction = .5;
 
     ImplicitCollider *dev_colliders;
+    Grid *dev_grid;
+    WorldParams *dev_wp;
+    ParticleGrid::Node *dev_nodes;
 
     checkCudaErrors(cudaMalloc((void**) &dev_colliders, sizeof(ImplicitCollider)));
     checkCudaErrors(cudaMemcpy(dev_colliders,&colliders,sizeof(ImplicitCollider),cudaMemcpyHostToDevice));
@@ -727,13 +908,27 @@ void testGridMath(){
     cudaFree(dev_nodes);
 
     printf("\tDone testing updateVelocities");
+}
+
+void testGridMath(){
+    printf("\nTesting grid math\n");
+    testComputeSigma<<<1,1>>>();
+    cudaDeviceSynchronize();
+
+    testComputeCellMassVelocityAndForce();
+
+    testCheckForAndHandleCollisions<<<1,1>>>();
+    checkCudaErrors(cudaDeviceSynchronize());
+
+    testUpdateVelocities();
+
 
     printf("Done testing grid math\n");
 
 }
 
 void timingTests(){
-    const int dim = 64;
+    const int dim = 128;
     ParticleGrid grid;
     grid.dim = glm::ivec3( dim, dim, dim );
     grid.h = 1.f/dim;
@@ -779,7 +974,8 @@ void timingTests(){
     floor.param = vec3(0,1,0);
     floor.type = HALF_PLANE;
 
-    ImplicitCollider colliders[1] = {floor};
+    ImplicitCollider colliders[] = {floor};
+    int nColliders = 1;
 
     printf( "    Allocating kernel resources...\n" ); fflush(stdout);
     Particle *devParticles;
@@ -787,11 +983,16 @@ void timingTests(){
     Grid *devGrid;
     WorldParams *devWorldParams;
     ImplicitCollider *devColliders;
+    ParticleGridTempData *devPTGD;
     checkCudaErrors(cudaMalloc( &devParticles, nParticles*sizeof(Particle) ));
     checkCudaErrors(cudaMalloc( &devNodes, (dim+1)*(dim+1)*(dim+1)*sizeof(ParticleGrid::Node) ));
+    checkCudaErrors(cudaMalloc( &devGrid, sizeof(Grid) ));
+    checkCudaErrors(cudaMalloc( &devWorldParams, sizeof(WorldParams) ));
+    checkCudaErrors(cudaMalloc( &devColliders, nColliders*sizeof(ImplicitCollider) ));
+    checkCudaErrors(cudaMalloc( &devPTGD, nParticles*sizeof(ParticleGridTempData)));
 
-    static const int blockSizes[] = { 32, 64, 128, 256, 512 };
-    static const int nBlocks = 5;
+    static const int blockSizes[] = { 64, 128, 256, 512 };
+    static const int nBlocks = 4;
 
     float dt = .001;
     for ( int i = 0; i < nBlocks; ++i ) {
@@ -799,23 +1000,25 @@ void timingTests(){
         checkCudaErrors(cudaMemcpy( devNodes, nodes, (dim+1)*(dim+1)*(dim+1)*sizeof(ParticleGrid::Node), cudaMemcpyHostToDevice ));
         checkCudaErrors(cudaMemcpy( devGrid, &grid, sizeof(Grid), cudaMemcpyHostToDevice ));
         checkCudaErrors(cudaMemcpy( devWorldParams, &worldParams, sizeof(WorldParams), cudaMemcpyHostToDevice ));
-        checkCudaErrors(cudaMemcpy( devColliders, colliders, sizeof(ImplicitCollider), cudaMemcpyHostToDevice ));
-        int blockSize = blockSizes[i];
+        checkCudaErrors(cudaMemcpy( devColliders, colliders, nColliders*sizeof(ImplicitCollider), cudaMemcpyHostToDevice ));
+        int threadCount = blockSizes[i];
 //        int blockSize = 256;
-        printf( "    Block size = %3d; ", blockSize ); fflush(stdout);
-//        TIME( " Launching full kernel... ", "finished\n",
-//          computeCellMassVelocityAndForce<<< nParticles / 512, 512 >>>(devParticles, devGrid, devWorldParams, devNodes);
-//          updateVelocities<<< grid->nodeCount() / 512, 512 >>>(devNodes, dt, devColliders, 1, devWorldParams, devGrid);
-//            checkCudaErrors(cudaDeviceSynchronize());
-//        );
-       // if ( error != cudaSuccess ) break;
+        printf( "    Block size = %3d; ", threadCount ); fflush(stdout);
+
+        TIME( " Launching full kernel... ", "finished\n",
+
+              computeParticleGridTempData<<< nParticles / threadCount , threadCount >>>(devParticles, devGrid, devWorldParams, devPTGD);
+              dim3 blockDim = dim3(nParticles / threadCount / 8, nParticles / threadCount / 8);
+              dim3 threadDim = dim3(threadCount/64, 64);
+              computeCellMassVelocityAndForceFast<<< blockDim, threadDim >>>(devParticles, devGrid, devPTGD, devNodes);
+//              computeCellMassVelocityAndForce<<< nParticles / threadCount, threadCount >>>(devParticles, devGrid, devWorldParams, devNodes);
+              updateVelocities<<< grid.nodeCount() / threadCount, threadCount >>>(devNodes, dt, devColliders, nColliders, devWorldParams, devGrid);
+              checkCudaErrors(cudaDeviceSynchronize());
+        );
     }
 
-//    if ( error != cudaSuccess ) {
-//        printf( "    FAILED: %s\n", _cudaGetErrorEnum(error) );
-//    } else {
-//        printf( "    PASSED.\n" );
-//    }
+//    checkCudaErrors(cudaMemcpy(nodes,devNodes,grid.nodeCount()*sizeof(ParticleGrid::Node),cudaMemcpyDeviceToHost));
+//    printf("mass: %f", nodes[21489].mass);
 
     printf( "    Freeing kernel resources...\n" ); fflush(stdout);
     checkCudaErrors(cudaFree( devParticles ));
@@ -823,6 +1026,7 @@ void timingTests(){
     checkCudaErrors(cudaFree( devGrid ));
     checkCudaErrors(cudaFree( devWorldParams ));
     checkCudaErrors(cudaFree( devColliders ));
+    checkCudaErrors(cudaFree( devPTGD ));
     delete [] particles;
     delete [] nodes;
 }

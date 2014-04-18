@@ -21,8 +21,10 @@
 #include "geometry/mesh.h"
 #include "scene/scene.h"
 #include "scene/scenenode.h"
+#include "sim/engine.h"
 #include "sim/particle.h"
 #include "ui/infopanel.h"
+#include "ui/uisettings.h"
 
 /// TEMPORARY
 #include "io/sceneparser.h"
@@ -39,10 +41,10 @@ ViewPanel::ViewPanel( QWidget *parent )
 
     m_infoPanel = new InfoPanel(this);
     m_infoPanel->setInfo( "FPS", "XXXXXX" );
-
     m_drawAxis = true;
-    m_scene = new Scene;
 
+    m_scene = new Scene;
+    m_engine = new Engine;
 }
 
 ViewPanel::~ViewPanel()
@@ -92,18 +94,21 @@ ViewPanel::initializeGL()
     OBJParser::load( PROJECT_PATH "/data/models/teapot.obj", meshes );
     for ( int i = 0; i < meshes.size(); ++i )
         node->addRenderable( meshes[i] );
+    m_scene->root()->addChild( node );
 
     this->makeCurrent();
 
-    m_particles = new ParticleSystem;
-    meshes[0]->fill( *m_particles, 256*512, 0.1f );
-    node->addRenderable( m_particles );
-    m_infoPanel->setInfo( "Particles", QString::number(m_particles->particles().size()) );
+    ParticleSystem *particles = new ParticleSystem;
+    meshes[0]->fill( *particles, 256*512, 0.1f );
+    m_scene->root()->addRenderable( particles );
+    m_engine->setParticleSystem( particles );
 
-    m_scene->root()->addChild( node );
+    m_infoPanel->setInfo( "Particles", QString::number(particles->size()) );
 
     // Render ticker
     assert( connect(&m_ticker, SIGNAL(timeout()), this, SLOT(update())) );
+    m_ticker.start( 1000/FPS );
+    m_timer.start();
 
 }
 
@@ -124,11 +129,6 @@ ViewPanel::paintGL()
 
     } m_viewport->pop();
 
-    // we still might want to manipulate scene before starting the simulation
-    m_particles->update( t += 1.f/FPS );
-
-
-    // TODO - as a cheap hack we'll have the renderer spit out the
     float fps = 1000.f / m_timer.restart();
     m_infoPanel->setInfo( "FPS", QString::number(fps, 'f', 2), false );
     m_infoPanel->render();
@@ -138,9 +138,11 @@ void
 ViewPanel::mousePressEvent( QMouseEvent *event )
 {
     UserInput::update(event);
-    if ( UserInput::leftMouse() ) m_viewport->setState( Viewport::TUMBLING );
-    else if ( UserInput::rightMouse() ) m_viewport->setState( Viewport::ZOOMING );
-    else if ( UserInput::middleMouse() ) m_viewport->setState( Viewport::PANNING );
+    if ( UserInput::ctrlKey() ) {
+        if ( UserInput::leftMouse() ) m_viewport->setState( Viewport::TUMBLING );
+        else if ( UserInput::rightMouse() ) m_viewport->setState( Viewport::ZOOMING );
+        else if ( UserInput::middleMouse() ) m_viewport->setState( Viewport::PANNING );
+    }
 }
 
 void
@@ -158,16 +160,19 @@ ViewPanel::mouseReleaseEvent( QMouseEvent *event )
 }
 
 
-// UI methods to pause/resume drawing
+// UI methods to pause/resume drawing and simulation
 // we might want to do this when doing non-viewing stuff, like opening new files
-void ViewPanel::pauseDrawing()
+void ViewPanel::pause()
 {
     m_ticker.stop();
+//    m_engine->pause();
 }
 
-void ViewPanel::resumeDrawing()
+void ViewPanel::resume()
 {
-    m_ticker.start();
+    m_ticker.start(1000/FPS);
+    m_timer.restart();
+//    m_engine->resume();
 }
 
 
@@ -208,15 +213,18 @@ void ViewPanel::renderOffline(QString file_prefix)
 
 void ViewPanel::start()
 {
-    // starts the simulation
-    m_ticker.start( 1000/FPS );
-    m_timer.start();
+    m_engine->start();
 }
 
 void ViewPanel::reset()
 {
-    m_ticker.stop();
-    t = 0.f;
-    m_scene->root()->clearChildren();
-    initializeGL();
+
+}
+
+void ViewPanel::fillSelectedMesh()
+{
+    // If there's a selection, do mesh->fill...
+    int nParticles = UiSettings::fillNumParticles();
+    float resolution = UiSettings::fillResolution();
+    // mesh->fill( *(m_engine->particleSystem()), nParticles, resolution );
 }

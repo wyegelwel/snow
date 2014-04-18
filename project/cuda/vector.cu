@@ -91,6 +91,15 @@ struct vec3
     static vec3 normalize( const vec3 &v ) { float f = 1.f/sqrtf(v.x*v.x+v.y*v.y+v.z*v.z); return vec3( f*v.x, f*v.y, f*v.z ); }
 
     __host__ __device__ __forceinline__
+    vec3& mult (float f ) { x *= f; y *= f; z *= f; return *this;}
+
+    __host__ __device__ __forceinline__
+    vec3& add (float f ) { x += f; y += f; z += f; return *this;}
+
+    __host__ __device__ __forceinline__
+    vec3& add (const vec3 &v ) { x += v.x; y += v.y; z += v.z; return *this;}
+
+    __host__ __device__ __forceinline__
     vec3& operator += ( const vec3 &rhs ) { x += rhs.x; y += rhs.y; z += rhs.z; return *this; }
 
     __host__ __device__ __forceinline__

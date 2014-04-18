@@ -23,6 +23,7 @@ extern "C"
     void testColliderNormal();
     void grid2ParticlesTests();
     void testGridMath();
+    void timingTests();
 }
 
 void Tests::runTests(char *argv[])  {
@@ -70,14 +71,15 @@ void Tests::runEricTests() {
 
 void Tests::runWilTests() {
     printf("running Wil Tests...\n");
-//    testColliderNormal();
-//    testColliding();
-//    testGridMath();
+    testColliderNormal();
+    testColliding();
+    testGridMath();
+    timingTests();
     printf("done running Wil Tests\n");
 }
 
 void Tests::runMaxTests() {
     printf("\nRunning Max Tests...\n");
-    grid2ParticlesTests();
+//    grid2ParticlesTests();
     printf("Done running Max Tests.\n");
 }
