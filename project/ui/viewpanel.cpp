@@ -30,7 +30,7 @@
 #include "io/sceneparser.h"
 #include "io/mitsubaexporter.h"
 
-#define FPS 65
+#define FPS 30
 
 ViewPanel::ViewPanel( QWidget *parent )
     : QGLWidget(QGLFormat(QGL::SampleBuffers), parent),
@@ -45,10 +45,12 @@ ViewPanel::ViewPanel( QWidget *parent )
 
     m_scene = new Scene;
     m_engine = new Engine;
+    m_scene->setParticleSystem( m_engine->particleSystem() );
 }
 
 ViewPanel::~ViewPanel()
 {
+    SAFE_DELETE( m_engine );
     SAFE_DELETE( m_viewport );
     SAFE_DELETE( m_infoPanel );
     SAFE_DELETE( m_scene );
@@ -57,7 +59,7 @@ ViewPanel::~ViewPanel()
 void
 ViewPanel::resetViewport()
 {
-    m_viewport->orient( glm::vec3( 25, 25, 25),
+    m_viewport->orient( glm::vec3( 0, 5, 12.5),
                         glm::vec3(  0,  0,  0),
                         glm::vec3(  0,  1,  0) );
     m_viewport->setDimensions( width(), height() );
@@ -99,11 +101,18 @@ ViewPanel::initializeGL()
     this->makeCurrent();
 
     ParticleSystem *particles = new ParticleSystem;
-    meshes[0]->fill( *particles, 256*512, 0.1f );
-    m_scene->root()->addRenderable( particles );
-    m_engine->setParticleSystem( particles );
+    meshes[0]->fill( *particles, 128*512, 0.1f );
+    m_engine->addParticleSystem( *particles );
+    delete particles;
 
-    m_infoPanel->setInfo( "Particles", QString::number(particles->size()) );
+    m_engine->grid().dim = glm::ivec3( 128, 128, 128 );
+
+    BBox box = meshes[0]->getObjectBBox();
+    box.expandRel( .2f );
+    m_engine->grid().pos = box.min();
+    m_engine->grid().h = box.longestDimSize() / 256.f;
+
+    m_infoPanel->setInfo( "Particles", QString::number(m_engine->particleSystem()->size()) );
 
     // Render ticker
     assert( connect(&m_ticker, SIGNAL(timeout()), this, SLOT(update())) );
@@ -164,15 +173,12 @@ ViewPanel::mouseReleaseEvent( QMouseEvent *event )
 // we might want to do this when doing non-viewing stuff, like opening new files
 void ViewPanel::pause()
 {
-    m_ticker.stop();
-//    m_engine->pause();
+    m_engine->pause();
 }
 
 void ViewPanel::resume()
 {
-    m_ticker.start(1000/FPS);
-    m_timer.restart();
-//    m_engine->resume();
+    m_engine->resume();
 }
 
 

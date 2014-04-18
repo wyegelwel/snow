@@ -68,6 +68,18 @@ public:
     inline float height() const { return m_max.y - m_min.y; }
     inline float depth() const { return m_max.z - m_max.z; }
 
+    inline int longestDim() const
+    {
+        vec3 size = m_max - m_min;
+        return ( size.x > size.y ) ? ( (size.x > size.z) ? 0 : 2 ) : ( (size.y > size.z) ? 1 : 2 );
+    }
+
+    inline float longestDimSize() const
+    {
+        vec3 size = m_max - m_min;
+        return ( size.x > size.y ) ? ( (size.x > size.z) ? size.x : size.z ) : ( (size.y > size.z) ? size.y : size.z );
+    }
+
     inline float volume() const { vec3 s = m_max-m_min; return s.x*s.y*s.z; }
     inline float surfaceArea() const { vec3 s = m_max-m_min; return 2*(s.x*s.y+s.x*s.z+s.y*s.z); }
 

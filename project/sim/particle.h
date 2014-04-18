@@ -11,40 +11,24 @@
 #ifndef PARTICLE_H
 #define PARTICLE_H
 
-#ifdef CUDA_INCLUDE
     #include "cuda/vector.cu"
     #include "cuda/matrix.cu"
-#else
-    #include <glm/vec3.hpp>
-    #include <glm/mat3x3.hpp>
-#endif
 
 struct Particle
 {
-#ifdef CUDA_INCLUDE
-    typedef vec3 vector_type;
-    typedef mat3 matrix_type;
-#else
-    typedef glm::vec3 vector_type;
-    typedef glm::mat3 matrix_type;
-#endif
-
-    vector_type position;
-    vector_type velocity;
+    vec3 position;
+    vec3 velocity;
     float mass;
     float volume;
-    matrix_type elasticF;
-    matrix_type plasticF;
-#ifndef CUDA_INCLUDE
-    Particle() : elasticF(1.f), plasticF(1.f) {}
-#endif
+    mat3 elasticF;
+    mat3 plasticF;
+    Particle() : mass(1e-6), velocity(.01f, 0.f, 0.f), volume(1e-9), elasticF(1.f), plasticF(1.f) {}
 };
 
 #ifndef CUDA_INCLUDE
 
 #include <QVector>
 typedef unsigned int GLuint;
-struct cudaGraphicsResource;
 
 #include "common/renderable.h"
 
@@ -65,15 +49,18 @@ public:
     QVector<Particle>& particles() { return m_particles; }
 
     virtual void render();
-    void update( float time );
 
-    ParticleSystem& operator += ( const Particle &particle ) { m_particles.append(particle); return *this; }
+    GLuint vbo() const { return m_glVBO; }
 
-private:
+    void merge( const ParticleSystem &particles ) { m_particles += particles.m_particles; deleteVBO(); }
+
+    ParticleSystem& operator += ( const ParticleSystem &particles ) { m_particles += particles.m_particles; deleteVBO(); return *this; }
+    ParticleSystem& operator += ( const Particle &particle ) { m_particles.append(particle); deleteVBO(); return *this; }
+
+protected:
 
     QVector<Particle> m_particles;
     GLuint m_glVBO;
-    cudaGraphicsResource *m_cudaVBO;
 
     bool hasVBO() const;
     void buildVBO();

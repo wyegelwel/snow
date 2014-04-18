@@ -12,7 +12,6 @@
 
 #include <GL/gl.h>
 #include "common/common.h"
-#include "cuda/functions.h"
 
 ParticleSystem::ParticleSystem()
 {
@@ -38,7 +37,7 @@ ParticleSystem::render()
 
     glPushAttrib( GL_LIGHTING_BIT );
     glDisable( GL_LIGHTING );
-    glColor3f( 0.8f, 0.8f, 1.f );
+    glColor3f( 1.0f, 0.f, 0.f );
     glPointSize( 1.f );
 
     glBindBuffer( GL_ARRAY_BUFFER, m_glVBO );
@@ -49,13 +48,6 @@ ParticleSystem::render()
     glBindBuffer( GL_ARRAY_BUFFER, 0 );
 
     glPopAttrib();
-}
-
-void
-ParticleSystem::update( float time )
-{
-    if ( !hasVBO() ) buildVBO();
-    updateParticles( &m_cudaVBO, time, m_particles.size() );
 }
 
 bool
@@ -75,8 +67,6 @@ ParticleSystem::buildVBO()
     glBufferData( GL_ARRAY_BUFFER, m_particles.size()*sizeof(Particle), m_particles.data(), GL_DYNAMIC_DRAW );
     glBindBuffer( GL_ARRAY_BUFFER, 0 );
 
-    // Register OpenGL VBO with CUDA
-    registerVBO( &m_cudaVBO, m_glVBO );
 }
 
 void
@@ -84,7 +74,6 @@ ParticleSystem::deleteVBO()
 {
     // Delete OpenGL VBO and unregister with CUDA
     if ( hasVBO() ) {
-        unregisterVBO( m_cudaVBO );
         glBindBuffer( GL_ARRAY_BUFFER, m_glVBO );
         glDeleteBuffers( 1, &m_glVBO );
         glBindBuffer( GL_ARRAY_BUFFER, 0 );

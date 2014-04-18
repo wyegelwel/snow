@@ -7,17 +7,17 @@
 
 float const PLANE_CONSTANT = 10.0f;
 
-ImplicitCollider::ImplicitCollider(ColliderType t, vec3 c, vec3 p)  {
-    type = t;
-    center = c;
-    param = p;
+Collider::Collider( ImplicitCollider &collider )
+    : m_collider(collider)
+{
     initializeMesh();
 }
 
-void ImplicitCollider::render()  {
+void Collider::render()
+{
     glPushMatrix();
-    glTranslatef(center.x,center.y,center.z);
-    switch(type)  {
+    glTranslatef( m_collider.center.x, m_collider.center.y, m_collider.center.z );
+    switch( m_collider.type )  {
     case(SPHERE):
         renderSphere();
         break;
@@ -27,26 +27,28 @@ void ImplicitCollider::render()  {
     default:
         break;
     }
-    mesh->render();
+    m_mesh->render();
     glPopMatrix();
 }
 
-void ImplicitCollider::renderSphere() {
-    glScalef(param.x,param.x,param.x);
+void Collider::renderSphere()
+{
+    glScalef( m_collider.param.x, m_collider.param.x, m_collider.param.x );
 }
 
-void ImplicitCollider::renderPlane()  {
+void Collider::renderPlane()
+{
     vec3 oldNormal = vec3(0,1,0);
-    vec3 rotationAxis = vec3::cross(oldNormal,param);
-    float rotationAngle = acos(vec3::dot(param,oldNormal));
+    vec3 rotationAxis = vec3::cross( oldNormal, m_collider.param );
+    float rotationAngle = acos(vec3::dot(m_collider.param,oldNormal));
     rotationAngle *= (180.0/M_PI);
     glRotatef(rotationAngle,rotationAxis.x,rotationAxis.y,rotationAxis.z);
     glScalef(PLANE_CONSTANT,PLANE_CONSTANT,PLANE_CONSTANT);
 }
 
-void ImplicitCollider::initializeMesh()  {
+void Collider::initializeMesh()  {
         QList<Mesh*> colliderMeshes;
-        switch(type)  {
+        switch( m_collider.type )  {
         case SPHERE:
             OBJParser::load( PROJECT_PATH "/data/models/sphere.obj", colliderMeshes);
             break;
@@ -56,5 +58,5 @@ void ImplicitCollider::initializeMesh()  {
         default:
             break;
         }
-        mesh = colliderMeshes[0];
+        m_mesh = colliderMeshes[0];
 }
