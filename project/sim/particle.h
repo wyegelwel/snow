@@ -22,7 +22,7 @@ struct Particle
     float volume;
     mat3 elasticF;
     mat3 plasticF;
-    Particle() : mass(1e-6), velocity(.01f, 0.f, 0.f), volume(1e-9), elasticF(1.f), plasticF(1.f) {}
+    Particle() : velocity(.01f, 0.f, 0.f), mass(1e-6), volume(1e-9), elasticF(1.f), plasticF(1.f) {}
 };
 
 #ifndef CUDA_INCLUDE
