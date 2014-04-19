@@ -41,6 +41,7 @@ ViewPanel::ViewPanel( QWidget *parent )
 
     m_infoPanel = new InfoPanel(this);
     m_infoPanel->setInfo( "FPS", "XXXXXX" );
+    m_infoPanel->setInfo( "Sim Time", "XXXXXXX" );
     m_draw = true;
     m_fps = FPS;
 
@@ -113,7 +114,7 @@ ViewPanel::initializeGL()
     m_engine->grid().pos = box.min();
     m_engine->grid().h = box.longestDimSize() / 256.f;
 
-    m_infoPanel->setInfo( "Particles", QString::number(m_engine->particleSystem()->size()) );
+    m_infoPanel->setInfo( "Particles", QLocale().toString(m_engine->particleSystem()->size()) );
 
     // Render ticker
     assert( connect(&m_ticker, SIGNAL(timeout()), this, SLOT(update())) );
@@ -137,8 +138,9 @@ ViewPanel::paintGL()
 
     if ( m_draw ) {
         static const float filter = 0.8f;
-        m_fps = (1-filter)*(1000.f/m_timer.restart()) + filter*m_fps;
+        m_fps = (1-filter)*(1000.f/MAX(m_timer.restart(),1)) + filter*m_fps;
         m_infoPanel->setInfo( "FPS", QString::number(m_fps, 'f', 2), false );
+        m_infoPanel->setInfo( "Sim Time", QString::number(m_engine->getSimulationTime(), 'f', 3)+" s", false );
     }
 
     m_infoPanel->render();
