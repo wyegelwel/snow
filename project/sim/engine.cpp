@@ -67,3 +67,8 @@ void Engine::update()
     // engine keeps track of its own time.
     // Somehow
 }
+
+Scene * Engine::scene()
+{
+    return m_scene;
+}

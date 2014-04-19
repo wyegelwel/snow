@@ -25,6 +25,7 @@
 #include "sim/particle.h"
 #include "ui/infopanel.h"
 #include "ui/uisettings.h"
+#include "sim/collider.h"
 
 /// TEMPORARY
 #include "io/sceneparser.h"
@@ -178,9 +179,10 @@ void ViewPanel::resume()
 
 /// temporary hack: I'm calling the SceneParser from here for the file saving
 /// and offline rendering. Ideally this would be handled by the Engine class.
+/// do this after the MitsubaExporter is working
 void ViewPanel::saveToFile(QString fname)
 {
-    // write - not done, do this out later
+    // write - not done, figure this out later
     SceneParser::write(fname, m_scene);
 }
 
@@ -223,13 +225,16 @@ void ViewPanel::reset()
 
 }
 
+// single obj file is associated with multiple renderables and a single
+// scene node.
 void ViewPanel::generateNewMesh(const QString &f)  {
-    SceneNode *node = new SceneNode;
+    SceneNode *node = new SceneNode(SNOW_CONTAINER, f);
 
     QList<Mesh*> meshes;
     OBJParser::load(f, meshes );
     for ( int i = 0; i < meshes.size(); ++i )
         node->addRenderable( meshes[i] );
+
     m_scene->root()->addChild( node );
     m_selectedMesh = meshes[0];
 }

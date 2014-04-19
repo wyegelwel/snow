@@ -58,6 +58,9 @@ public:
 
     ParticleSystem* particleSystem();
 
+    /// accessor to scene
+    Scene * scene();
+
 private:
     ParticleSystem *m_particles;
     Scene *m_scene;

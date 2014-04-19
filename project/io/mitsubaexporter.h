@@ -10,32 +10,26 @@
 
 // generic class for exporting to Mitsuba for offline rendering
 
+
 #ifndef MITSUBAEXPORTER_H
 #define MITSUBAEXPORTER_H
 
 
 #include <QString>
 #include <QtXml>
+#include <glm/geometric.hpp>
 
-class Scene;
+class Engine;
 class Camera;
 class BBox;
 class Particle;
 class ParticleGrid;
+class SceneNode;
 
 //class MitsubaRenderSettings
 //{
 //    // TODO - populate with general render settings
 //};
-
-/**
- * @brief The MitsubaExporter class exports the scene
- * to a Mitsuba-readable XML format.
- * The snow is rendered to a grid-based volume data source (gridvolume)
- * our colliders are basic geometric primitives
- * and mitsuba can render them once we write them out.
- */
-
 
 
 class MitsubaExporter
@@ -46,8 +40,10 @@ public:
     /**
      * @brief exports scene at a particular time frame to a MITSUBA-renderable file format.
      * writes sceneNode and all of its children (i.e. pass in m_scene->root() to render the whole scene)
+     * it also needs access to the camera, so we also need to pass in the cam
      */
-    void exportScene(QString fprefix, int frame, Scene * scene, Camera * camera);
+    void exportScene(QString fprefix, int frame, Engine * engine, Camera * camera);
+
 private:
     /**
      * @brief exports particle system at a single time frame to a .vol file
@@ -55,46 +51,35 @@ private:
      * the format is unique to Wenzel Jakob's fsolve program
      * http://www.mitsuba-renderer.org/misc.html#
      * bounds specifies the maximum bounds of the heterogenous volume. smaller the better
-     *
-     * TODO - need to
-     *
      */
-    void exportVolumeData(QString fprefix, BBox bounds, ParticleGrid * grid);
-
+    void exportVolumeData(QString fprefix);
 
     /**
      * adds <medium> tag to XML tree. Also calls exportVolumeData to write out volume.
      * calls exportVolumeData, then if successful, links to the .vol file
      */
-    void addMedium(QDomElement &node);
+    QDomElement appendMedium(QDomElement node);
 
-    /**
-     * exports the integrator presets
-     */
-    void addRenderer(QDomElement &node);
+    /// export rendering presets
+    QDomElement appendRenderer(QDomElement node);
 
-    /**
-     * outputs camera into XML format for Mitsuba
-     * TODO
-     */
-    void addCamera(QDomElement &node, Camera * camera);
+    /// converts camera into XML node
+    QDomElement appendCamera(QDomElement node, Camera * camera);
 
-    /**
-     * adds generic obj node as child of node under doc.
-     * used by addCollider and addSnowContainer
-     */
-    void addOBJ(QDomElement &node, QString objfile);
+    /// append transform matrix
+    QDomElement appendXform(QDomElement node, glm::mat4 xform);
 
-    /**
-     * adds collider OBJ to XML tree
-     */
-    void addCollider(QDomElement &node);
+    /// appends sceneNodes
+    QDomElement appendShape(QDomElement node, SceneNode * sceneNode);
 
-    /**
-     * adds snow container OBJ to XML tree
-     */
-    void addSnowContainer(QDomElement &node);
+    /// add obj shape node
+    QDomElement appendOBJ(QDomElement node, QString objfile);
 
+    /// add default material
+    QDomElement appendBSDF(QDomElement node);
+
+    /// adds a light sphere to the scene
+    QDomElement appendLight(QDomElement node);
 
     QDomDocument m_document;
     QString      m_filename;

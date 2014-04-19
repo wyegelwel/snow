@@ -20,6 +20,12 @@ SceneNode::SceneNode( SceneNode *parent )
 {
 }
 
+SceneNode::SceneNode(SceneNodeType type, QString objfile)
+    : m_type(type),
+      m_objfile(objfile)
+{
+}
+
 SceneNode::~SceneNode()
 {
     clearChildren();
@@ -89,4 +95,16 @@ SceneNode::allNodes()
         list.append(m_children[i]->allNodes());
     }
     return list;
+}
+
+QString
+SceneNode::getObjFile()
+{
+    return m_objfile;
+}
+
+SceneNodeType
+SceneNode::getType()
+{
+    return m_type;
 }
