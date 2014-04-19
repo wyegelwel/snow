@@ -41,7 +41,8 @@ ViewPanel::ViewPanel( QWidget *parent )
 
     m_infoPanel = new InfoPanel(this);
     m_infoPanel->setInfo( "FPS", "XXXXXX" );
-    m_drawAxis = true;
+    m_draw = true;
+    m_fps = FPS;
 
     m_scene = new Scene;
     m_engine = new Engine;
@@ -101,7 +102,7 @@ ViewPanel::initializeGL()
     this->makeCurrent();
 
     ParticleSystem *particles = new ParticleSystem;
-    meshes[0]->fill( *particles, 128*512, 0.1f );
+    meshes[0]->fill( *particles, 64*512, 0.1f );
     m_engine->addParticleSystem( *particles );
     delete particles;
 
@@ -126,20 +127,20 @@ float t = 0.f;
 void
 ViewPanel::paintGL()
 {
-
     glClearColor( 0.f, 0.f, 0.f, 0.f );
     glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
     m_viewport->push(); {
-
         m_scene->render();
-
-        if ( m_drawAxis ) m_viewport->drawAxis();
-
+        m_viewport->drawAxis();
     } m_viewport->pop();
 
-    float fps = 1000.f / m_timer.restart();
-    m_infoPanel->setInfo( "FPS", QString::number(fps, 'f', 2), false );
+    if ( m_draw ) {
+        static const float filter = 0.8f;
+        m_fps = (1-filter)*(1000.f/m_timer.restart()) + filter*m_fps;
+        m_infoPanel->setInfo( "FPS", QString::number(m_fps, 'f', 2), false );
+    }
+
     m_infoPanel->render();
 }
 
@@ -168,20 +169,6 @@ ViewPanel::mouseReleaseEvent( QMouseEvent *event )
     m_viewport->setState( Viewport::IDLE );
 }
 
-
-// UI methods to pause/resume drawing and simulation
-// we might want to do this when doing non-viewing stuff, like opening new files
-void ViewPanel::pause()
-{
-    m_engine->pause();
-}
-
-void ViewPanel::resume()
-{
-    m_engine->resume();
-}
-
-
 /// temporary hack: I'm calling the SceneParser from here for the file saving
 /// and offline rendering. Ideally this would be handled by the Engine class.
 void ViewPanel::saveToFile(QString fname)
@@ -202,7 +189,7 @@ void ViewPanel::renderOffline(QString file_prefix)
      * the exporter handles scene by scene so here, we tell the simulation to start over
      * then call exportScene every frame
      */
-    reset();
+    resetSimulation();
     // step the simulation 1/24 of a second at a time.
 
 //    for (int s=0; s<1; s++)
@@ -217,14 +204,32 @@ void ViewPanel::renderOffline(QString file_prefix)
     MitsubaExporter::exportScene(file_prefix, 0, m_scene);
 }
 
-void ViewPanel::start()
+void ViewPanel::startSimulation()
 {
     m_engine->start();
 }
 
-void ViewPanel::reset()
+void ViewPanel::pauseSimulation( bool pause )
 {
+    if ( pause ) m_engine->pause();
+    else m_engine->resume();
+}
 
+void ViewPanel::resetSimulation()
+{
+    LOG( "NOT YET IMPLEMENTED." );
+}
+
+void ViewPanel::pauseDrawing()
+{
+    m_ticker.stop();
+    m_draw = false;
+}
+
+void ViewPanel::resumeDrawing()
+{
+    m_ticker.start( 1000/FPS );
+    m_draw = true;
 }
 
 void ViewPanel::generateNewMesh(const QString &f)  {

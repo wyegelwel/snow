@@ -31,8 +31,13 @@ UiSettings::loadSettings()
 {
     QSettings s( "CS224", "snow" );
 
+    windowPosition() = s.value( "windowPosition", QPoint(0,0) ).toPoint();
+    windowSize() = s.value( "windowSize", QSize(1000,800) ).toSize();
+
     fillNumParticles() = s.value( "fillNumParticles", 512*128 ).toInt();
     fillResolution() = s.value( "fillResolution", 0.05f ).toFloat();
+
+    exportSimulation() = s.value( "exportSimulation", false ).toBool();
 }
 
 void
@@ -40,6 +45,11 @@ UiSettings::saveSettings()
 {
     QSettings s( "CS224", "snow" );
 
+    s.setValue( "windowPosition", windowPosition() );
+    s.setValue( "windowSize", windowSize() );
+
     s.setValue( "fillNumParticles", fillNumParticles() );
     s.setValue( "fillResolution", fillResolution() );
+
+    s.setValue( "exportSimulation", exportSimulation() );
 }

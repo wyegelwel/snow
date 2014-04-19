@@ -51,17 +51,13 @@ public slots:
     virtual void mouseMoveEvent( QMouseEvent *event );
     virtual void mouseReleaseEvent( QMouseEvent *event );
 
-    void pause();
-    void resume();
+    void startSimulation();
+    void pauseSimulation( bool pause = true );
+    void resumeSimulation() { pauseSimulation(false); }
+    void resetSimulation();
 
-    /// TODO - the following functionalities will eventually be migrated to the
-    /// multi-threaded Engine class.
-    // we probably want the simulation to not start automatically
-    // so the user has a chance to move stuff around in the scene
-    void start();
-
-    // resets the simulation.
-    void reset();
+    void pauseDrawing();
+    void resumeDrawing();
 
     // Filling
     void fillSelectedMesh();
@@ -79,10 +75,12 @@ private:
     Engine *m_engine;
     Scene *m_scene;
 
-    // set true to draw a little XYZ axis in the corner
-    bool m_drawAxis;
-
     Mesh *m_selectedMesh;
+
+    bool m_draw;
+
+    float m_fps;
+
 };
 
 #endif // VIEWPANEL_H

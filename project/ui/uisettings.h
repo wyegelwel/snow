@@ -18,6 +18,9 @@
         static TYPE& NAME() { return instance()->m_##NAME; }    \
 
 
+#include <QPoint>
+#include <QSize>
+
 class UiSettings
 {
 
@@ -38,8 +41,13 @@ private:
 
     static UiSettings *INSTANCE;
 
+    DEFINE_SETTING( QPoint, windowPosition )
+    DEFINE_SETTING( QSize, windowSize )
+
     DEFINE_SETTING( int, fillNumParticles )
     DEFINE_SETTING( float, fillResolution )
+
+    DEFINE_SETTING( bool, exportSimulation )
 
 };
 

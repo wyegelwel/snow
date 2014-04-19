@@ -26,8 +26,14 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWindow)
 {
     UiSettings::loadSettings();
+
     ui->setupUi(this);
+
     setupUI();
+
+    this->setWindowTitle( "SNOW" );
+    this->move( UiSettings::windowPosition() );
+    this->resize( UiSettings::windowSize() );
 }
 
 MainWindow::~MainWindow()
@@ -39,42 +45,59 @@ MainWindow::~MainWindow()
 
 void MainWindow::loadFromFile()
 {
-    // pause sim
-    ui->viewPanel->pause();
+    ui->viewPanel->pauseSimulation();
+    ui->viewPanel->pauseDrawing();
+
     QDir sceneDir("../project/data/scenes");
     sceneDir.makeAbsolute();
     QString fname = QFileDialog::getOpenFileName(this, QString("Open Scene"), sceneDir.absolutePath());
     std::cout << fname.toStdString() << std::endl;
     //ui->viewPanel->loadFromFile(fname);
+
+    ui->viewPanel->resumeSimulation();
+    ui->viewPanel->resumeDrawing();
 }
 
 void MainWindow::saveToFile()
 {
-    ui->viewPanel->pause();
+    ui->viewPanel->pauseSimulation();
+    ui->viewPanel->pauseDrawing();
+
     QDir sceneDir("../project/data/scenes");
     sceneDir.makeAbsolute();
     QString fname = QFileDialog::getSaveFileName(this, QString("Save Scene"), sceneDir.absolutePath());
     //ui->viewPanel->saveToFile(fname);
-    ui->viewPanel->resume();
+
+    ui->viewPanel->resumeSimulation();
+    ui->viewPanel->resumeDrawing();
 }
 
 void MainWindow::renderOffline()
 {
-    ui->viewPanel->pause();
+    ui->viewPanel->pauseSimulation();
+    ui->viewPanel->pauseDrawing();
+
     QDir sceneDir("~/offline_renders");
     sceneDir.makeAbsolute();
     QString fprefix = QFileDialog::getSaveFileName(this, QString("Save Scene"), sceneDir.absolutePath());
     ui->viewPanel->renderOffline(fprefix);
+
+    ui->viewPanel->resumeSimulation();
+    ui->viewPanel->resumeDrawing();
 }
 
 void MainWindow::importMesh()
 {
-    ui->viewPanel->pause();
+    ui->viewPanel->pauseSimulation();
+    ui->viewPanel->pauseDrawing();
+
     QString filename = QFileDialog::getOpenFileName(this, "Select mesh to import.", PROJECT_PATH "/data/models", "*.obj");
     if ( !filename.isEmpty() ) {
         ui->viewPanel->generateNewMesh(filename);
     }
-    ui->viewPanel->resume();
+
+    ui->viewPanel->resumeSimulation();
+    ui->viewPanel->resumeDrawing();
 }
 
 void MainWindow::setupUI()
@@ -88,4 +111,24 @@ void MainWindow::setupUI()
     // Connect values to settings
     FloatBinding::bindSpinBox( ui->fillResolutionSpinbox, UiSettings::fillResolution(), this );
     IntBinding::bindSpinBox( ui->fillNumParticlesSpinbox, UiSettings::fillNumParticles(), this );
+
+    // Simulation
+
+    // Connect button to slots
+    assert( connect(ui->startButton, SIGNAL(clicked()), ui->viewPanel, SLOT(startSimulation())) );
+    assert( connect(ui->pauseButton, SIGNAL(toggled(bool)), ui->viewPanel, SLOT(pauseSimulation(bool))) );
+
+    // Connect values to settings
+    BoolBinding::bindCheckBox( ui->exportCheckbox, UiSettings::exportSimulation(), this );
+
+}
+
+void MainWindow::resizeEvent( QResizeEvent* )
+{
+    UiSettings::windowSize() = size();
+}
+
+void MainWindow::moveEvent( QMoveEvent* )
+{
+    UiSettings::windowPosition() = pos();
 }
