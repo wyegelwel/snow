@@ -126,7 +126,10 @@ __global__ void fillMeshVoxelsKernel( curandState *states, unsigned int seed, Gr
     vec3 r = vec3( curand_uniform(&localState), curand_uniform(&localState), curand_uniform(&localState) );
     vec3 min = grid.pos + grid.h * vec3( x, y, z );
     vec3 max = min + vec3( grid.h, grid.h, grid.h );
-    particles[tid].position = min + r*(max-min);
+
+    Particle particle;
+    particle.position = min + r*(max-min);
+    particles[tid] = particle;
 }
 
 void fillMesh( cudaGraphicsResource **resource, int triCount, const Grid &grid, Particle *particles, int particleCount )

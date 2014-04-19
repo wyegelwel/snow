@@ -15,6 +15,7 @@
 #define CUDA_INCLUDE
 #include "sim/collider.h"
 #include "sim/material.h"
+#include "sim/parameters.h"
 #include "sim/particle.h"
 #include "sim/particlegrid.h"
 
@@ -159,7 +160,7 @@ __global__ void computeCellMassVelocityAndForceFast( Particle *particleData, Gri
  * nodes -- updated velocity and velocityChange
  *
  */
-__global__ void updateVelocities( ParticleGrid::Node *nodes, float dt, ImplicitCollider* colliders, int numColliders, MaterialConstants *material, Grid *grid )
+__global__ void updateNodeVelocities( ParticleGrid::Node *nodes, float dt, ImplicitCollider* colliders, int numColliders, MaterialConstants *material, Grid *grid, const vec3 gravity )
 {
     int nodeIdx = blockIdx.x*blockDim.x + threadIdx.x;
     int gridI, gridJ, gridK;
@@ -171,7 +172,8 @@ __global__ void updateVelocities( ParticleGrid::Node *nodes, float dt, ImplicitC
 
     node.velocity *= scale; //Have to normalize velocity by mass to conserve momentum
 
-    vec3 tmpVelocity = node.velocity + dt*(node.force*scale + vec3(0.f,-9.8f,0.f));
+    // Update velocity with node force and gravity
+    vec3 tmpVelocity = node.velocity + dt * ( node.force*scale + gravity );
 
     checkForAndHandleCollisions( colliders, numColliders, material->coeffFriction, nodePosition, tmpVelocity );
     node.velocityChange = tmpVelocity - node.velocity;
@@ -234,8 +236,7 @@ __device__ void processGridVelocities( Particle &particle, Grid *grid, const Par
 __device__ void updateParticleDeformationGradients( Particle &particle, const mat3 &velocityGradient, float timeStep, MaterialConstants *mat )
 {
     // Temporarily assign all deformation to elastic portion
-//    mat3 F = (mat3(1.f) + timeStep*velocityGradient) * particle.elasticF;
-    mat3 F = mat3::addIdentity(timeStep*velocityGradient) * particle.elasticF;
+    mat3 F = mat3::addIdentity( timeStep*velocityGradient ) * particle.elasticF;
 
     // Clamp the singular values
     mat3 W, S, Sinv, V;
@@ -270,13 +271,13 @@ __global__ void updateParticlesFromGrid( Particle *particles, Grid *grid, const 
 
     checkForAndHandleCollisions( colliders, numColliders, mat->coeffFriction, particle.position, particle.velocity );
 
-    particle.velocity += timeStep*vec3(0.f,-9.8f,0.f); // Gravity =)
     particle.position += timeStep * (particle.velocity );
 
 }
 
 
-void updateParticles( Particle *particles, int numParticles, float timeStep,
+void updateParticles( const SimulationParameters &parameters,
+                      Particle *particles, int numParticles,
                       Grid *grid, ParticleGrid::Node *nodes, int numNodes, ParticleGridTempData *particleGridTempData,
                       ImplicitCollider *colliders, int numColliders,
                       MaterialConstants *mat )
@@ -287,16 +288,18 @@ void updateParticles( Particle *particles, int numParticles, float timeStep,
     computeParticleGridTempData<<< numParticles / threadCount , threadCount >>>( particles, grid, mat, particleGridTempData );
     checkCudaErrors( cudaDeviceSynchronize() );
 
-    checkCudaErrors( cudaMemset( nodes, 0, numNodes*sizeof(ParticleGrid::Node) ) );
+    // Clear grid data before update
+    checkCudaErrors( cudaMemset(nodes, 0, numNodes*sizeof(ParticleGrid::Node)) );
+
     dim3 blockDim = dim3(numParticles / threadCount, 64);
     dim3 threadDim = dim3(threadCount/64, 64);
-    computeCellMassVelocityAndForceFast<<< blockDim, threadDim >>>(particles, grid, particleGridTempData, nodes);
+    computeCellMassVelocityAndForceFast<<< blockDim, threadDim >>>( particles, grid, particleGridTempData, nodes );
     checkCudaErrors( cudaDeviceSynchronize() );
 
-    updateVelocities<<< numNodes / threadCount, threadCount >>>(nodes, timeStep, colliders, numColliders, mat, grid);
+    updateNodeVelocities<<< numNodes / threadCount, threadCount >>>( nodes, parameters.timeStep, colliders, numColliders, mat, grid, parameters.gravity );
     checkCudaErrors( cudaDeviceSynchronize() );
 
-    updateParticlesFromGrid<<< numParticles / threadCount, threadCount >>>( particles, grid, nodes, timeStep, colliders, numColliders, mat );
+    updateParticlesFromGrid<<< numParticles / threadCount, threadCount >>>( particles, grid, nodes, parameters.timeStep, colliders, numColliders, mat );
     checkCudaErrors( cudaDeviceSynchronize() );
 
 }

@@ -98,20 +98,20 @@ void Engine::resume()
 
 void Engine::update()
 {
-    if ( m_running && !m_paused ) {
+    if ( !m_busy && m_running && !m_paused ) {
+
+        m_busy = true;
 
         cudaGraphicsMapResources( 1, &m_cudaResource, 0 );
         Particle *devParticles;
         size_t size;
         checkCudaErrors( cudaGraphicsResourceGetMappedPointer( (void**)&devParticles, &size, m_cudaResource ) );
 
-//        LOG( "%lu %lu", size, size/sizeof(Particle) );
-
         if ( (int)(size/sizeof(Particle)) != m_particleSystem->size() ) {
-            LOG( "Particle resource error..." );
+            LOG( "Particle resource error : %lu bytes (%lu expected)", size, m_particleSystem->size()*sizeof(Particle) );
         }
 
-        updateParticles( devParticles, m_particleSystem->size(), m_params.timeStep, m_devGrid,
+        updateParticles( m_params, devParticles, m_particleSystem->size(), m_devGrid,
                          m_devNodes, m_grid.nodeCount(), m_devPGTD, m_devColliders, m_colliders.size(), m_devMaterial );
 
 //        cudaMemcpy( m_particleSystem->particles().data(), devParticles, 12*sizeof(Particle), cudaMemcpyDeviceToHost );
@@ -121,10 +121,11 @@ void Engine::update()
 //        }
 //        LOG("\n");
 
-
         checkCudaErrors( cudaGraphicsUnmapResources( 1, &m_cudaResource, 0 ) );
 
         m_time += m_params.timeStep;
+
+        m_busy = false;
 
     } else {
         LOG( "IS PAUSED OR ISN'T RUNNING" );

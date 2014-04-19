@@ -20,6 +20,7 @@ struct Particle;
 struct ParticleGridTempData;
 struct ImplicitCollider;
 struct MaterialConstants;
+struct SimulationParameters;
 
 extern "C"
 {
@@ -29,8 +30,8 @@ void registerVBO( cudaGraphicsResource **resource, GLuint vbo );
 void unregisterVBO( cudaGraphicsResource *resource );
 
 // Particle simulation
-//void updateParticles( Particle *particles, float time, int particleCount );
-void updateParticles( Particle *particles, int numParticles, float timeStep,
+void updateParticles( const SimulationParameters &parameters,
+                      Particle *particles, int numParticles,
                       Grid *grid, ParticleGrid::Node *nodes, int numNodes, ParticleGridTempData *particleGridTempData,
                       ImplicitCollider *colliders, int numColliders,
                       MaterialConstants *mat );
