@@ -112,14 +112,22 @@ Mesh::render()
     glEnable( GL_POLYGON_OFFSET_LINE );
     glPolygonOffset( -1.f, -1.f );
 
-    glColor4fv( glm::value_ptr(m_color) );
-    glPolygonMode( GL_FRONT_AND_BACK, GL_FILL );
-    renderVBO();
+//    glColor4fv( glm::value_ptr(m_color) );
+//    glPolygonMode( GL_FRONT_AND_BACK, GL_FILL );
+//    renderVBO();
 
+    glPushAttrib( GL_DEPTH_BUFFER_BIT );
+    glDepthMask( false );
+    glPushAttrib( GL_COLOR_BUFFER_BIT );
+    glEnable( GL_BLEND );
+    glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
     glLineWidth( 1.f );
-    glColor4fv( glm::value_ptr(m_color*0.8f) );
+    glm::vec4 color = m_color*0.8f;
+    color.w = 0.5f;
+    glColor4fv( glm::value_ptr(color) );
     glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
     renderVBO();
+    glPopAttrib();
 
     glPopAttrib();
     glPopAttrib();

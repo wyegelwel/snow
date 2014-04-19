@@ -35,12 +35,13 @@ class Engine : public QObject
 
 public:
 
-    struct Parameters
+    struct SimulationParameters
     {
         float timeStep;
         float startTime;
         float endTime;
-        Parameters( float dt, float start, float end ) : timeStep(dt), startTime(start), endTime(end) {}
+        vec3 gravity;
+        SimulationParameters() : timeStep(0.001f), startTime(0.f), endTime(0.f), gravity(0.f, -9.8f, 0.f) {}
     };
 
     Engine();
@@ -106,7 +107,7 @@ private:
     ImplicitCollider *m_devColliders;
     MaterialConstants *m_devMaterial;
 
-    Parameters m_params;
+    SimulationParameters m_params;
     float m_time;
 
     bool m_running;

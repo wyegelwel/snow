@@ -27,34 +27,47 @@
 #include "cuda/functions.h"
 
 __host__ __device__ __forceinline__
-bool withinBoundsInclusive( const float &v, const float &min, const float &max ) { return (v >= min && v <= max); }
+bool withinBoundsInclusive( const float &v, const float &min, const float &max )
+{
+    return ( v >= min && v <= max );
+}
 
 __host__ __device__ __forceinline__
-bool withinBoundsInclusive( const glm::ivec3 &v, const glm::ivec3 &min, const glm::ivec3 &max ) { return  withinBoundsInclusive(v.x, min.x, max.x)
-                                                                                                            && withinBoundsInclusive(v.y, min.y, max.y)
-                                                                                                            && withinBoundsInclusive(v.z, min.z, max.z);}
+bool withinBoundsInclusive( const glm::ivec3 &v, const glm::ivec3 &min, const glm::ivec3 &max )
+{
+    return withinBoundsInclusive(v.x, min.x, max.x) && withinBoundsInclusive(v.y, min.y, max.y) && withinBoundsInclusive(v.z, min.z, max.z);
+}
 
 
-__host__ __device__ void gridIndexToIJK(int idx, int &i, int &j, int &k,const  glm::ivec3 &nodeDim){
+__host__ __device__ __forceinline__
+void gridIndexToIJK( int idx, int &i, int &j, int &k,const  glm::ivec3 &nodeDim )
+{
     i = idx / (nodeDim.y*nodeDim.z);
     idx = idx % (nodeDim.y*nodeDim.z);
     j = idx / nodeDim.z;
     k = idx % nodeDim.z;
 }
 
-__host__ __device__ int getGridIndex( int i, int j, int k, const glm::ivec3 &nodeDim)  {
+__host__ __device__  __forceinline__
+int getGridIndex( int i, int j, int k, const glm::ivec3 &nodeDim)
+{
     return (i*(nodeDim.y*nodeDim.z) + j*(nodeDim.z) + k);
 }
 
-__host__ __device__ void gridIndexToIJK(int idx, const  glm::ivec3 &nodeDim, glm::ivec3 &IJK){
+__host__ __device__ __forceinline__
+void gridIndexToIJK( int idx, const  glm::ivec3 &nodeDim, glm::ivec3 &IJK )
+{
     gridIndexToIJK(idx, IJK.x, IJK.y, IJK.z, nodeDim);
 }
 
-__host__ __device__ int getGridIndex( const glm::ivec3 &IJK, const glm::ivec3 &nodeDim)  {
+__host__ __device__ __forceinline__
+int getGridIndex( const glm::ivec3 &IJK, const glm::ivec3 &nodeDim )
+{
     return getGridIndex(IJK.x, IJK.y, IJK.z, nodeDim);
 }
 
-__host__ __device__ void computeSigma( Particle &particle, MaterialConstants *material, mat3 &sigma ){
+__device__ void computeSigma( Particle &particle, MaterialConstants *material, mat3 &sigma )
+{
     mat3 &Fp = particle.plasticF; //for the sake of making the code look like the math
     mat3 &Fe = particle.elasticF;
 
@@ -64,22 +77,27 @@ __host__ __device__ void computeSigma( Particle &particle, MaterialConstants *ma
     mat3 Re;
     computePD(Fe, Re);
 
-    float muFp = material->mu*exp(material->xi*(1-Jpp));
-    float lambdaFp = material->lambda*exp(material->xi*(1-Jpp));
+    float muFp = material->mu*__expf(material->xi*(1-Jpp));
+    float lambdaFp = material->lambda*__expf(material->xi*(1-Jpp));
 
-    sigma = (2*muFp*(Fe-Re)*mat3::transpose(Fe)+lambdaFp*(Jep-1)*Jep*mat3(1.0f)) * (particle.volume);
+//    sigma = (2*muFp*(Fe-Re)*mat3::transpose(Fe)+lambdaFp*(Jep-1)*Jep*mat3(1.0f)) * (particle.volume);
+    sigma = (2*muFp*mat3::multiplyABt(Fe-Re, Fe) + mat3(lambdaFp*(Jep-1)*Jep)) * particle.volume;
 }
 
-__global__ void computeParticleGridTempData ( Particle *particleData, Grid *grid, MaterialConstants *material, ParticleGridTempData *particleGridTempData ){
+__global__ void computeParticleGridTempData ( Particle *particleData, Grid *grid, MaterialConstants *material, ParticleGridTempData *particleGridTempData )
+{
     int particleIdx = blockIdx.x*blockDim.x + threadIdx.x;
+
     Particle &particle = particleData[particleIdx];
     ParticleGridTempData &pgtd = particleGridTempData[particleIdx];
+
     pgtd.particleGridPos = (particle.position - grid->pos)/grid->h;
-   // computeSigma(particle, material, pgtd.sigma);
-    pgtd.sigma = mat3(0);
+    computeSigma(particle, material, pgtd.sigma);
 }
 
-__device__ void atomicAdd(vec3 *add, vec3 toAdd){
+__device__ __forceinline__
+void atomicAdd( vec3 *add, vec3 toAdd )
+{
     atomicAdd(&(add->x), toAdd.x);
     atomicAdd(&(add->y), toAdd.y);
     atomicAdd(&(add->z), toAdd.z);
@@ -99,17 +117,16 @@ __device__ void atomicAdd(vec3 *add, vec3 toAdd){
  * nodes -- list of every node in grid ((dim.x+1)*(dim.y+1)*(dim.z+1))
  *
  */
-__global__ void computeCellMassVelocityAndForceFast(Particle *particleData, Grid *grid, ParticleGridTempData *particleGridTempData, ParticleGrid::Node *nodes){
+__global__ void computeCellMassVelocityAndForceFast( Particle *particleData, Grid *grid, ParticleGridTempData *particleGridTempData, ParticleGrid::Node *nodes )
+{
     int particleIdx = blockIdx.y*gridDim.x*blockDim.x + blockIdx.x*blockDim.x + threadIdx.x;
+
     Particle &particle = particleData[particleIdx];
     ParticleGridTempData &pgtd = particleGridTempData[particleIdx];
 
     glm::ivec3 currIJK;
     gridIndexToIJK(threadIdx.y, glm::ivec3(4,4,4), currIJK);
     currIJK.x += (int) pgtd.particleGridPos.x - 1; currIJK.y += (int) pgtd.particleGridPos.y - 1; currIJK.z += (int) pgtd.particleGridPos.z - 1;
-
-//    particle.mass = 1e-6;
-//    particle.velocity = vec3();
 
     if (withinBoundsInclusive(currIJK, glm::ivec3(0,0,0), grid->dim)){
         ParticleGrid::Node &node = nodes[getGridIndex(currIJK, grid->dim+1)];
@@ -121,7 +138,6 @@ __global__ void computeCellMassVelocityAndForceFast(Particle *particleData, Grid
 
         atomicAdd(&node.mass, particle.mass*w);
         atomicAdd(&node.velocity, particle.velocity*particle.mass*w );
-//        atomicAdd(&node.velocity, vec3(.0001,0,0)*particle.mass*w );
         atomicAdd(&node.force, pgtd.sigma*wg);
      }
 }
@@ -143,7 +159,8 @@ __global__ void computeCellMassVelocityAndForceFast(Particle *particleData, Grid
  * nodes -- updated velocity and velocityChange
  *
  */
-__global__ void updateVelocities(ParticleGrid::Node *nodes, float dt, ImplicitCollider* colliders, int numColliders, MaterialConstants *material, Grid *grid){
+__global__ void updateVelocities( ParticleGrid::Node *nodes, float dt, ImplicitCollider* colliders, int numColliders, MaterialConstants *material, Grid *grid )
+{
     int nodeIdx = blockIdx.x*blockDim.x + threadIdx.x;
     int gridI, gridJ, gridK;
     gridIndexToIJK(nodeIdx, gridI, gridJ, gridK, grid->dim+1);
@@ -154,12 +171,11 @@ __global__ void updateVelocities(ParticleGrid::Node *nodes, float dt, ImplicitCo
 
     node.velocity *= scale; //Have to normalize velocity by mass to conserve momentum
 
+    vec3 tmpVelocity = node.velocity + dt*(node.force*scale + vec3(0.f,-9.8f,0.f));
 
-    vec3 tmpVelocity = node.velocity + dt*(node.force*scale); // TODO ADD GRAVITY
-
-    //checkForAndHandleCollisions(colliders, numColliders, material->coeffFriction, nodePosition, tmpVelocity);
-//    node.velocityChange = tmpVelocity - node.velocity;
-//    node.velocity = tmpVelocity;
+    checkForAndHandleCollisions( colliders, numColliders, material->coeffFriction, nodePosition, tmpVelocity );
+    node.velocityChange = tmpVelocity - node.velocity;
+    node.velocity = tmpVelocity;
 }
 
 #define VEC2IVEC( V ) ( glm::ivec3((int)V.x, (int)V.y, (int)V.z) )
@@ -212,8 +228,7 @@ __device__ void processGridVelocities( Particle &particle, Grid *grid, const Par
             }
         }
     }
-//    particle.velocity = (1.f-alpha)*v_PIC + alpha*(particle.velocity+dv_FLIP);
-    particle.velocity = v_PIC;
+    particle.velocity = (1.f-alpha)*v_PIC + alpha*(particle.velocity+dv_FLIP);
 }
 
 __device__ void updateParticleDeformationGradients( Particle &particle, const mat3 &velocityGradient, float timeStep, MaterialConstants *mat )
@@ -251,13 +266,12 @@ __global__ void updateParticlesFromGrid( Particle *particles, Grid *grid, const 
     mat3 velocityGradient = mat3( 0.f );
     processGridVelocities( particle, grid, nodes, velocityGradient, 0.95f );
 
-//    updateParticleDeformationGradients( particle, velocityGradient, timeStep, mat );
+    updateParticleDeformationGradients( particle, velocityGradient, timeStep, mat );
 
-//    checkForAndHandleCollisions( colliders, numColliders, mat->coeffFriction, particle.position, particle.velocity );
+    checkForAndHandleCollisions( colliders, numColliders, mat->coeffFriction, particle.position, particle.velocity );
 
     particle.velocity += timeStep*vec3(0.f,-9.8f,0.f); // Gravity =)
     particle.position += timeStep * (particle.velocity );
-//    particle.position = particle.velocity;
 
 }
 
