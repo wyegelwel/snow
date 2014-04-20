@@ -11,7 +11,11 @@
 #ifndef GRID_H
 #define GRID_H
 
+#ifndef GLM_FORCE_RADIANS
+    #define GLM_FORCE_RADIANS
+#endif
 #include "glm/vec3.hpp"
+
 #include "cuda/vector.cu"
 
 struct Grid
@@ -21,6 +25,7 @@ struct Grid
     float h;
 
     Grid() : dim(0,0,0), pos(0,0,0), h(0.f) {}
+    Grid( const Grid &grid ) : dim(grid.dim), pos(grid.pos), h(grid.h) {}
 
     inline bool empty() const { return cellCount() == 0; }
 
@@ -28,13 +33,6 @@ struct Grid
     inline int nodeCount() const { return (dim.x+1)*(dim.y+1)*(dim.z+1); }
     inline int cellCount() const { return dim.x * dim.y * dim.z; }
     inline int index( int i, int j, int k ) const { return (i*(dim.y*dim.z) + j*(dim.z) + k); }
-
-
-//    inline BBox toBBox() const
-//    {
-//
-//    }
-
 };
 
 #endif // GRID_H

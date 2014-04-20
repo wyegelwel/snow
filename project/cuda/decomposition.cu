@@ -70,7 +70,7 @@ __host__ __device__ void jacobiConjugation( int x, int y, int z, mat3 &S, quat &
  */
 __host__ __device__ __forceinline__ void jacobiEigenanalysis( mat3 &S, quat &qV )
 {
-    qV = glm::quat( 1,0,0,0 );
+    qV = quat( 1,0,0,0 );
 
     jacobiConjugation( 0, 1, 2, S, qV );
     jacobiConjugation( 1, 2, 0, S, qV );

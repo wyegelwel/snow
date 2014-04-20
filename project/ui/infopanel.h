@@ -15,6 +15,9 @@
 #include <QHash>
 #include <QString>
 
+#ifndef GLM_FORCE_RADIANS
+    #define GLM_FORCE_RADIANS
+#endif
 #include <glm/vec2.hpp>
 
 #include "common/renderable.h"
@@ -26,7 +29,7 @@
 
 class ViewPanel;
 
-class InfoPanel : public Renderable
+class InfoPanel
 {
 
     struct Entry {
@@ -49,7 +52,7 @@ public:
     void setInfo( const QString &key, const QString &value, bool layout = true );
     void removeInfo( const QString &key );
 
-    virtual void render();
+    void render();
 
 private:
 

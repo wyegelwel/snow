@@ -16,7 +16,10 @@
 #include <QVector>
 #include <QString>
 
-#include <glm/mat4x4.hpp>
+#ifndef GLM_FORCE_RADIANS
+    #define GLM_FORCE_RADIANS
+#endif
+#include "glm/mat4x4.hpp"
 
 #include "common/renderable.h"
 
@@ -95,7 +98,7 @@ public:
     virtual void render();
     virtual void renderForPicker();
 
-    BBox getWorldBBox( const glm::mat4 &transform ) const;
+    virtual BBox getBBox( const glm::mat4 &ctm );
     BBox getObjectBBox() const;
 
 private:

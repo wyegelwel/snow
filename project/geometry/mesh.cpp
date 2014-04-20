@@ -11,10 +11,13 @@
 #include "mesh.h"
 
 #include <GL/gl.h>
-#include <glm/geometric.hpp>
-#include <glm/mat4x4.hpp>
-#include <glm/gtc/random.hpp>
-#include <glm/gtc/type_ptr.hpp>
+
+#ifndef GLM_FORCE_RADIANS
+    #define GLM_FORCE_RADIANS
+#endif
+#include "glm/geometric.hpp"
+#include "glm/mat4x4.hpp"
+#include "glm/gtc/type_ptr.hpp"
 
 #include <QElapsedTimer>
 #include <QLocale>
@@ -122,6 +125,9 @@ Mesh::render()
 
     glPushAttrib( GL_DEPTH_TEST );
     glEnable( GL_DEPTH_TEST );
+
+    glEnable( GL_LINE_SMOOTH );
+    glHint( GL_LINE_SMOOTH_HINT, GL_NICEST );
 
     glm::vec4 color = ( m_selected ) ? glm::mix( m_color, UiSettings::selectionColor(), 0.5f ) : m_color;
 
@@ -265,12 +271,12 @@ Mesh::fill( ParticleSystem &particles, int particleCount, float h )
 }
 
 BBox
-Mesh::getWorldBBox( const glm::mat4 &transform ) const
+Mesh::getBBox( const glm::mat4 &ctm )
 {
     BBox box;
     for ( int i = 0; i < getNumVertices(); ++i ) {
         const Vertex &v = m_vertices[i];
-        glm::vec4 point = transform * glm::vec4( v.x, v.y, v.z, 1.f );
+        glm::vec4 point = ctm * glm::vec4( v.x, v.y, v.z, 1.f );
         box += vec3( point.x, point.y, point.z );
     }
     return box;

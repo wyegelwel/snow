@@ -12,7 +12,11 @@
 #include <cuda.h>
 #include <cuda_runtime.h>
 
+#ifndef GLM_FORCE_RADIANS
+    #define GLM_FORCE_RADIANS
+#endif
 #include <glm/geometric.hpp>
+
 #include "math.h"   // this imports the CUDA math library
 #include "sim/collider.h"
 #include "matrix.cu"

@@ -20,6 +20,7 @@
 #include "ui/databinding.h"
 #include "ui/uisettings.h"
 #include "ui/viewpanel.h"
+#include "ui/tools/tool.h"
 
 #include "sim/collider.h"
 
@@ -121,6 +122,15 @@ void MainWindow::setupUI()
     // Simulation
     assert( connect(ui->startButton, SIGNAL(clicked()), ui->viewPanel, SLOT(startSimulation())) );
     assert( connect(ui->pauseButton, SIGNAL(toggled(bool)), ui->viewPanel, SLOT(pauseSimulation(bool))) );
+    assert( connect(ui->gridXSpinbox, SIGNAL(valueChanged(int)), ui->viewPanel, SLOT(updateSceneGrid())) );
+    assert( connect(ui->gridYSpinbox, SIGNAL(valueChanged(int)), ui->viewPanel, SLOT(updateSceneGrid())) );
+    assert( connect(ui->gridZSpinbox, SIGNAL(valueChanged(int)), ui->viewPanel, SLOT(updateSceneGrid())) );
+    assert( connect(ui->gridResolutionSpinbox, SIGNAL(valueChanged(double)), ui->viewPanel, SLOT(updateSceneGrid())) );
+    IntBinding::bindSpinBox( ui->gridXSpinbox, UiSettings::gridDimensions().x, this );
+    IntBinding::bindSpinBox( ui->gridYSpinbox, UiSettings::gridDimensions().y, this );
+    IntBinding::bindSpinBox( ui->gridZSpinbox, UiSettings::gridDimensions().z, this );
+    FloatBinding::bindSpinBox( ui->gridResolutionSpinbox, UiSettings::gridResolution(), this );
+
     BoolBinding::bindCheckBox( ui->exportCheckbox, UiSettings::exportSimulation(), this );
 
     // Collider
@@ -138,7 +148,6 @@ void MainWindow::setupUI()
     assert( connect(ui->editSimConstantsButton, SIGNAL(clicked()), ui->viewPanel, SLOT(editSnowConstants())));
 
     // View Panel
-   // View Panel
     assert( connect(ui->showBBoxCheckbox, SIGNAL(toggled(bool)), ui->showGridCheckbox, SLOT(setEnabled(bool))) );
     assert( connect(ui->wireframeCheckbox, SIGNAL(clicked()), this, SLOT(checkMeshRenderSettings())) );
     assert( connect(ui->solidCheckbox, SIGNAL(clicked()), this, SLOT(checkMeshRenderSettings())) );
@@ -146,6 +155,12 @@ void MainWindow::setupUI()
     BoolBinding::bindCheckBox( ui->solidCheckbox, UiSettings::showSolid(), this );
     BoolBinding::bindCheckBox( ui->showBBoxCheckbox, UiSettings::showBBox(), this );
     BoolBinding::bindCheckBox( ui->showGridCheckbox, UiSettings::showGrid(), this );
+
+    // Tools
+    ui->toolButtonGroup->setId( ui->selectionToolButton, Tool::SELECTION );
+    ui->toolButtonGroup->setId( ui->moveToolButton, Tool::MOVE );
+    assert( connect(ui->toolButtonGroup, SIGNAL(buttonClicked(int)), ui->viewPanel, SLOT(setTool(int))) );
+    ui->selectionToolButton->click();
 }
 
 void MainWindow::checkMeshRenderSettings()

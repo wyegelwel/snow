@@ -9,7 +9,11 @@
 **************************************************************************/
 
 #include <GL/gl.h>
-#include <glm/gtc/type_ptr.hpp>
+
+#ifndef GLM_FORCE_RADIANS
+    #define GLM_FORCE_RADIANS
+#endif
+#include "glm/gtc/type_ptr.hpp"
 
 #include "common/common.h"
 #include "common/renderable.h"
@@ -44,7 +48,18 @@ SceneNode::addChild( SceneNode *child )
 {
     m_children += child;
     child->m_parent = this;
-    child->m_ctmDirty = true;
+    child->setCTMDirty();
+}
+
+void
+SceneNode::deleteChild( SceneNode *child )
+{
+    int index = m_children.indexOf( child );
+    if ( index != -1 ) {
+        SceneNode *child = m_children[index];
+        SAFE_DELETE( child );
+        m_children.removeAt( index );
+    }
 }
 
 void
@@ -55,15 +70,34 @@ SceneNode::setRenderable( Renderable *renderable )
 }
 
 void
-SceneNode::render()
+SceneNode::renderOpaque()
 {
     glMatrixMode( GL_MODELVIEW );
     glPushMatrix();
     glMultMatrixf( glm::value_ptr(m_transform) );
-    if ( m_renderable ) m_renderable->render();
+    if ( m_renderable && !isTransparent() ) m_renderable->render();
     for ( int i = 0; i < m_children.size(); ++i )
-        m_children[i]->render();
+        m_children[i]->renderOpaque();
     glPopMatrix();
+}
+
+void
+SceneNode::renderTransparent()
+{
+    glMatrixMode( GL_MODELVIEW );
+    glPushMatrix();
+    glMultMatrixf( glm::value_ptr(m_transform) );
+    if ( m_renderable && isTransparent() ) m_renderable->render();
+    for ( int i = 0; i < m_children.size(); ++i )
+        m_children[i]->renderTransparent();
+    glPopMatrix();
+}
+
+void
+SceneNode::applyTransformation( const glm::mat4 &transform )
+{
+    m_transform = transform * m_transform;
+    setCTMDirty();
 }
 
 glm::mat4
@@ -75,4 +109,28 @@ SceneNode::getCTM()
         m_ctmDirty = false;
     }
     return m_ctm;
+}
+
+void
+SceneNode::setCTMDirty()
+{
+    for ( int i = 0; i < m_children.size(); ++i ) {
+        m_children[i]->setCTMDirty();
+    }
+    m_ctmDirty = true;
+    m_bboxDirty = true;
+}
+
+BBox
+SceneNode::getBBox()
+{
+    if ( m_bboxDirty ) {
+        if ( hasRenderable() ) {
+            m_bbox = m_renderable->getBBox( getCTM() );
+        } else {
+            m_bbox = BBox();
+        }
+        m_bboxDirty = false;
+    }
+    return m_bbox;
 }

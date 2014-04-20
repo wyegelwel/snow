@@ -21,7 +21,9 @@
 #include "cuda/decomposition.cu"
 #include "cuda/weighting.cu"
 
-#include "glm/gtc/matrix_access.hpp"
+#ifndef GLM_FORCE_RADIANS
+    #define GLM_FORCE_RADIANS
+#endif
 #include "glm/gtc/type_ptr.hpp"
 
 #include "common/common.h"

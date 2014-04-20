@@ -13,8 +13,6 @@
 
 #include "viewpanel.h"
 
-#include <glm/gtc/random.hpp>
-
 #include "common/common.h"
 #include "ui/userinput.h"
 #include "viewport/viewport.h"
@@ -22,12 +20,14 @@
 #include "geometry/mesh.h"
 #include "geometry/bbox.h"
 #include "scene/scene.h"
+#include "scene/scenegrid.h"
 #include "scene/scenenode.h"
 #include "scene/scenenodeiterator.h"
 #include "sim/engine.h"
 #include "sim/particle.h"
 #include "ui/infopanel.h"
 #include "ui/picker.h"
+#include "ui/tools/Tools.h"
 #include "ui/uisettings.h"
 #include "sim/collider.h"
 
@@ -38,7 +38,8 @@
 
 ViewPanel::ViewPanel( QWidget *parent )
     : QGLWidget(QGLFormat(QGL::SampleBuffers), parent),
-      m_infoPanel(NULL)
+      m_infoPanel(NULL),
+      m_tool(NULL)
 {
     m_viewport = new Viewport;
     resetViewport();
@@ -57,6 +58,7 @@ ViewPanel::~ViewPanel()
 {
     SAFE_DELETE( m_engine );
     SAFE_DELETE( m_viewport );
+    SAFE_DELETE( m_tool );
     SAFE_DELETE( m_infoPanel );
     SAFE_DELETE( m_scene );
 }
@@ -129,12 +131,14 @@ float t = 0.f;
 void
 ViewPanel::paintGL()
 {
-    glClearColor( 0.f, 0.f, 0.f, 0.f );
+    glClearColor( 0.20f, 0.225f, 0.25f, 1.f );
     glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
     m_viewport->push(); {
         m_scene->render();
         m_engine->render();
+        paintGrid();
+        if ( m_tool ) m_tool->render();
         m_viewport->drawAxis();
     } m_viewport->pop();
 
@@ -148,6 +152,26 @@ ViewPanel::paintGL()
     m_infoPanel->render();
 }
 
+// Paint grid on XZ plane to orient viewport
+void
+ViewPanel::paintGrid()
+{
+    glLineWidth( 1.f );
+    glPushAttrib( GL_COLOR_BUFFER_BIT );
+    glEnable( GL_BLEND );
+    glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
+    glColor4f( 0.5f, 0.5f, 0.5f, 0.5f );
+    glBegin( GL_LINES );
+    for ( int i = -10; i <= 10; ++i ) {
+        glVertex3f( i, 0.f, -10.f );
+        glVertex3f( i, 0.f, 10.f );
+        glVertex3f( -10.f, 0.f, i );
+        glVertex3f( 10.f, 0.f, i );
+    }
+    glEnd();
+    glPopAttrib();
+}
+
 void
 ViewPanel::mousePressEvent( QMouseEvent *event )
 {
@@ -157,20 +181,9 @@ ViewPanel::mousePressEvent( QMouseEvent *event )
         else if ( UserInput::rightMouse() ) m_viewport->setState( Viewport::ZOOMING );
         else if ( UserInput::middleMouse() ) m_viewport->setState( Viewport::PANNING );
     } else {
-        if ( UserInput::leftMouse() ) {
-            SceneNode *clicked = getClickedSceneNode();
-            if ( clicked ) {
-                if ( UserInput::shiftKey() ) {
-                    clicked->getRenderable()->setSelected( !clicked->getRenderable()->isSelected() );
-                } else {
-                    clearSelection();
-                    clicked->getRenderable()->setSelected( true );
-                }
-            } else {
-                clearSelection();
-            }
-        }
+        if ( UserInput::leftMouse() ) if ( m_tool ) m_tool->mousePressed();
     }
+    update();
 }
 
 void
@@ -178,6 +191,8 @@ ViewPanel::mouseMoveEvent( QMouseEvent *event )
 {
     UserInput::update(event);
     m_viewport->mouseMoved();
+    if ( m_tool ) m_tool->mouseMoved();
+    update();
 }
 
 void
@@ -185,6 +200,16 @@ ViewPanel::mouseReleaseEvent( QMouseEvent *event )
 {
     UserInput::update(event);
     m_viewport->setState( Viewport::IDLE );
+    if ( m_tool ) m_tool->mouseReleased();
+    update();
+}
+
+void
+ViewPanel::keyPressEvent( QKeyEvent *event )
+{
+    if ( event->key() == Qt::Key_Backspace ) {
+        m_scene->deleteSelectedNodes();
+    }
 }
 
 /// temporary hack: I'm calling the SceneParser from here for the file saving
@@ -205,7 +230,7 @@ void ViewPanel::loadFromFile(QString fname)
 
 void ViewPanel::startSimulation()
 {
-    if (!m_engine->isRunning() && UiSettings::exportSimulation())
+    if ( !m_engine->isRunning() && UiSettings::exportSimulation() )
     {
         // ask the user where the data should be saved
 //        QDir sceneDir("~/offline_renders");
@@ -213,13 +238,19 @@ void ViewPanel::startSimulation()
         QString fprefix = QFileDialog::getSaveFileName(this, QString("Choose Export Name"), QString());
         m_engine->initExporter(fprefix);
     }
-    m_engine->start(UiSettings::exportSimulation());
+    m_engine->setGrid( UiSettings::buildGrid() );
+    m_engine->start( UiSettings::exportSimulation() );
 }
 
 void ViewPanel::pauseSimulation( bool pause )
 {
     if ( pause ) m_engine->pause();
     else m_engine->resume();
+}
+
+void ViewPanel::resumeSimulation()
+{
+    m_engine->resume();
 }
 
 void ViewPanel::resetSimulation()
@@ -288,43 +319,6 @@ void ViewPanel::fillSelectedMesh()
     delete mesh;
 }
 
-SceneNode* ViewPanel::getClickedSceneNode()
-{
-    m_viewport->loadPickMatrices( UserInput::mousePos() );
-
-    SceneNode *clicked = NULL;
-
-    QList<SceneNode*> renderables;
-    for ( SceneNodeIterator it = m_scene->begin(); it.isValid(); ++it ) {
-        if ( (*it)->hasRenderable() ) {
-            renderables += (*it);
-        }
-    }
-    if ( !renderables.empty() ) {
-        Picker picker( renderables.size() );
-        for ( int i = 0; i < renderables.size(); ++i ) {
-            picker.setObjectIndex(i);
-            renderables[i]->getRenderable()->renderForPicker();
-        }
-        unsigned int index = picker.getPick();
-        if ( index != Picker::NO_PICK ) {
-            clicked = renderables[index];
-        }
-    }
-
-    m_viewport->popMatrices();
-
-    return clicked;
-}
-
-void ViewPanel::clearSelection()
-{
-    for ( SceneNodeIterator it = m_scene->begin(); it.isValid(); ++it ) {
-        if ( (*it)->hasRenderable() )
-            (*it)->getRenderable()->setSelected( false );
-    }
-}
-
 void ViewPanel::addCollider(ColliderType c)  {
     //TODO add a collider to the scene and set it as selected renderable.
 }
@@ -332,4 +326,31 @@ void ViewPanel::addCollider(ColliderType c)  {
 void ViewPanel::editSnowConstants()  {
     //TODO create popout to edit snow constants? Other (possibly better) option is to have all
     // constants listed in UI in LineEdits and have them editable, then we could bind it to UISettings.
+}
+
+void ViewPanel::setTool( int tool )
+{
+    SAFE_DELETE( m_tool );
+    switch ( (Tool::Type)tool ) {
+    case Tool::SELECTION:
+        m_tool = new SelectionTool(this);
+        break;
+    case Tool::MOVE:
+        m_tool = new MoveTool(this);
+        break;
+    default:
+        break;
+    }
+    if ( m_tool ) m_tool->update();
+    update();
+}
+
+void ViewPanel::updateSceneGrid()
+{
+    SceneNode *gridNode = m_scene->getSceneGridNode();
+    if ( gridNode ) {
+        SceneGrid *grid = dynamic_cast<SceneGrid*>( gridNode->getRenderable() );
+        grid->setGrid( UiSettings::buildGrid() );
+    }
+    update();
 }

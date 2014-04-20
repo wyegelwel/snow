@@ -20,7 +20,16 @@
 
 #include <QPoint>
 #include <QSize>
+
+#ifndef GLM_FORCE_RADIANS
+    #define GLM_FORCE_RADIANS
+#endif
+#include "glm/vec3.hpp"
 #include "glm/vec4.hpp"
+
+#include "cuda/vector.cu"
+
+struct Grid;
 
 class UiSettings
 {
@@ -32,6 +41,8 @@ public:
 
     static void loadSettings();
     static void saveSettings();
+
+    static Grid buildGrid();
 
 protected:
 
@@ -49,6 +60,10 @@ private:
     DEFINE_SETTING( float, fillResolution )
 
     DEFINE_SETTING( bool, exportSimulation )
+
+    DEFINE_SETTING( vec3, gridPosition )
+    DEFINE_SETTING( glm::ivec3, gridDimensions )
+    DEFINE_SETTING( float, gridResolution )
 
     DEFINE_SETTING( bool, showWireframe )
     DEFINE_SETTING( bool, showSolid )

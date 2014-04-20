@@ -28,7 +28,11 @@ public:
 
     SceneNode* root() { return m_root; }
 
+    SceneNode* getSceneGridNode();
+
     SceneNodeIterator begin() const;
+
+    void deleteSelectedNodes();
 
 private:
 
