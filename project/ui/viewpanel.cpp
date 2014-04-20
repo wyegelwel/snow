@@ -20,6 +20,7 @@
 #include "geometry/mesh.h"
 #include "geometry/bbox.h"
 #include "scene/scene.h"
+#include "scene/scenegrid.h"
 #include "scene/scenenode.h"
 #include "scene/scenenodeiterator.h"
 #include "sim/engine.h"
@@ -221,7 +222,7 @@ void ViewPanel::loadFromFile(QString fname)
 
 void ViewPanel::startSimulation()
 {
-    if (!m_engine->isRunning() && UiSettings::exportSimulation())
+    if ( !m_engine->isRunning() && UiSettings::exportSimulation() )
     {
         // ask the user where the data should be saved
 //        QDir sceneDir("~/offline_renders");
@@ -229,13 +230,19 @@ void ViewPanel::startSimulation()
         QString fprefix = QFileDialog::getSaveFileName(this, QString("Choose Export Name"), QString());
         m_engine->initExporter(fprefix);
     }
-    m_engine->start(UiSettings::exportSimulation());
+    m_engine->setGrid( UiSettings::buildGrid() );
+    m_engine->start( UiSettings::exportSimulation() );
 }
 
 void ViewPanel::pauseSimulation( bool pause )
 {
     if ( pause ) m_engine->pause();
     else m_engine->resume();
+}
+
+void ViewPanel::resumeSimulation()
+{
+    m_engine->resume();
 }
 
 void ViewPanel::resetSimulation()
@@ -345,5 +352,15 @@ void ViewPanel::setTool( int tool )
         break;
     }
     if ( m_tool ) m_tool->update();
+    update();
+}
+
+void ViewPanel::updateSceneGrid()
+{
+    SceneNode *gridNode = m_scene->getSceneGridNode();
+    if ( gridNode ) {
+        SceneGrid *grid = dynamic_cast<SceneGrid*>( gridNode->getRenderable() );
+        grid->setGrid( UiSettings::buildGrid() );
+    }
     update();
 }

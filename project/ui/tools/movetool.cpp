@@ -17,6 +17,7 @@
 #include "scene/scenenode.h"
 #include "scene/scenenodeiterator.h"
 #include "ui/picker.h"
+#include "ui/uisettings.h"
 #include "ui/userinput.h"
 #include "ui/viewpanel.h"
 #include "viewport/camera.h"
@@ -133,6 +134,9 @@ MoveTool::mouseMoved()
         for ( SceneNodeIterator it = m_panel->m_scene->begin(); it.isValid(); ++it ) {
             if ( (*it)->hasRenderable() && (*it)->getRenderable()->isSelected() ) {
                 (*it)->applyTransformation( transform );
+                if ( (*it)->getType() == SceneNode::SIMULATION_GRID ) {
+                    UiSettings::gridPosition() += translate;
+                }
             }
         }
     }

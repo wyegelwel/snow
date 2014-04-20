@@ -54,7 +54,7 @@ public slots:
 
     void startSimulation();
     void pauseSimulation( bool pause = true );
-    void resumeSimulation() { pauseSimulation(false); }
+    void resumeSimulation();
     void resetSimulation();
 
     void pauseDrawing();
@@ -69,6 +69,8 @@ public slots:
     void editSnowConstants();
 
     void setTool( int tool );
+
+    void updateSceneGrid();
 
 protected:
 

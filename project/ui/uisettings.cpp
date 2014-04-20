@@ -7,6 +7,7 @@
 #include <QSettings>
 
 #include "common/common.h"
+#include "geometry/grid.h"
 #include "ui/uisettings.h"
 
 UiSettings* UiSettings::INSTANCE = NULL;
@@ -39,6 +40,16 @@ UiSettings::loadSettings()
 
     exportSimulation() = s.value( "exportSimulation", false ).toBool();
 
+    gridPosition() = vec3( s.value("gridPositionX", 0.f).toFloat(),
+                           s.value("gridPositionY", 0.f).toFloat(),
+                           s.value("gridPositionZ", 0.f).toFloat() );
+
+    gridDimensions() = glm::ivec3( s.value("gridDimensionX", 128).toInt(),
+                                   s.value("gridDimensionY", 128).toInt(),
+                                   s.value("gridDimensionZ", 128).toInt() );
+
+    gridResolution() = s.value( "gridResolution", 0.05f ).toFloat();
+
     showWireframe() = s.value( "showWireframe", true ).toBool();
     showSolid() = s.value( "showSolid", true ).toBool();
     showBBox() = s.value( "showBBox", true ).toBool();
@@ -60,8 +71,28 @@ UiSettings::saveSettings()
 
     s.setValue( "exportSimulation", exportSimulation() );
 
+    s.setValue( "gridPositionX", gridPosition().x );
+    s.setValue( "gridPositionY", gridPosition().y );
+    s.setValue( "gridPositionZ", gridPosition().z );
+
+    s.setValue( "gridDimensionX", gridDimensions().x );
+    s.setValue( "gridDimensionY", gridDimensions().y );
+    s.setValue( "gridDimensionZ", gridDimensions().z );
+
+    s.setValue( "gridResolution", gridResolution() );
+
     s.setValue( "showWireframe", showWireframe() );
     s.setValue( "showSolid", showSolid() );
     s.setValue( "showBBox", showBBox() );
     s.setValue( "showGrid", showGrid() );
+}
+
+Grid
+UiSettings::buildGrid()
+{
+    Grid grid;
+    grid.pos = UiSettings::gridPosition();
+    grid.dim = UiSettings::gridDimensions();
+    grid.h = UiSettings::gridResolution();
+    return grid;
 }

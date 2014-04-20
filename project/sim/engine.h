@@ -18,7 +18,6 @@
 
 #include <QObject>
 #include <QTimer>
-#include <QVector>
 
 #include "common/renderable.h"
 #include "geometry/grid.h"
@@ -56,7 +55,7 @@ public:
     void clearParticleSystem();
     ParticleSystem* particleSystem() { return m_particleSystem; }
 
-    void setGrid( const Grid &grid ) { m_grid = grid; deleteVBO(); }
+    void setGrid( const Grid &grid ) { m_grid = grid; }
     MaterialConstants& materialConstants() { return m_materialConstants; }
 
     void addCollider( const ImplicitCollider &collider ) { m_colliders += collider; }
@@ -95,10 +94,6 @@ private:
     ImplicitCollider *m_devColliders;
     MaterialConstants *m_devMaterial;
 
-    // OpenGL rendering
-    GLuint m_gridVBO;
-    int m_vboSize;
-
     SimulationParameters m_params;
     float m_time;
 
@@ -112,9 +107,6 @@ private:
     void initializeCudaResources();
     void freeCudaResources();
 
-    bool hasVBO() const;
-    void buildVBO();
-    void deleteVBO();
 };
 
 #endif // ENGINE_H

@@ -32,7 +32,8 @@ public:
     {
         TRANSFORM,
         IMPLICIT_COLLIDER,
-        SNOW_CONTAINER
+        SNOW_CONTAINER,
+        SIMULATION_GRID
     };
 
     SceneNode( Type type = TRANSFORM );
@@ -47,7 +48,8 @@ public:
     void setRenderable( Renderable *renderable );
     Renderable* getRenderable() { return m_renderable; }
 
-    virtual void render();
+    virtual void renderOpaque();
+    virtual void renderTransparent();
 
     glm::mat4 getCTM();
     void setCTMDirty();
@@ -58,6 +60,9 @@ public:
     void setBBoxDirty() { m_bboxDirty = true; }
 
     Type getType() { return m_type; }
+
+    // For now, only scene grid nodes are transparent;
+    bool isTransparent() const { return m_type == SIMULATION_GRID; }
 
 private:
 

@@ -33,8 +33,6 @@
 
 Engine::Engine()
     : m_particleSystem( NULL ),
-      m_gridVBO(0),
-      m_vboSize(0),
       m_time( 0.f ),
       m_running( false ),
       m_paused( false )
@@ -64,7 +62,6 @@ Engine::~Engine()
     SAFE_DELETE( m_particleSystem );
     if (m_export)
         SAFE_DELETE(m_exporter);
-    deleteVBO();
 }
 
 void Engine::addParticleSystem( const ParticleSystem &particles )
@@ -77,31 +74,35 @@ void Engine::clearParticleSystem()
     m_particleSystem->clear();
 }
 
-void Engine::initExporter(QString fprefix)
+void Engine::initExporter( QString fprefix )
 {
-    m_exporter = new MitsubaExporter(fprefix, 24.f);
+    m_exporter = new MitsubaExporter( fprefix, 24.f );
 }
 
-void Engine::start(bool exportScene)
+void Engine::start( bool exportScene )
 {
     if ( m_particleSystem->size() > 0 && !m_grid.empty() && !m_running ) {
-        m_export = exportScene;
 
-        if (m_export)
-        {
-            m_exporter->reset(m_grid);
-        }
+        if ( (m_export = exportScene) ) m_exporter->reset( m_grid );
 
         LOG( "STARTING SIMULATION" );
 
         m_time = 0.f;
         initializeCudaResources();
-        m_ticker.start(TICKS);
         m_running = true;
+        m_ticker.start(TICKS);
 
     } else {
 
-        LOG( "EMPTY PARTICLE SYSTEM OR EMPTY GRID OR SIMULATION ALREADY RUNNING." );
+        if ( m_particleSystem->size() == 0 ) {
+            LOG( "Empty particle system." );
+        }
+        if ( m_grid.empty() ) {
+            LOG( "Empty simulation grid." );
+        }
+        if ( m_running ) {
+            LOG( "Simulation already running." );
+        }
 
     }
 }
@@ -121,9 +122,9 @@ void Engine::pause()
 
 void Engine::resume()
 {
-    if ( m_paused && m_running ) {
+    if ( m_paused ) {
         m_paused = false;
-        m_ticker.start(TICKS);
+        if ( m_running ) m_ticker.start(TICKS);
     }
 }
 
@@ -177,7 +178,14 @@ void Engine::update()
         m_busy = false;
 
     } else {
-        LOG( "IS PAUSED OR ISN'T RUNNING" );
+
+        if ( !m_running ) {
+            LOG( "Simulation not running..." );
+        }
+        if ( m_paused ) {
+            LOG( "Simulation paused..." );
+        }
+
     }
 }
 
@@ -228,146 +236,7 @@ void Engine::freeCudaResources()
 
 void Engine::render()
 {
-    if ( !hasVBO() ) buildVBO();
-
     m_particleSystem->render();
-
-    if ( m_vboSize > 0 && UiSettings::showBBox() ) {
-
-        glPushAttrib( GL_COLOR_BUFFER_BIT );
-        glEnable( GL_BLEND );
-        glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
-
-        glEnable( GL_LINE_SMOOTH );
-        glHint( GL_LINE_SMOOTH_HINT, GL_NICEST );
-
-        glBindBuffer( GL_ARRAY_BUFFER, m_gridVBO );
-        glEnableClientState( GL_VERTEX_ARRAY );
-        glVertexPointer( 3, GL_FLOAT, sizeof(vec3), (void*)(0) );
-
-        glColor4f( 0.5f, 0.8f, 1.f, 0.75f );
-        glLineWidth( 3.f );
-        glDrawArrays( GL_LINES, 0, 24 );
-
-        if ( UiSettings::showGrid() ) {
-            glColor4f( 0.5f, 0.8f, 1.f, 0.25f );
-            glLineWidth( 1.5f );
-            glDrawArrays( GL_LINES, 24, m_vboSize-24 );
-        }
-
-        glBindBuffer( GL_ARRAY_BUFFER, 0 );
-        glDisableClientState( GL_VERTEX_ARRAY );
-
-        glPopAttrib();
-    }
-
-}
-
-bool Engine::hasVBO() const
-{
-    return m_gridVBO > 0 && glIsBuffer( m_gridVBO );
-}
-
-void Engine::buildVBO()
-{
-    deleteVBO();
-
-    QVector<vec3> data;
-
-    const glm::ivec3 &dim = m_grid.dim;
-    vec3 min = m_grid.pos;
-    vec3 max = m_grid.pos + m_grid.h * vec3( dim.x, dim.y, dim.z );
-
-    // Bounding box
-    data += min;
-    data += vec3( min.x, min.y, max.z );
-    data += vec3( min.x, min.y, max.z );
-    data += vec3( min.x, max.y, max.z );
-    data += vec3( min.x, max.y, max.z );
-    data += vec3( min.x, max.y, min.z );
-    data += vec3( min.x, max.y, min.z );
-    data += min;
-    data += vec3( max.x, min.y, min.z );
-    data += vec3( max.x, min.y, max.z );
-    data += vec3( max.x, min.y, max.z );
-    data += vec3( max.x, max.y, max.z );
-    data += vec3( max.x, max.y, max.z );
-    data += vec3( max.x, max.y, min.z );
-    data += vec3( max.x, max.y, min.z );
-    data += vec3( max.x, min.y, min.z );
-    data += min;
-    data += vec3( max.x, min.y, min.z );
-    data += vec3( min.x, min.y, max.z );
-    data += vec3( max.x, min.y, max.z );
-    data += vec3( min.x, max.y, max.z );
-    data += max;
-    data += vec3( min.x, max.y, min.z );
-    data += vec3( max.x, max.y, min.z );
-
-    // yz faces
-    for ( int i = 1; i < dim.y; ++i ) {
-        float y = min.y + i*m_grid.h;
-        data += vec3( min.x, y, min.z );
-        data += vec3( min.x, y, max.z );
-        data += vec3( max.x, y, min.z );
-        data += vec3( max.x, y, max.z );
-    }
-    for ( int i = 1; i < dim.z; ++i ) {
-        float z = min.z + i*m_grid.h;
-        data += vec3( min.x, min.y, z );
-        data += vec3( min.x, max.y, z );
-        data += vec3( max.x, min.y, z );
-        data += vec3( max.x, max.y, z );
-    }
-
-    // xy faces
-    for ( int i = 1; i < dim.x; ++i ) {
-        float x = min.x + i*m_grid.h;
-        data += vec3( x, min.y, min.z );
-        data += vec3( x, max.y, min.z );
-        data += vec3( x, min.y, max.z );
-        data += vec3( x, max.y, max.z );
-    }
-    for ( int i = 1; i < dim.y; ++i ) {
-        float y = min.y + i*m_grid.h;
-        data += vec3( min.x, y, min.z );
-        data += vec3( max.x, y, min.z );
-        data += vec3( min.x, y, max.z );
-        data += vec3( max.x, y, max.z );
-    }
-
-    // xz faces
-    for ( int i = 1; i < dim.x; ++i ) {
-        float x = min.x + i*m_grid.h;
-        data += vec3( x, min.y, min.z );
-        data += vec3( x, min.y, max.z );
-        data += vec3( x, max.y, min.z );
-        data += vec3( x, max.y, max.z );
-    }
-    for ( int i = 1; i < dim.z; ++i ) {
-        float z = min.z + i*m_grid.h;
-        data += vec3( min.x, min.y, z );
-        data += vec3( max.x, min.y, z );
-        data += vec3( min.x, max.y, z );
-        data += vec3( max.x, max.y, z );
-    }
-
-    m_vboSize = data.size();
-
-    glGenBuffers( 1, &m_gridVBO );
-    glBindBuffer( GL_ARRAY_BUFFER, m_gridVBO );
-    glBufferData( GL_ARRAY_BUFFER, data.size()*sizeof(vec3), data.data(), GL_STATIC_DRAW );
-    glBindBuffer( GL_ARRAY_BUFFER, 0 );
-}
-
-void Engine::deleteVBO()
-{
-    if ( m_gridVBO > 0 ) {
-        glBindBuffer( GL_ARRAY_BUFFER, m_gridVBO );
-        if ( glIsBuffer(m_gridVBO) ) glDeleteBuffers( 1, &m_gridVBO );
-        glBindBuffer( GL_ARRAY_BUFFER, 0 );
-        m_gridVBO = 0;
-    }
 }
 
 BBox Engine::getBBox( const glm::mat4 &ctm )
