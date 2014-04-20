@@ -204,6 +204,14 @@ ViewPanel::mouseReleaseEvent( QMouseEvent *event )
     update();
 }
 
+void
+ViewPanel::keyPressEvent( QKeyEvent *event )
+{
+    if ( event->key() == Qt::Key_Backspace ) {
+        m_scene->deleteSelectedNodes();
+    }
+}
+
 /// temporary hack: I'm calling the SceneParser from here for the file saving
 /// and offline rendering. Ideally this would be handled by the Engine class.
 /// do this after the MitsubaExporter is working

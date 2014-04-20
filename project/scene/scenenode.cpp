@@ -52,6 +52,17 @@ SceneNode::addChild( SceneNode *child )
 }
 
 void
+SceneNode::deleteChild( SceneNode *child )
+{
+    int index = m_children.indexOf( child );
+    if ( index != -1 ) {
+        SceneNode *child = m_children[index];
+        SAFE_DELETE( child );
+        m_children.removeAt( index );
+    }
+}
+
+void
 SceneNode::setRenderable( Renderable *renderable )
 {
     SAFE_DELETE( m_renderable );
@@ -63,11 +74,11 @@ SceneNode::renderOpaque()
 {
     glMatrixMode( GL_MODELVIEW );
     glPushMatrix();
-    glMultMatrixf( glm::value_ptr(m_transform) );
+    glMultMatrixf( glm::value_ptr(getCTM()) );
     if ( m_renderable && !isTransparent() ) m_renderable->render();
+    glPopMatrix();
     for ( int i = 0; i < m_children.size(); ++i )
         m_children[i]->renderOpaque();
-    glPopMatrix();
 }
 
 void
@@ -75,11 +86,11 @@ SceneNode::renderTransparent()
 {
     glMatrixMode( GL_MODELVIEW );
     glPushMatrix();
-    glMultMatrixf( glm::value_ptr(m_transform) );
+    glMultMatrixf( glm::value_ptr(getCTM()) );
+    glPopMatrix();
     if ( m_renderable && isTransparent() ) m_renderable->render();
     for ( int i = 0; i < m_children.size(); ++i )
         m_children[i]->renderTransparent();
-    glPopMatrix();
 }
 
 void

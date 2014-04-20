@@ -10,6 +10,8 @@
 
 #include <GL/gl.h>
 
+#include <QQueue>
+
 #ifndef GLM_FORCE_RADIANS
     #define GLM_FORCE_RADIANS
 #endif
@@ -90,4 +92,25 @@ Scene::getSceneGridNode()
         }
     }
     return NULL;
+}
+
+// Note: don't use iterator here, because we want to make sure we don't
+// try and delete nodes twice (i.e., if it was already deleted because
+// its parent was deleted). Also we don't allow for the SceneGrid node to
+// be deleted.
+void
+Scene::deleteSelectedNodes()
+{
+    QQueue<SceneNode*> nodes;
+    nodes += m_root;
+    while ( !nodes.empty() ) {
+        SceneNode *node = nodes.dequeue();
+        if ( node->hasRenderable() && node->getType() != SceneNode::SIMULATION_GRID && node->getRenderable()->isSelected() ) {
+            // Delete node through its parent so that the scene graph is appropriately
+            // rid of the deleted node.
+            node->parent()->deleteChild( node );
+        } else {
+            nodes += node->getChildren();
+        }
+    }
 }

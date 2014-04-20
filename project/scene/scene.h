@@ -32,6 +32,8 @@ public:
 
     SceneNodeIterator begin() const;
 
+    void deleteSelectedNodes();
+
 private:
 
     SceneNode *m_root;
