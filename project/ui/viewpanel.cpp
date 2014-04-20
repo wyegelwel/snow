@@ -96,30 +96,27 @@ ViewPanel::initializeGL()
 
     // Scene
 
-    SceneNode *node = new SceneNode;
+//    SceneNode *node = new SceneNode;
 
-    QList<Mesh*> meshes;
-    OBJParser::load( PROJECT_PATH "/data/models/teapot.obj", meshes );
-    for ( int i = 0; i < meshes.size(); ++i )
-        node->addRenderable( meshes[i] );
-    m_scene->root()->addChild( node );
+//    QList<Mesh*> meshes;
+//    OBJParser::load( PROJECT_PATH "/data/models/teapot.obj", meshes );
+//    node->setRenderable( meshes[0] );
+//    m_scene->root()->addChild( node );
 
-    this->makeCurrent();
+//    ParticleSystem *particles = new ParticleSystem;
+//    meshes[0]->fill( *particles, 32*512, 0.1f );
+//    m_engine->addParticleSystem( *particles );
+//    delete particles;
 
-    ParticleSystem *particles = new ParticleSystem;
-    meshes[0]->fill( *particles, 32*512, 0.1f );
-    m_engine->addParticleSystem( *particles );
-    delete particles;
+//    Grid grid;
+//    grid.dim = glm::ivec3( 128, 128, 128 );
+//    BBox box = meshes[0]->getWorldBBox( glm::mat4(1.f) );
+//    grid.pos = box.min();
+//    grid.h = box.longestDimSize() / 128.f;
 
-    Grid grid;
-    grid.dim = glm::ivec3( 128, 128, 128 );
-    BBox box = meshes[0]->getWorldBBox( glm::mat4(1.f) );
-    grid.pos = box.min();
-    grid.h = box.longestDimSize() / 128.f;
+//    m_engine->setGrid( grid );
 
-    m_engine->setGrid( grid );
-
-    m_infoPanel->setInfo( "Particles", QLocale().toString(m_engine->particleSystem()->size()) );
+    m_infoPanel->setInfo( "Particles", 0 );
 
     // Render ticker
     assert( connect(&m_ticker, SIGNAL(timeout()), this, SLOT(update())) );
@@ -162,13 +159,17 @@ ViewPanel::mousePressEvent( QMouseEvent *event )
         else if ( UserInput::middleMouse() ) m_viewport->setState( Viewport::PANNING );
     } else {
         if ( UserInput::leftMouse() ) {
-            clearSelection();
-            m_viewport->loadPickMatrices( UserInput::mousePos() );
-            Renderable *clicked = getClickedRenderable();
+            SceneNode *clicked = getClickedSceneNode();
             if ( clicked ) {
-                clicked->setSelected( true );
+                if ( UserInput::shiftKey() ) {
+                    clicked->getRenderable()->setSelected( !clicked->getRenderable()->isSelected() );
+                } else {
+                    clearSelection();
+                    clicked->getRenderable()->setSelected( true );
+                }
+            } else {
+                clearSelection();
             }
-            m_viewport->popMatrices();
         }
     }
 }
@@ -255,62 +256,88 @@ void ViewPanel::resumeDrawing()
     m_draw = true;
 }
 
-void ViewPanel::generateNewMesh( const QString &f )
+void ViewPanel::loadMesh( const QString &filename )
 {
-// single obj file is associated with multiple renderables and a single
-// scene node.
-    SceneNode *node = new SceneNode(SNOW_CONTAINER, f);
 
+    // single obj file is associated with multiple renderables and a single
+    // scene node.
     QList<Mesh*> meshes;
-    OBJParser::load(f, meshes );
-    for ( int i = 0; i < meshes.size(); ++i )
-        node->addRenderable( meshes[i] );
+    OBJParser::load( filename, meshes );
 
-    m_scene->root()->addChild( node );
-    m_selectedMesh = meshes[0];
+    for ( int i = 0; i < meshes.size(); ++i ) {
+        SceneNode *node = new SceneNode( SceneNode::SNOW_CONTAINER );
+        node->setRenderable( meshes[i] );
+        m_scene->root()->addChild( node );
+    }
+
 }
 
 void ViewPanel::fillSelectedMesh()
 {
+    Mesh *mesh = new Mesh;
+
+    for ( SceneNodeIterator it = m_scene->begin(); it.isValid(); ++it ) {
+        if ( (*it)->hasRenderable() &&
+             (*it)->getType() == SceneNode::SNOW_CONTAINER &&
+             (*it)->getRenderable()->isSelected() ) {
+            Mesh *copy = new Mesh( *dynamic_cast<Mesh*>((*it)->getRenderable()) );
+            const glm::mat4 transformation = (*it)->getCTM();
+            copy->applyTransformation( transformation );
+            mesh->append( *copy );
+            delete copy;
+        }
+    }
+
     // If there's a selection, do mesh->fill...
-    if ( m_selectedMesh )  {
+    if ( !mesh->isEmpty() )  {
+
         int nParticles = UiSettings::fillNumParticles();
         float resolution = UiSettings::fillResolution();
+
         ParticleSystem *particles = new ParticleSystem;
-        m_selectedMesh->fill( *particles, nParticles, resolution );
+        mesh->fill( *particles, nParticles, resolution );
         m_engine->addParticleSystem( *particles );
         delete particles;
+
         m_infoPanel->setInfo( "Particles", QString::number(m_engine->particleSystem()->size()) );
     }
+
+    delete mesh;
 }
 
-Renderable* ViewPanel::getClickedRenderable()
+SceneNode* ViewPanel::getClickedSceneNode()
 {
-    QList<Renderable*> renderables;
+    m_viewport->loadPickMatrices( UserInput::mousePos() );
+
+    SceneNode *clicked = NULL;
+
+    QList<SceneNode*> renderables;
     for ( SceneNodeIterator it = m_scene->begin(); it.isValid(); ++it ) {
-        renderables += (*it)->getRenderables();
+        if ( (*it)->hasRenderable() ) {
+            renderables += (*it);
+        }
     }
     if ( !renderables.empty() ) {
         Picker picker( renderables.size() );
         for ( int i = 0; i < renderables.size(); ++i ) {
             picker.setObjectIndex(i);
-            renderables[i]->renderForPicker();
+            renderables[i]->getRenderable()->renderForPicker();
         }
         unsigned int index = picker.getPick();
         if ( index != Picker::NO_PICK ) {
-            return renderables[index];
+            clicked = renderables[index];
         }
     }
-    return NULL;
+
+    m_viewport->popMatrices();
+
+    return clicked;
 }
 
 void ViewPanel::clearSelection()
 {
-    QList<Renderable*> renderables;
     for ( SceneNodeIterator it = m_scene->begin(); it.isValid(); ++it ) {
-        renderables += (*it)->getRenderables();
-    }
-    for ( int i = 0; i < renderables.size(); ++i ) {
-        renderables[i]->setSelected( false );
+        if ( (*it)->hasRenderable() )
+            (*it)->getRenderable()->setSelected( false );
     }
 }

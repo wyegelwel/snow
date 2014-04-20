@@ -61,8 +61,7 @@ public slots:
 
     // Filling
     void fillSelectedMesh();
-
-    void generateNewMesh(const QString &f);
+    void loadMesh( const QString &filename );
 
 private:
 
@@ -75,13 +74,11 @@ private:
     Engine *m_engine;
     Scene *m_scene;
 
-    Mesh *m_selectedMesh;
-
     bool m_draw;
 
     float m_fps;
 
-    Renderable* getClickedRenderable();
+    SceneNode* getClickedSceneNode();
     void clearSelection();
 
 };

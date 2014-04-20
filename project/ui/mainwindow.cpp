@@ -93,7 +93,7 @@ void MainWindow::importMesh()
 
     QString filename = QFileDialog::getOpenFileName(this, "Select mesh to import.", PROJECT_PATH "/data/models", "*.obj");
     if ( !filename.isEmpty() ) {
-        ui->viewPanel->generateNewMesh(filename);
+        ui->viewPanel->loadMesh( filename );
     }
 
     ui->viewPanel->resumeSimulation();

@@ -78,12 +78,10 @@ void Engine::start()
         m_ticker.start(TICKS);
         m_running = true;
 
-//        update();
-
-//        stop();
-
     } else {
+
         LOG( "EMPTY PARTICLE SYSTEM OR EMPTY GRID OR SIMULATION ALREADY RUNNING." );
+
     }
 }
 
@@ -180,6 +178,7 @@ void Engine::initializeCudaResources()
 
 void Engine::freeCudaResources()
 {
+    LOG( "Freeing CUDA resources..." );
     unregisterVBO( m_cudaResource );
     cudaFree( m_devGrid );
     cudaFree( m_devNodes );
