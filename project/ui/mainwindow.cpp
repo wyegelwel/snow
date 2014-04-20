@@ -81,7 +81,7 @@ void MainWindow::renderOffline()
 
     QDir sceneDir("~/offline_renders");
     sceneDir.makeAbsolute();
-    QString fprefix = QFileDialog::getSaveFileName(this, QString("Save Scene"), sceneDir.absolutePath());
+    QString fprefix = QFileDialog::getSaveFileName(this, QString("Choose Export Filename"), sceneDir.absolutePath());
     ui->viewPanel->renderOffline(fprefix);
 
     ui->viewPanel->resumeSimulation();
@@ -126,22 +126,14 @@ void MainWindow::addCollider()  {
 void MainWindow::setupUI()
 {
     // Mesh Filling
-
-    // Connect buttons to slots
     assert( connect(ui->importButton, SIGNAL(clicked()), this, SLOT(importMesh())) );
     assert( connect(ui->fillButton, SIGNAL(clicked()), ui->viewPanel, SLOT(fillSelectedMesh())) );
-
-    // Connect values to settings
     FloatBinding::bindSpinBox( ui->fillResolutionSpinbox, UiSettings::fillResolution(), this );
     IntBinding::bindSpinBox( ui->fillNumParticlesSpinbox, UiSettings::fillNumParticles(), this );
 
     // Simulation
-
-    // Connect button to slots
     assert( connect(ui->startButton, SIGNAL(clicked()), ui->viewPanel, SLOT(startSimulation())) );
     assert( connect(ui->pauseButton, SIGNAL(toggled(bool)), ui->viewPanel, SLOT(pauseSimulation(bool))) );
-
-    // Connect values to settings
     BoolBinding::bindCheckBox( ui->exportCheckbox, UiSettings::exportSimulation(), this );
 
     // Collider
@@ -157,6 +149,24 @@ void MainWindow::setupUI()
     assert( connect(ui->saveSceneButton, SIGNAL(clicked()), this, SLOT(saveToFile())));
     assert( connect(ui->loadSceneButton, SIGNAL(clicked()), this, SLOT(loadFromFile())));
     assert( connect(ui->editSimConstantsButton, SIGNAL(clicked()), ui->viewPanel, SLOT(editSnowConstants())));
+
+    // View Panel
+   // View Panel
+    assert( connect(ui->showBBoxCheckbox, SIGNAL(toggled(bool)), ui->showGridCheckbox, SLOT(setEnabled(bool))) );
+    assert( connect(ui->wireframeCheckbox, SIGNAL(clicked()), this, SLOT(checkMeshRenderSettings())) );
+    assert( connect(ui->solidCheckbox, SIGNAL(clicked()), this, SLOT(checkMeshRenderSettings())) );
+    BoolBinding::bindCheckBox( ui->wireframeCheckbox, UiSettings::showWireframe(), this );
+    BoolBinding::bindCheckBox( ui->solidCheckbox, UiSettings::showSolid(), this );
+    BoolBinding::bindCheckBox( ui->showBBoxCheckbox, UiSettings::showBBox(), this );
+    BoolBinding::bindCheckBox( ui->showGridCheckbox, UiSettings::showGrid(), this );
+}
+
+void MainWindow::checkMeshRenderSettings()
+{
+    if ( !ui->wireframeCheckbox->isChecked() && !ui->solidCheckbox->isChecked() ) {
+        ui->wireframeCheckbox->click();
+    }
+>>>>>>> a95799f66a2c1f5d9456440cd6df30bbfbdb8052
 }
 
 void MainWindow::resizeEvent( QResizeEvent* )

@@ -3,7 +3,7 @@
 **   SNOW - CS224 BROWN UNIVERSITY
 **
 **   scenenode.h
-**   Author: mliberma
+**   Authors: evjang, mliberma, taparson, wyegelwe
 **   Created: 8 Apr 2014
 **
 **************************************************************************/
@@ -13,8 +13,15 @@
 
 #include <QList>
 #include <glm/mat4x4.hpp>
+#include <QString>
 
 class Renderable;
+
+// we could make the type a part of renderable (i.e. make sub-part of OBJ a collider)
+// but that would make the offline rendering pipeline kind of messy. leaving it like this for now.
+enum SceneNodeType{
+    IMPLICIT_COLLIDER, SNOW_CONTAINER, OBJ
+};
 
 class SceneNode
 {
@@ -22,6 +29,7 @@ class SceneNode
 public:
 
     SceneNode( SceneNode *parent = NULL );
+    SceneNode(SceneNodeType type, QString objfile);
     virtual ~SceneNode();
 
     void clearChildren();
@@ -30,11 +38,15 @@ public:
     void clearRenderables();
     void addRenderable( Renderable *renderable );
 
-    QList<SceneNode*> getChildren();
+    QList<SceneNode*> getChildren() { return m_children; }
+    QList<Renderable*> getRenderables() { return m_renderables; }
 
     virtual void render();
 
     glm::mat4 getCTM();
+
+    SceneNodeType getType();
+    QString getObjFile();
 
 private:
 
@@ -48,6 +60,8 @@ private:
     QList<SceneNode*> m_children;
     QList<Renderable*> m_renderables;
 
+    SceneNodeType m_type;
+    QString m_objfile;
 };
 
 #endif // SCENENODE_H

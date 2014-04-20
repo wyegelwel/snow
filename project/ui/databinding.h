@@ -126,6 +126,7 @@ public:
     static BoolBinding* bindCheckBox( QCheckBox *checkbox, bool &value, QObject *parent = NULL )
     {
         BoolBinding *binding = new BoolBinding( value, parent );
+        checkbox->setChecked( value );
         assert( connect(checkbox, SIGNAL(toggled(bool)), binding, SLOT(valueChanged(bool))) );
         return binding;
     }

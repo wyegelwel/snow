@@ -3,7 +3,7 @@
 **   SNOW - CS224 BROWN UNIVERSITY
 **
 **   mesh.cpp
-**   Author: mliberma
+**   Authors: evjang, mliberma, taparson, wyegelwe
 **   Created: 8 Apr 2014
 **
 **************************************************************************/
@@ -24,10 +24,11 @@
 #include "geometry/bbox.h"
 #include "geometry/grid.h"
 #include "sim/particle.h"
+#include "ui/uisettings.h"
 
 Mesh::Mesh()
     : m_glVBO(0),
-      m_color(0.5f, 0.5f, 0.5f, 1.f)
+      m_color(0.4f, 0.4f, 0.4f, 1.f)
 {
 }
 
@@ -108,27 +109,52 @@ Mesh::render()
     glPushAttrib( GL_DEPTH_TEST );
     glEnable( GL_DEPTH_TEST );
 
+    glm::vec4 color = ( m_selected ) ? glm::mix( m_color, UiSettings::selectionColor(), 0.5f ) : m_color;
+
+    if ( UiSettings::showSolid() ) {
+        glPushAttrib( GL_LIGHTING_BIT );
+        glEnable( GL_LIGHTING );
+        glMaterialfv( GL_FRONT_AND_BACK, GL_AMBIENT, glm::value_ptr(color*0.2f) );
+        glMaterialfv( GL_FRONT_AND_BACK, GL_DIFFUSE, glm::value_ptr(color) );
+        glPolygonMode( GL_FRONT_AND_BACK, GL_FILL );
+        renderVBO();
+        glPopAttrib();
+    }
+
+    if ( UiSettings::showWireframe() ) {
+        glPushAttrib( GL_POLYGON_BIT );
+        glEnable( GL_POLYGON_OFFSET_LINE );
+        glPolygonOffset( -1.f, -1.f );
+        glPushAttrib( GL_LIGHTING_BIT );
+        glDisable( GL_LIGHTING );
+        glLineWidth( 1.f );
+        glColor4fv( glm::value_ptr(color*0.8f) );
+        glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
+        renderVBO();
+        glPopAttrib();
+        glPopAttrib();
+    }
+
+    glPopAttrib();
+}
+
+void
+Mesh::renderForPicker()
+{
+    if ( !hasVBO() ) {
+        buildVBO();
+    }
+    glPushAttrib( GL_DEPTH_TEST );
+    glEnable( GL_DEPTH_TEST );
+    glPushAttrib( GL_LIGHTING_BIT );
+    glDisable( GL_LIGHTING );
+    glColor3f( 1.f, 1.f, 1.f );
     glPushAttrib( GL_POLYGON_BIT );
-    glEnable( GL_POLYGON_OFFSET_LINE );
-    glPolygonOffset( -1.f, -1.f );
-
-//    glColor4fv( glm::value_ptr(m_color) );
-//    glPolygonMode( GL_FRONT_AND_BACK, GL_FILL );
-//    renderVBO();
-
-    glPushAttrib( GL_DEPTH_BUFFER_BIT );
-    glDepthMask( false );
-    glPushAttrib( GL_COLOR_BUFFER_BIT );
-    glEnable( GL_BLEND );
-    glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
-    glLineWidth( 1.f );
-    glm::vec4 color = m_color*0.8f;
-    color.w = 0.5f;
-    glColor4fv( glm::value_ptr(color) );
-    glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
+    if ( !UiSettings::showSolid() ) {
+        glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
+    }
     renderVBO();
     glPopAttrib();
-
     glPopAttrib();
     glPopAttrib();
 }
@@ -136,12 +162,11 @@ Mesh::render()
 void
 Mesh::renderVBO()
 {
-
     glBindBuffer( GL_ARRAY_BUFFER, m_glVBO );
     glEnableClientState( GL_VERTEX_ARRAY );
-    glVertexPointer( 3, GL_FLOAT, 2*sizeof(glm::vec3), (void*)(0) );
+    glVertexPointer( 3, GL_FLOAT, 2*sizeof(vec3), (void*)(0) );
     glEnableClientState( GL_NORMAL_ARRAY );
-    glNormalPointer( GL_FLOAT, 2*sizeof(glm::vec3), (void*)(sizeof(glm::vec3)) );
+    glNormalPointer( GL_FLOAT, 2*sizeof(vec3), (void*)(sizeof(vec3)) );
 
     glDrawArrays( GL_TRIANGLES, 0, 3*getNumTris() );
 
@@ -179,8 +204,6 @@ Mesh::deleteVBO()
 void
 Mesh::buildVBO()
 {
-    LOG( "Building mesh VBO..." );
-
     deleteVBO();
 
     // Create flat array of non-indexed triangles
@@ -205,7 +228,6 @@ Mesh::buildVBO()
     registerVBO( &m_cudaVBO, m_glVBO );
 
     delete [] data;
-
 }
 
 void

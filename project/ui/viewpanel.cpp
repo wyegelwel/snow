@@ -3,12 +3,13 @@
 **   SNOW - CS224 BROWN UNIVERSITY
 **
 **   viewpanel.cpp
-**   Author: mliberma
+**   Authors: evjang, mliberma, taparson, wyegelwe
 **   Created: 6 Apr 2014
 **
 **************************************************************************/
 
 #include <GL/gl.h>
+#include <QQueue>
 
 #include "viewpanel.h"
 
@@ -19,12 +20,16 @@
 #include "viewport/viewport.h"
 #include "io/objparser.h"
 #include "geometry/mesh.h"
+#include "geometry/bbox.h"
 #include "scene/scene.h"
 #include "scene/scenenode.h"
+#include "scene/scenenodeiterator.h"
 #include "sim/engine.h"
 #include "sim/particle.h"
 #include "ui/infopanel.h"
+#include "ui/picker.h"
 #include "ui/uisettings.h"
+#include "sim/collider.h"
 
 /// TEMPORARY
 #include "io/sceneparser.h"
@@ -47,7 +52,6 @@ ViewPanel::ViewPanel( QWidget *parent )
 
     m_scene = new Scene;
     m_engine = new Engine;
-    m_scene->setParticleSystem( m_engine->particleSystem() );
 }
 
 ViewPanel::~ViewPanel()
@@ -61,9 +65,9 @@ ViewPanel::~ViewPanel()
 void
 ViewPanel::resetViewport()
 {
-    m_viewport->orient( glm::vec3( 0, 5, 12.5),
-                        glm::vec3(  0,  0,  0),
-                        glm::vec3(  0,  1,  0) );
+    m_viewport->orient( glm::vec3( 0, 5, 12.5 ),
+                        glm::vec3( 0, 1,    0 ),
+                        glm::vec3( 0, 1,    0 ) );
     m_viewport->setDimensions( width(), height() );
 }
 
@@ -103,16 +107,17 @@ ViewPanel::initializeGL()
     this->makeCurrent();
 
     ParticleSystem *particles = new ParticleSystem;
-    meshes[0]->fill( *particles, 64*512, 0.1f );
+    meshes[0]->fill( *particles, 32*512, 0.1f );
     m_engine->addParticleSystem( *particles );
     delete particles;
 
-    m_engine->grid().dim = glm::ivec3( 128, 128, 128 );
+    Grid grid;
+    grid.dim = glm::ivec3( 128, 128, 128 );
+    BBox box = meshes[0]->getWorldBBox( glm::mat4(1.f) );
+    grid.pos = box.min();
+    grid.h = box.longestDimSize() / 128.f;
 
-    BBox box = meshes[0]->getObjectBBox();
-    box.expandRel( .2f );
-    m_engine->grid().pos = box.min();
-    m_engine->grid().h = box.longestDimSize() / 256.f;
+    m_engine->setGrid( grid );
 
     m_infoPanel->setInfo( "Particles", QLocale().toString(m_engine->particleSystem()->size()) );
 
@@ -133,6 +138,7 @@ ViewPanel::paintGL()
 
     m_viewport->push(); {
         m_scene->render();
+        m_engine->render();
         m_viewport->drawAxis();
     } m_viewport->pop();
 
@@ -154,6 +160,16 @@ ViewPanel::mousePressEvent( QMouseEvent *event )
         if ( UserInput::leftMouse() ) m_viewport->setState( Viewport::TUMBLING );
         else if ( UserInput::rightMouse() ) m_viewport->setState( Viewport::ZOOMING );
         else if ( UserInput::middleMouse() ) m_viewport->setState( Viewport::PANNING );
+    } else {
+        if ( UserInput::leftMouse() ) {
+            clearSelection();
+            m_viewport->loadPickMatrices( UserInput::mousePos() );
+            Renderable *clicked = getClickedRenderable();
+            if ( clicked ) {
+                clicked->setSelected( true );
+            }
+            m_viewport->popMatrices();
+        }
     }
 }
 
@@ -173,9 +189,10 @@ ViewPanel::mouseReleaseEvent( QMouseEvent *event )
 
 /// temporary hack: I'm calling the SceneParser from here for the file saving
 /// and offline rendering. Ideally this would be handled by the Engine class.
+/// do this after the MitsubaExporter is working
 void ViewPanel::saveToFile(QString fname)
 {
-    // write - not done, do this out later
+    // write - not done, figure this out later
     SceneParser::write(fname, m_scene);
 }
 
@@ -191,19 +208,23 @@ void ViewPanel::renderOffline(QString file_prefix)
      * the exporter handles scene by scene so here, we tell the simulation to start over
      * then call exportScene every frame
      */
+
     resetSimulation();
+
     // step the simulation 1/24 of a second at a time.
 
 //    for (int s=0; s<1; s++)
 //    {
 //        for (int f=0; f<24; f++)
 //        {
-//            MitsubaExporter::exportScene(file_prefix, f, m_scene);
+//            MitsubaExporter::exportScene(file_prefix, f, m_scene, cam);
 //        }
 //    }
 
     // for now, just export the first frame
-    MitsubaExporter::exportScene(file_prefix, 0, m_scene);
+
+    MitsubaExporter exporter;
+    exporter.exportScene(file_prefix, 0);
 }
 
 void ViewPanel::startSimulation()
@@ -234,13 +255,17 @@ void ViewPanel::resumeDrawing()
     m_draw = true;
 }
 
-void ViewPanel::generateNewMesh(const QString &f)  {
-    SceneNode *node = new SceneNode;
+void ViewPanel::generateNewMesh( const QString &f )
+{
+// single obj file is associated with multiple renderables and a single
+// scene node.
+    SceneNode *node = new SceneNode(SNOW_CONTAINER, f);
 
     QList<Mesh*> meshes;
     OBJParser::load(f, meshes );
     for ( int i = 0; i < meshes.size(); ++i )
         node->addRenderable( meshes[i] );
+
     m_scene->root()->addChild( node );
     m_selectedMesh = meshes[0];
 }
@@ -248,14 +273,45 @@ void ViewPanel::generateNewMesh(const QString &f)  {
 void ViewPanel::fillSelectedMesh()
 {
     // If there's a selection, do mesh->fill...
-    if(m_selectedMesh)  {
+    if ( m_selectedMesh )  {
         int nParticles = UiSettings::fillNumParticles();
         float resolution = UiSettings::fillResolution();
-        ParticleSystem *particles = m_engine->particleSystem();
+        ParticleSystem *particles = new ParticleSystem;
         m_selectedMesh->fill( *particles, nParticles, resolution );
-        m_scene->root()->addRenderable(particles );
+        m_engine->addParticleSystem( *particles );
+        delete particles;
+        m_infoPanel->setInfo( "Particles", QString::number(m_engine->particleSystem()->size()) );
+    }
+}
 
-        m_infoPanel->setInfo( "Particles", QString::number(particles->size()) );
+Renderable* ViewPanel::getClickedRenderable()
+{
+    QList<Renderable*> renderables;
+    for ( SceneNodeIterator it = m_scene->begin(); it.isValid(); ++it ) {
+        renderables += (*it)->getRenderables();
+    }
+    if ( !renderables.empty() ) {
+        Picker picker( renderables.size() );
+        for ( int i = 0; i < renderables.size(); ++i ) {
+            picker.setObjectIndex(i);
+            renderables[i]->renderForPicker();
+        }
+        unsigned int index = picker.getPick();
+        if ( index != Picker::NO_PICK ) {
+            return renderables[index];
+        }
+    }
+    return NULL;
+}
+
+void ViewPanel::clearSelection()
+{
+    QList<Renderable*> renderables;
+    for ( SceneNodeIterator it = m_scene->begin(); it.isValid(); ++it ) {
+        renderables += (*it)->getRenderables();
+    }
+    for ( int i = 0; i < renderables.size(); ++i ) {
+        renderables[i]->setSelected( false );
     }
 }
 

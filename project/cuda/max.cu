@@ -28,15 +28,17 @@
 #include "common/math.h"
 
 #define CUDA_INCLUDE
-#include "sim/particlegrid.h"
+#include "sim/particlegridnode.h"
 #include "sim/particle.h"
+
+#include "cuda/tim.cu"
 
 #define VEC2IVEC( V ) ( glm::ivec3((int)V.x, (int)V.y, (int)V.z) )
 
 #define CLAMP( X, A, B ) ( (X < A) ? A : ((X > B) ? B : X) )
 
 // Use weighting functions to compute particle velocity gradient and update particle velocity
-__device__ void processGridVelocities( Particle &particle, const Grid &grid, const ParticleGrid::Node *nodes, mat3 &velocityGradient, float alpha )
+__device__ void processGridVelocities( Particle &particle, const Grid &grid, const ParticleGridNode *nodes, mat3 &velocityGradient, float alpha )
 {
     const vec3 &pos = particle.position;
     const glm::ivec3 &dim = grid.dim;
@@ -70,7 +72,7 @@ __device__ void processGridVelocities( Particle &particle, const Grid &grid, con
             for ( int k = minIndex.z; k <= maxIndex.z; ++k ) {
                 d.z = k - gridIndex.z;
                 d.z *= ( s.z = ( d.z < 0 ) ? -1.f : 1.f );
-                const ParticleGrid::Node &node = nodes[rowOffset+k];
+                const ParticleGridNode &node = nodes[rowOffset+k];
                 float w;
                 vec3 wg;
                 weightAndGradient( s, d, w, wg );
@@ -83,6 +85,50 @@ __device__ void processGridVelocities( Particle &particle, const Grid &grid, con
     }
     particle.velocity = (1.f-alpha)*v_PIC + alpha*(particle.velocity+dv_FLIP);
 }
+
+//__host__ __device__ __forceinline__
+//bool withinBoundsInclusive( const float &v, const float &min, const float &max ) { return (v >= min && v <= max); }
+
+//__host__ __device__ __forceinline__
+//bool withinBoundsInclusive( const glm::ivec3 &v, const glm::ivec3 &min, const glm::ivec3 &max ) { return  withinBoundsInclusive(v.x, min.x, max.x)
+//                                                                                                            && withinBoundsInclusive(v.y, min.y, max.y)
+//                                                                                                          && withinBoundsInclusive(v.z, min.z, max.z);}
+
+//__device__ void atomicAdd(vec3 *add, vec3 toAdd){
+//    atomicAdd(&(add->x), toAdd.x);
+//    atomicAdd(&(add->y), toAdd.y);
+//    atomicAdd(&(add->z), toAdd.z);
+//}
+
+//__device__ void processGridVelocitiesFast( Particle *particles, const Grid &grid, const ParticleGridNode *nodes, mat3 &velocityGradient, float alpha )
+//{
+
+//    int tid = threadIdx.x + blockIdx.x*blockDim.x + blockIdx.y*blockDim.y*blockDim.x;
+
+//    Particle &particle = particles[tid];
+
+//    glm::ivec3 ijk;
+//    gridIndexToIJK( threadIdx.y, glm::ivec3(4,4,4), ijk );
+
+//    vec3 gridPos = (particle.position-grid.pos)/grid.h;
+//    ijk.x += (int) gridPos.x-1;
+//    ijk.y += (int) gridPos.y-1;
+//    ijk.z += (int) gridPos.z-1;
+
+//    if ( withinBoundsInclusive(ijk,glm::ivec3(0,0,0),grid.dim) ) {
+
+//        ParticleGridNode &node = nodes[getGridIndex(ijk, grid.dim+1)];
+//        float w;
+//        vec3 wg;
+//        vec3 nodePos( ijk.x, ijk.y, ijk.z );
+//        weightAndGradient( gridPos-nodePos, w, wg );
+
+
+
+//    }
+
+
+//}
 
 __device__ void updateParticleDeformationGradients( Particle &particle, const mat3 &velocityGradient, float timeStep,
                                                     float criticalCompression, float criticalStretch )
@@ -117,7 +163,7 @@ __device__ void checkForCollisions( Particle &particle )
 // NOTE: assumes particleCount % blockDim.x = 0, so tid is never out of range!
 // criticalCompression = 1 - theta_c
 // criticalStretch = 1 + theta_s
-__global__ void updateParticlesFromGrid( Particle *particles, const ParticleGrid grid, const ParticleGrid::Node *nodes, float timeStep,
+__global__ void updateParticlesFromGrid( Particle *particles, const ParticleGrid grid, const ParticleGridNode *nodes, float timeStep,
                                          float criticalCompression, float criticalStretch, float alpha )
 {
     int tid = threadIdx.x + blockIdx.x * blockDim.x;
@@ -262,7 +308,7 @@ __global__ void matrixTestKernel()
 
 }
 
-__global__ void velocityTest( Particle *particles, glm::mat3 *gradients, const Grid grid, ParticleGrid::Node *nodes, float alpha )
+__global__ void velocityTest( Particle *particles, glm::mat3 *gradients, const Grid grid, ParticleGridNode *nodes, float alpha )
 {
     int tid = threadIdx.x + blockIdx.x * blockDim.x;
     Particle &particle = particles[tid];
@@ -299,13 +345,13 @@ __host__ void valueTests()
     }
 
     printf( "    Generating %d grid nodes (%.2f MB)...\n",
-            (dim+1)*(dim+1)*(dim+1), (dim+1)*(dim+1)*(dim+1)*sizeof(ParticleGrid::Node)/1e6 );
+            (dim+1)*(dim+1)*(dim+1), (dim+1)*(dim+1)*(dim+1)*sizeof(ParticleGridNode)/1e6 );
     fflush(stdout);
-    ParticleGrid::Node *nodes = grid.createNodes();
+    ParticleGridNode *nodes = grid.createNodes();
     for ( int i = 0; i <= dim; ++i ) {
         for ( int j = 0; j <= dim; ++j ) {
             for ( int k = 0; k <= dim; ++k ) {
-                ParticleGrid::Node node;
+                ParticleGridNode node;
                 node.velocity = vec3( 0.f, -0.125f, 0.f );
                 node.velocityChange = vec3( 0.f, -0.001f, 0.f );
                 nodes[i*(dim+1)*(dim+1)+j*(dim+1)+k] = node;
@@ -316,13 +362,13 @@ __host__ void valueTests()
 
     printf( "    Allocating kernel resources...\n" ); fflush(stdout);
     Particle *devParticles;
-    ParticleGrid::Node *devNodes;
+    ParticleGridNode *devNodes;
     glm::mat3 *devGradients;
     cudaError_t error;
     error = cudaMalloc( &devParticles, nParticles*sizeof(Particle) );
     error = cudaMemcpy( devParticles, particles, nParticles*sizeof(Particle), cudaMemcpyHostToDevice );
-    error = cudaMalloc( &devNodes, (dim+1)*(dim+1)*(dim+1)*sizeof(ParticleGrid::Node) );
-    error = cudaMemcpy( devNodes, nodes, (dim+1)*(dim+1)*(dim+1)*sizeof(ParticleGrid::Node), cudaMemcpyHostToDevice );
+    error = cudaMalloc( &devNodes, (dim+1)*(dim+1)*(dim+1)*sizeof(ParticleGridNode) );
+    error = cudaMemcpy( devNodes, nodes, (dim+1)*(dim+1)*(dim+1)*sizeof(ParticleGridNode), cudaMemcpyHostToDevice );
     error = cudaMalloc( &devGradients, nParticles*sizeof(glm::mat3) );
 
     static const int blockSize = 128;
@@ -477,13 +523,13 @@ __host__ void timeTests()
     }
 
     printf( "    Generating %d grid nodes (%.2f MB)...\n",
-            (dim+1)*(dim+1)*(dim+1), (dim+1)*(dim+1)*(dim+1)*sizeof(ParticleGrid::Node)/1e6 );
+            (dim+1)*(dim+1)*(dim+1), (dim+1)*(dim+1)*(dim+1)*sizeof(ParticleGridNode)/1e6 );
     fflush(stdout);
-    ParticleGrid::Node *nodes = grid.createNodes();
+    ParticleGridNode *nodes = grid.createNodes();
     for ( int i = 0; i <= dim; ++i ) {
         for ( int j = 0; j <= dim; ++j ) {
             for ( int k = 0; k <= dim; ++k ) {
-                ParticleGrid::Node node;
+                ParticleGridNode node;
                 node.velocity = vec3( 0.f, -0.125f, 0.f );
                 node.velocityChange = vec3( 0.f, -0.001f, 0.f );
                 nodes[i*(dim+1)*(dim+1)+j*(dim+1)+k] = node;
@@ -493,17 +539,17 @@ __host__ void timeTests()
 
     printf( "    Allocating kernel resources...\n" ); fflush(stdout);
     Particle *devParticles;
-    ParticleGrid::Node *devNodes;
+    ParticleGridNode *devNodes;
     cudaError_t error;
     error = cudaMalloc( &devParticles, nParticles*sizeof(Particle) );
-    error = cudaMalloc( &devNodes, (dim+1)*(dim+1)*(dim+1)*sizeof(ParticleGrid::Node) );
+    error = cudaMalloc( &devNodes, (dim+1)*(dim+1)*(dim+1)*sizeof(ParticleGridNode) );
 
 //    static const int blockSizes[] = { 32, 64, 96, 128, 160, 192, 224, 256, 288, 320, 352, 384, 416, 448, 480, 512 };
     static const int nBlocks = 16;
 
     for ( int i = 0; i < nBlocks; ++i ) {
         error = cudaMemcpy( devParticles, particles, nParticles*sizeof(Particle), cudaMemcpyHostToDevice );
-        error = cudaMemcpy( devNodes, nodes, (dim+1)*(dim+1)*(dim+1)*sizeof(ParticleGrid::Node), cudaMemcpyHostToDevice );
+        error = cudaMemcpy( devNodes, nodes, (dim+1)*(dim+1)*(dim+1)*sizeof(ParticleGridNode), cudaMemcpyHostToDevice );
 //        int blockSize = blockSizes[i];
         int blockSize = 256;
         printf( "    Block size = %3d; ", blockSize ); fflush(stdout);

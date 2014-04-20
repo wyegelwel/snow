@@ -34,6 +34,7 @@ SOURCES += \
     io/sceneparser.cpp \
     #sim/AppSettings.cpp \
     ui/uisettings.cpp \
+    ui/picker.cpp
 
 
 
@@ -59,14 +60,16 @@ HEADERS  += \
     geometry/bbox.h \
     common/math.h \
     geometry/grid.h \
-    sim/particlegrid.h \
     sim/engine.h \
     io/sceneparser.h \
     #sim/AppSettings.h
     ui/databinding.h \
     ui/uisettings.h \
     sim/material.h \
-    sim/parameters.h
+    sim/parameters.h \
+    sim/particlegridnode.h \
+    ui/picker.h \
+    scene/scenenodeiterator.h
 
 FORMS    += ui/mainwindow.ui
 

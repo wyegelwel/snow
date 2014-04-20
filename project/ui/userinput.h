@@ -3,7 +3,7 @@
 **   SNOW - CS224 BROWN UNIVERSITY
 **
 **   userinput.h
-**   Author: mliberma
+**   Authors: evjang, mliberma, taparson, wyegelwe
 **   Created: 7 Apr 2014
 **
 **************************************************************************/

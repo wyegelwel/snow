@@ -35,7 +35,8 @@ public:
     Camera* getCamera() const { return m_camera; }
 
     void loadMatrices() const;
-    void popMatrices() const;
+    static void popMatrices();
+    void loadPickMatrices( const glm::ivec2 &click ) const;
 
     void push() const;
     void pop() const;
