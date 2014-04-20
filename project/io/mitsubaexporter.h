@@ -50,6 +50,7 @@ public:
     void reset(Grid grid);
     void exportVolumeData(float t);
     ParticleGridNode * getNodesPtr();
+    void test(float t);
 
 private:
     /**

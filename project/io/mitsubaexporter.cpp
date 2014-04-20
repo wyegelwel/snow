@@ -61,6 +61,59 @@ void MitsubaExporter::reset(Grid grid)
     //m_albedo = new float[m_grid.nodeCount()];
 }
 
+void MitsubaExporter::test(float t)
+{
+    // can we draw a sphere?
+    float v = m_grid.h * m_grid.h * m_grid.h;
+
+    // draw a cloudy sphere in center of bbox, bobbing up and down
+    float r = m_bbox.width()*.25;
+    float r2 = r*r;
+
+    float sx = m_bbox.center().x;
+    float sy = m_bbox.center().y + sin(t*10)*m_bbox.height();
+    //float sy = .25;
+    float sz = m_bbox.center().z;
+
+    float x,y,z;
+    float dx,dy,dz;
+    float mass;
+
+    float minX = m_bbox.min().x;
+    float minY = m_bbox.min().y;
+    float minZ = m_bbox.min().z;
+
+    for (size_t i=0; i<m_grid.nodeCount(); ++i)
+    {
+        // looping over OUR grid format - xmajor, zminor
+        int j = i;
+        // data[((zpos*yres + ypos)*xres + xpos)*channels + chan]
+        int xpos = j / (m_grid.dim.y*m_grid.dim.z);
+        j -= xpos*(m_grid.dim.y*m_grid.dim.z);
+        int ypos = j / m_grid.dim.z;
+        j -= ypos*m_grid.dim.z;
+        int zpos = j;
+
+        // true grid positions in simulation space
+        x = minX + m_grid.h * xpos;
+        y = minY + m_grid.h * ypos;
+        z = minZ + m_grid.h * zpos;
+        dx=x-sx;
+        dy=y-sy;
+        dz=z-sz;
+        if (dx*dx+dy*dy+dz*dz < r2)
+        {
+            mass=v;
+        }
+        else
+        {
+            mass=0;
+        }
+
+        m_nodes[i].mass = mass;
+    }
+}
+
 void MitsubaExporter::exportVolumeData(float t)
 {
 /// the engine has to decide to copy over ParticleGrid data
@@ -86,13 +139,22 @@ void MitsubaExporter::exportVolumeData(float t)
     value = 1;      // number of channels
     os.write((char *) &value, sizeof(int));
 
-    float minX = m_bbox.min().x;
-    float minY = m_bbox.min().y;
-    float minZ = m_bbox.min().z;
-    float maxX = m_bbox.max().x;
-    float maxY = m_bbox.max().y;
-    float maxZ = m_bbox.max().z;
+//    float minX = m_bbox.min().x;
+//    float minY = m_bbox.min().y;
+//    float minZ = m_bbox.min().z;
+//    float maxX = m_bbox.max().x;
+//    float maxY = m_bbox.max().y;
+//    float maxZ = m_bbox.max().z;
 
+    // the bounding box of the snow volume
+    // corresponds to exactly where the heterogenous medium
+    // will be positioned.
+    float minX=-1;
+    float minY=0;
+    float minZ=-1;
+    float maxX=1;
+    float maxY=2;
+    float maxZ=1;
 
     // bounding box
     os.write((char *) &minX, sizeof(float));
@@ -104,10 +166,27 @@ void MitsubaExporter::exportVolumeData(float t)
 
     // write each node density
     float v = m_grid.h * m_grid.h * m_grid.h;
-    for (size_t i=0; i<m_grid.nodeCount(); ++i) {
-        //float value = m_densities[i]; // this is a single float representing the density
-        float density = m_nodes[i].mass/v * 100; // temporary. this will be ammended once we use more particles
 
+
+    for (size_t i=0; i<m_grid.nodeCount(); ++i) {
+        // for each mitsuba-ordered index (z-major,x-minor), find the index of OUR grid
+        // that it corresponds to, then write it.
+
+        int j = i;
+        // data[((zpos*yres + ypos)*xres + xpos)*channels + chan]
+        int zpos = j / (m_grid.dim.x*m_grid.dim.y);
+        j -= zpos*(m_grid.dim.x*m_grid.dim.y);
+        int ypos = j / m_grid.dim.x;
+        j -= ypos*m_grid.dim.x;
+        int xpos = j;
+        // our grid indexing scheme
+        int index = ((xpos*m_grid.dim.y + ypos)*m_grid.dim.z) + zpos;
+
+
+//        float density = sin(ypos*t);
+
+        float density = m_nodes[index].mass/v;
+//        density *= 100;
 //        if (density > 0.001f)
 //        {
 //            printf("%d : %f\n",i,density);

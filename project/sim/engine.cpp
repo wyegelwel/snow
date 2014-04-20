@@ -159,6 +159,7 @@ void Engine::update()
             // TODO - call this in a separate thread so that the simulation isn't slowed down while
             // once that is done, call the export function on a separate thread
             // so the rest of the simulation can continue
+            //m_exporter->test(m_time);
             m_exporter->exportVolumeData(m_time);
         }
 
