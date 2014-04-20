@@ -166,7 +166,6 @@ void MainWindow::checkMeshRenderSettings()
     if ( !ui->wireframeCheckbox->isChecked() && !ui->solidCheckbox->isChecked() ) {
         ui->wireframeCheckbox->click();
     }
->>>>>>> a95799f66a2c1f5d9456440cd6df30bbfbdb8052
 }
 
 void MainWindow::resizeEvent( QResizeEvent* )
