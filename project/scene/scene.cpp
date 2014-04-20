@@ -12,9 +12,11 @@
 
 #include "common/common.h"
 #include "scene/scenenode.h"
+#include "sim/particle.h"
 
 Scene::Scene()
-    : m_root(new SceneNode(NULL))
+    : m_root(new SceneNode(NULL)),
+      m_particleSystem(NULL)
 {
 }
 
@@ -27,4 +29,5 @@ void
 Scene::render()
 {
     if ( m_root ) m_root->render();
+    if ( m_particleSystem ) m_particleSystem->render();
 }

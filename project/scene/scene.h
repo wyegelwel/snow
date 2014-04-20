@@ -12,7 +12,7 @@
 #define SCENE_H
 
 class SceneNode;
-
+class ParticleSystem;
 
 class Scene
 {
@@ -26,10 +26,14 @@ public:
 
     SceneNode* root() { return m_root; }
 
+    void setParticleSystem( ParticleSystem *particleSystem ) { m_particleSystem = particleSystem; }
+
 
 private:
-    //WorldParams m_params; // parameters of the simulation.
+
     SceneNode *m_root;
+
+    ParticleSystem *m_particleSystem;
 
 };
 

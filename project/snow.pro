@@ -33,7 +33,8 @@ SOURCES += \
     sim/engine.cpp \
     io/sceneparser.cpp \
     #sim/AppSettings.cpp \
-    ui/uisettings.cpp
+    ui/uisettings.cpp \
+
 
 
 HEADERS  += \
@@ -63,7 +64,8 @@ HEADERS  += \
     io/sceneparser.h \
     #sim/AppSettings.h
     ui/databinding.h \
-    ui/uisettings.h
+    ui/uisettings.h \
+    sim/material.h
 
 FORMS    += ui/mainwindow.ui
 
@@ -78,9 +80,10 @@ QMAKE_CXXFLAGS += -std=c++11
 CUDA_SOURCES += cuda/snow.cu \
     cuda/mesh.cu \
 #    cuda/wil.cu \
-    cuda/max.cu \
+#    cuda/max.cu \
 #    cuda/tim.cu \
 #    cuda/eric.cu \
+    cuda/simulation.cu
 
 CUDA_DIR = /contrib/projects/cuda5-toolkit
 INCLUDEPATH += $$CUDA_DIR/include
@@ -101,7 +104,9 @@ OTHER_FILES += \
     cuda/weighting.cu \
     cuda/matrix.cu \
     cuda/vector.cu \
-    cuda/quaternion.cu
+    cuda/quaternion.cu \
+    cuda/simulation.cu \
+    cuda/collider.cu
 
 # GPU ARCH
 # this gets passed as the gpu-architecture flag to nvcc compiler

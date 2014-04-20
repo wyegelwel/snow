@@ -18,7 +18,7 @@
 #include "sim/engine.h"
 #include "viewport/camera.h"
 #include "sim/collider.h" // implicit colliders
-//#include "math.h"
+#include "math.h"
 #include <fstream>
 #include <iomanip>
 
@@ -37,19 +37,18 @@ void MitsubaExporter::exportVolumeData(QString fprefix)
     int zres = 200;
 
     // test volume
-    float densities[xres*yres*zres];
-    for (int i=0; i<xres*yres*zres; ++i)
+    int numCells = xres*yres*zres;
+    float *densities = new float[numCells];
+    for (int i=0; i<numCells;i++)
     {
-        densities[i]=sin(i);
+        densities[i]=std::sin(float(i)/10);
     }
 
     // derive xres, yres, zres from h?
-    //QString fname = QString("%1.vol").arg(fprefix);
-    //std::ofstream os(fname.toStdString().c_str());
+    QString fname = QString("%1.vol").arg(fprefix);
+    std::ofstream os(fname.toStdString().c_str());
 
-    std::ofstream os("snow.vol");
-
-    float scale = 1.0f / std::max(std::max(xres, yres), zres);
+    //float scale = 1.0f / std::max(std::max(xres, yres), zres);
 
     os.write("VOL", 3);
     char version = 3;
@@ -62,12 +61,15 @@ void MitsubaExporter::exportVolumeData(QString fprefix)
     value = 1;      // number of channels
     os.write((char *) &value, sizeof(int));
 
-    float minX = -xres/2.0f*scale;
-    float minY = -yres/2.0f*scale;
-    float minZ = -zres/2.0f*scale;
-    float maxX = xres/2.0f*scale;
-    float maxY = yres/2.0f*scale;
-    float maxZ = zres/2.0f*scale;
+
+
+
+//    float minX = -xres/2.0f*scale;
+//    float minY = -yres/2.0f*scale;
+//    float minZ = -zres/2.0f*scale;
+//    float maxX = xres/2.0f*scale;
+//    float maxY = yres/2.0f*scale;
+//    float maxZ = zres/2.0f*scale;
 
     // bounding box
     os.write((char *) &minX, sizeof(float));
@@ -83,10 +85,11 @@ void MitsubaExporter::exportVolumeData(QString fprefix)
         os.write((char *) &value, sizeof(float));
     }
     os.close();
+    delete [] densities;
 }
 
 /// MAIN FUNCTION
-void MitsubaExporter::exportScene(QString fprefix1, int frame, Engine *engine, Camera * camera)
+void MitsubaExporter::exportScene(QString fprefix1, int frame) //, Engine *engine, Camera * camera
 {
     /**
      * Exports Single Frame of Scene to Mitsuba format.

@@ -2,8 +2,6 @@
 #define COLLIDER_H
 
 #include "cuda/vector.cu"
-#include "common/renderable.h"
-#include "geometry/mesh.h"
 
 /**
  * For the sake of supporting multiple implicit colliders in cuda, we define an enum for the type of collider
@@ -16,27 +14,40 @@ enum ColliderType{
     HALF_PLANE, SPHERE
 };
 
-struct ImplicitCollider : public Renderable {
+struct ImplicitCollider {
     vec3 center;
     vec3 param;
     vec3 velocity;
     ColliderType type;
-    Mesh *mesh;
-    ImplicitCollider(ColliderType t, vec3 c = vec3(0,0,0), vec3 p = vec3(0,0,0));
-    virtual void render();//{mesh->render();}
-    void renderSphere();
-    void renderPlane();
-    void initializeMesh();
 };
 
-//#ifndef CUDA_INCLUDE
-//class Collider{
-//public:
-//    virtual void render() = 0;
-//    virtual void init() = 0;
-//    virtual ImplicitCollider toImplicitCollider();
-//};
+#ifndef CUDA_INCLUDE
 
-//#endif //CUDA_INCLUDE
+#include "common/renderable.h"
+#include "geometry/mesh.h"
+
+class Collider : public Renderable {
+
+public:
+
+
+    Collider( ImplicitCollider &collider );
+    virtual void render();//{mesh->render();}
+
+    virtual void init() = 0;
+
+    void initializeMesh();
+
+private:
+
+    ImplicitCollider &m_collider;
+    Mesh *m_mesh;
+
+    void renderSphere();
+    void renderPlane();
+
+};
+
+#endif //CUDA_INCLUDE
 
 #endif // COLLIDER_H

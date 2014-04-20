@@ -42,7 +42,7 @@ public:
      * writes sceneNode and all of its children (i.e. pass in m_scene->root() to render the whole scene)
      * it also needs access to the camera, so we also need to pass in the cam
      */
-    void exportScene(QString fprefix, int frame, Engine * engine, Camera * camera);
+    void exportScene(QString fprefix, int frame); //, Engine * engine, Camera * camera
 
 private:
     /**

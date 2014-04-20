@@ -20,6 +20,10 @@ struct Grid
     vec3 pos;
     float h;
 
+    Grid() : dim(0,0,0), pos(0,0,0), h(0.f) {}
+
+    inline bool empty() const { return cellCount() == 0; }
+
     inline glm::ivec3 nodeDim() const {return dim+1;}
     inline int nodeCount() const { return (dim.x+1)*(dim.y+1)*(dim.z+1); }
     inline int cellCount() const { return dim.x * dim.y * dim.z; }
