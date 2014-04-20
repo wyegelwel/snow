@@ -25,6 +25,8 @@
 #include "sim/particle.h"
 #include "sim/particlegrid.h"
 #include "sim/parameters.h"
+#include "geometry/grid.h"
+#include "io/mitsubaexporter.h"
 
 struct cudaGraphicsResource;
 class ParticleGridTempData;
@@ -39,7 +41,7 @@ public:
     Engine();
     virtual ~Engine();
 
-    void start();
+    void start(bool exportScene);
     void pause();
     void resume();
     void stop();
@@ -59,11 +61,9 @@ public:
     void clearColliders() { m_colliders.clear(); }
     QVector<ImplicitCollider>& colliders() { return m_colliders; }
 
-    /**
-     * calls MitsubaExporter class to serialize volume data
-     * also writes out the collider primitives to Mitsuba-compatible shapes
-     */
-    void exportMitsuba() {}
+    void initExporter(QString fprefix);
+
+    bool isRunning();
 
 public slots:
 
@@ -82,7 +82,7 @@ private:
     // CUDA pointers
     cudaGraphicsResource *m_cudaResource; // Particles
     Grid *m_devGrid;
-    ParticleGrid::Node *m_devNodes;
+    ParticleGrid::Node * m_devNodes;
     ParticleGridTempData *m_devPGTD;
     ImplicitCollider *m_devColliders;
     MaterialConstants *m_devMaterial;
@@ -93,6 +93,9 @@ private:
     bool m_busy;
     bool m_running;
     bool m_paused;
+    bool m_export;
+
+    MitsubaExporter * m_exporter;
 
     void initializeCudaResources();
     void freeCudaResources();

@@ -28,9 +28,8 @@
 #include "ui/uisettings.h"
 #include "sim/collider.h"
 
-/// TEMPORARY
-#include "io/sceneparser.h"
-#include "io/mitsubaexporter.h"
+#include <QFileDialog>
+
 
 #define FPS 30
 
@@ -179,43 +178,27 @@ ViewPanel::mouseReleaseEvent( QMouseEvent *event )
 void ViewPanel::saveToFile(QString fname)
 {
     // write - not done, figure this out later
-    SceneParser::write(fname, m_scene);
+    //SceneParser::write(fname, m_scene);
 }
 
 void ViewPanel::loadFromFile(QString fname)
 {
     // read - not done, figure this out later
-    SceneParser::read(fname, m_scene);
+    //SceneParser::read(fname, m_scene);
 }
 
-void ViewPanel::renderOffline(QString file_prefix)
-{
-    /**
-     * the exporter handles scene by scene so here, we tell the simulation to start over
-     * then call exportScene every frame
-     */
-
-    resetSimulation();
-
-    // step the simulation 1/24 of a second at a time.
-
-//    for (int s=0; s<1; s++)
-//    {
-//        for (int f=0; f<24; f++)
-//        {
-//            MitsubaExporter::exportScene(file_prefix, f, m_scene, cam);
-//        }
-//    }
-
-    // for now, just export the first frame
-
-    MitsubaExporter exporter;
-    exporter.exportScene(file_prefix, 0);
-}
 
 void ViewPanel::startSimulation()
 {
-    m_engine->start();
+    if (!m_engine->isRunning() && UiSettings::exportSimulation())
+    {
+        // ask the user where the data should be saved
+//        QDir sceneDir("~/offline_renders");
+//        sceneDir.makeAbsolute();
+        QString fprefix = QFileDialog::getSaveFileName(this, QString("Choose Export Name"), QString());
+        m_engine->initExporter(fprefix);
+    }
+    m_engine->start(UiSettings::exportSimulation());
 }
 
 void ViewPanel::pauseSimulation( bool pause )

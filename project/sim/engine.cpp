@@ -24,6 +24,7 @@
 #include <QtConcurrentRun>
 
 #include "GL/gl.h"
+#include <QFileDialog>
 
 #define TICKS 50
 
@@ -35,10 +36,13 @@ Engine::Engine()
 {
     m_particleSystem = new ParticleSystem;
 
+    m_exporter = NULL;
+
     m_params.timeStep = 0.001f;
     m_params.startTime = 0.f;
     m_params.endTime = 60.f;
     m_params.gravity = vec3( 0.f, -9.8f, 0.f );
+
 
     ImplicitCollider collider;
     collider.center = vec3( 0.f, 0.5f, 0.f );
@@ -53,11 +57,24 @@ Engine::~Engine()
 {
     if ( m_running ) stop();
     SAFE_DELETE( m_particleSystem );
+    if (m_export)
+        SAFE_DELETE(m_exporter);
 }
 
-void Engine::start()
+void Engine::initExporter(QString fprefix)
+{
+    m_exporter = new MitsubaExporter(fprefix, 24.f);
+}
+
+void Engine::start(bool exportScene)
 {
     if ( m_particleSystem->size() > 0 && !m_grid.empty() && !m_running ) {
+        m_export = exportScene;
+
+        if (m_export)
+        {
+            m_exporter->reset(m_grid);
+        }
 
         LOG( "STARTING SIMULATION" );
 
@@ -96,6 +113,11 @@ void Engine::resume()
     }
 }
 
+bool Engine::isRunning()
+{
+    return m_running;
+}
+
 void Engine::update()
 {
     if ( !m_busy && m_running && !m_paused ) {
@@ -113,6 +135,19 @@ void Engine::update()
 
         updateParticles( m_params, devParticles, m_particleSystem->size(), m_devGrid,
                          m_devNodes, m_grid.nodeCount(), m_devPGTD, m_devColliders, m_colliders.size(), m_devMaterial );
+
+
+        if (m_export && (m_time - m_exporter->getLastUpdateTime() >= m_exporter->getspf()))
+        {
+            // TODO - memcpy the mass data from each ParticleGrid::Node
+            // to the m_densities array in the exporter.
+            cudaMemcpy(m_exporter->getNodesPtr(), m_devNodes, m_grid.nodeCount() * sizeof(ParticleGrid::Node), cudaMemcpyDeviceToHost);
+            // TODO - call this in a separate thread so that the simulation isn't slowed down while
+            // once that is done, call the export function on a separate thread
+            // so the rest of the simulation can continue
+            m_exporter->exportVolumeData(m_time);
+        }
+
 
 //        cudaMemcpy( m_particleSystem->particles().data(), devParticles, 12*sizeof(Particle), cudaMemcpyDeviceToHost );
 //        for ( int i = 0; i < 12; ++i ) {
