@@ -11,8 +11,14 @@
 #ifndef PARTICLE_H
 #define PARTICLE_H
 
-    #include "cuda/vector.cu"
-    #include "cuda/matrix.cu"
+#include "cuda/vector.cu"
+#include "cuda/matrix.cu"
+
+#ifdef CUDA_INCLUDE
+    #define DECL __host__ __device__
+#else
+    #define DECL
+#endif
 
 struct Particle
 {
@@ -22,7 +28,15 @@ struct Particle
     float volume;
     mat3 elasticF;
     mat3 plasticF;
-    Particle() : velocity(.01f, 0.f, 0.f), mass(1e-6), volume(1e-9), elasticF(1.f), plasticF(1.f) {}
+    DECL Particle()
+    {
+        position = vec3( 0.f, 0.f, 0.f );
+        velocity = vec3( 0.f, 0.f, 0.f );
+        mass = 1e-6;
+        volume = 1e-9;
+        elasticF = mat3( 1.f );
+        plasticF = mat3( 1.f );
+    }
 };
 
 #ifndef CUDA_INCLUDE

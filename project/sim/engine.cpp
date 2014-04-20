@@ -25,22 +25,26 @@
 
 #include "GL/gl.h"
 
-#define TICKS 500
+#define TICKS 50
 
 Engine::Engine()
     : m_particleSystem( NULL ),
-      m_params( 1e-2, 0.f, 60.f ),
       m_time( 0.f ),
       m_running( false ),
       m_paused( false )
 {
     m_particleSystem = new ParticleSystem;
 
+    m_params.timeStep = 0.001f;
+    m_params.startTime = 0.f;
+    m_params.endTime = 60.f;
+    m_params.gravity = vec3( 0.f, -9.8f, 0.f );
+
     ImplicitCollider collider;
-    collider.center = vec3( 0.f, 0.0f, 0.f );
+    collider.center = vec3( 0.f, 0.5f, 0.f );
     collider.param = vec3( 0.f, 1.f, 0.f );
     collider.type = HALF_PLANE;
-//    m_colliders += collider;
+    m_colliders += collider;
 
     assert( connect(&m_ticker, SIGNAL(timeout()), this, SLOT(update())) );
 }
@@ -59,12 +63,12 @@ void Engine::start()
 
         m_time = 0.f;
         initializeCudaResources();
-//        m_ticker.start(TICKS);
+        m_ticker.start(TICKS);
         m_running = true;
 
-        update();
+//        update();
 
-        stop();
+//        stop();
 
     } else {
         LOG( "EMPTY PARTICLE SYSTEM OR EMPTY GRID OR SIMULATION ALREADY RUNNING." );
@@ -94,33 +98,34 @@ void Engine::resume()
 
 void Engine::update()
 {
-    if ( m_running && !m_paused ) {
+    if ( !m_busy && m_running && !m_paused ) {
+
+        m_busy = true;
 
         cudaGraphicsMapResources( 1, &m_cudaResource, 0 );
         Particle *devParticles;
         size_t size;
         checkCudaErrors( cudaGraphicsResourceGetMappedPointer( (void**)&devParticles, &size, m_cudaResource ) );
 
-        LOG( "%lu %lu", size, size/sizeof(Particle) );
-
         if ( (int)(size/sizeof(Particle)) != m_particleSystem->size() ) {
-            LOG( "Particle resource error..." );
+            LOG( "Particle resource error : %lu bytes (%lu expected)", size, m_particleSystem->size()*sizeof(Particle) );
         }
 
-        updateParticles( devParticles, m_particleSystem->size(), m_params.timeStep, m_devGrid,
+        updateParticles( m_params, devParticles, m_particleSystem->size(), m_devGrid,
                          m_devNodes, m_grid.nodeCount(), m_devPGTD, m_devColliders, m_colliders.size(), m_devMaterial );
 
-        cudaMemcpy( m_particleSystem->particles().data(), devParticles, 12*sizeof(Particle), cudaMemcpyDeviceToHost );
-        for ( int i = 0; i < 12; ++i ) {
-            Particle &p = m_particleSystem->particles()[i];
-             LOG( "Position: (%f, %f, %f), Velocity: (%f, %f, %f), mass: %g", p.position.x, p.position.y, p.position.z, p.velocity.x, p.velocity.y, p.velocity.z, p.mass );
-        }
-        LOG("\n");
-
+//        cudaMemcpy( m_particleSystem->particles().data(), devParticles, 12*sizeof(Particle), cudaMemcpyDeviceToHost );
+//        for ( int i = 0; i < 12; ++i ) {
+//            Particle &p = m_particleSystem->particles()[i];
+//             LOG( "Position: (%f, %f, %f), Velocity: (%f, %f, %f), mass: %g", p.position.x, p.position.y, p.position.z, p.velocity.x, p.velocity.y, p.velocity.z, p.mass );
+//        }
+//        LOG("\n");
 
         checkCudaErrors( cudaGraphicsUnmapResources( 1, &m_cudaResource, 0 ) );
 
         m_time += m_params.timeStep;
+
+        m_busy = false;
 
     } else {
         LOG( "IS PAUSED OR ISN'T RUNNING" );
@@ -129,9 +134,12 @@ void Engine::update()
 
 void Engine::initializeCudaResources()
 {
+    LOG( "Initializing CUDA resources..." );
+
     // Particles
     registerVBO( &m_cudaResource, m_particleSystem->vbo() );
-    LOG("Allocated %f mb for particles", m_particleSystem->size()*sizeof(Particle)/1e6);
+    float particlesSize = m_particleSystem->size()*sizeof(Particle) / 1e6;
+    LOG( "Allocated %.2f MB for particle system.", particlesSize );
 
     // Grid
     checkCudaErrors(cudaMalloc( (void**)&m_devGrid, sizeof(Grid) ));
@@ -139,22 +147,23 @@ void Engine::initializeCudaResources()
 
     // Grid Nodes
     checkCudaErrors(cudaMalloc( (void**)&m_devNodes, m_grid.nodeCount()*sizeof(ParticleGrid::Node) ));
-    LOG("Allocating %f mb for grid nodes", m_grid.nodeCount()*sizeof(ParticleGrid::Node)/1e6);
+    float nodesSize =  m_grid.nodeCount()*sizeof(ParticleGrid::Node) / 1e6;
+    LOG( "Allocating %.2f MB for grid nodes.", nodesSize );
 
     // Colliders
     checkCudaErrors(cudaMalloc( (void**)&m_devColliders, m_colliders.size()*sizeof(ImplicitCollider) ));
     checkCudaErrors(cudaMemcpy( m_devColliders, m_colliders.data(), m_colliders.size()*sizeof(ImplicitCollider), cudaMemcpyHostToDevice ));
-    LOG("Allocating %f mb for colliders", m_colliders.size()*sizeof(ImplicitCollider)/1e6);
 
     // Particle Grid Temp Data
     checkCudaErrors(cudaMalloc( (void**)&m_devPGTD, m_particleSystem->size()*sizeof(ParticleGridTempData) ));
-    LOG("Allocating %f mb for particle grid temp data", m_particleSystem->size()*sizeof(ParticleGridTempData)/1e6);
+    float tempSize = m_particleSystem->size()*sizeof(ParticleGridTempData) / 1e6;
+    LOG( "Allocating %.2f MB for particle grid temp data.", tempSize );
 
     // Material Constants
     checkCudaErrors(cudaMalloc( (void**)&m_devMaterial, sizeof(MaterialConstants) ));
     checkCudaErrors(cudaMemcpy( m_devMaterial, &m_materialConstants, sizeof(MaterialConstants), cudaMemcpyHostToDevice ));
 
-    LOG("Allocated %f mb in total", (m_particleSystem->size()*sizeof(Particle)+m_grid.nodeCount()*sizeof(ParticleGrid::Node)+m_colliders.size()*sizeof(ImplicitCollider)+m_particleSystem->size()*sizeof(ParticleGridTempData))/1e6);
+    LOG("Allocated %.2f MB in total", particlesSize + nodesSize + tempSize );
 }
 
 void Engine::freeCudaResources()

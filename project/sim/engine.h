@@ -24,6 +24,7 @@
 #include "sim/material.h"
 #include "sim/particle.h"
 #include "sim/particlegrid.h"
+#include "sim/parameters.h"
 
 struct cudaGraphicsResource;
 class ParticleGridTempData;
@@ -35,37 +36,17 @@ class Engine : public QObject
 
 public:
 
-    struct Parameters
-    {
-        float timeStep;
-        float startTime;
-        float endTime;
-        Parameters( float dt, float start, float end ) : timeStep(dt), startTime(start), endTime(end) {}
-    };
-
     Engine();
     virtual ~Engine();
 
-    /**
-     * Sets the time to zero and starts the simulation.
-     */
     void start();
-
-    /**
-     * Pauses the simulation.
-     */
     void pause();
-
-    /**
-     * Resumes the simulation (without restarting the time).
-     */
     void resume();
-
     void stop();
 
-    void setStartTime( float start ) { m_params.startTime = start; }
-    void setEndTime( float end ) { m_params.endTime = end; }
-    void setTimeStep( float dt ) { m_params.timeStep = dt; }
+    float getSimulationTime() { return m_time; }
+
+    SimulationParameters& parameters() { return m_params; }
 
     void addParticleSystem( const ParticleSystem &particles ) { *m_particleSystem += particles; }
     void clearParticleSystem() { m_particleSystem->clear(); }
@@ -106,9 +87,10 @@ private:
     ImplicitCollider *m_devColliders;
     MaterialConstants *m_devMaterial;
 
-    Parameters m_params;
+    SimulationParameters m_params;
     float m_time;
 
+    bool m_busy;
     bool m_running;
     bool m_paused;
 

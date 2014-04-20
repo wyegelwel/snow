@@ -71,7 +71,7 @@
        </property>
        <layout class="QGridLayout" name="gridLayout_2">
         <item row="0" column="0">
-         <widget class="QGroupBox" name="groupBox">
+         <widget class="QGroupBox" name="fillBox">
           <property name="title">
            <string>Fill Object</string>
           </property>
@@ -169,7 +169,7 @@
           </layout>
          </widget>
         </item>
-        <item row="1" column="0">
+        <item row="2" column="0">
          <spacer name="verticalSpacer">
           <property name="orientation">
            <enum>Qt::Vertical</enum>
@@ -181,6 +181,39 @@
            </size>
           </property>
          </spacer>
+        </item>
+        <item row="1" column="0">
+         <widget class="QGroupBox" name="simulationBox">
+          <property name="title">
+           <string>Simulation</string>
+          </property>
+          <layout class="QGridLayout" name="gridLayout_4">
+           <item row="0" column="0">
+            <widget class="QPushButton" name="startButton">
+             <property name="text">
+              <string>Start</string>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="1">
+            <widget class="QPushButton" name="pauseButton">
+             <property name="text">
+              <string>Pause</string>
+             </property>
+             <property name="checkable">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="0">
+            <widget class="QCheckBox" name="exportCheckbox">
+             <property name="text">
+              <string>Export</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
         </item>
        </layout>
       </widget>
@@ -206,12 +239,8 @@
    </widget>
    <widget class="QMenu" name="menuSimulate">
     <property name="title">
-     <string>Simulate</string>
+     <string>Simulation</string>
     </property>
-    <addaction name="actionStart"/>
-    <addaction name="actionPause"/>
-    <addaction name="actionResume"/>
-    <addaction name="actionReset"/>
     <addaction name="actionRenderOffline"/>
    </widget>
    <addaction name="menuFile"/>
@@ -248,26 +277,6 @@
    </property>
    <property name="shortcut">
     <string>Ctrl+R</string>
-   </property>
-  </action>
-  <action name="actionPause">
-   <property name="text">
-    <string>Pause</string>
-   </property>
-  </action>
-  <action name="actionResume">
-   <property name="text">
-    <string>Resume</string>
-   </property>
-  </action>
-  <action name="actionStart">
-   <property name="text">
-    <string>Start</string>
-   </property>
-  </action>
-  <action name="actionReset">
-   <property name="text">
-    <string>Reset</string>
    </property>
   </action>
  </widget>
@@ -321,38 +330,6 @@
    </hints>
   </connection>
   <connection>
-   <sender>actionPause</sender>
-   <signal>triggered()</signal>
-   <receiver>viewPanel</receiver>
-   <slot>pause()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>-1</x>
-     <y>-1</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>399</x>
-     <y>306</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>actionResume</sender>
-   <signal>triggered()</signal>
-   <receiver>viewPanel</receiver>
-   <slot>resume()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>-1</x>
-     <y>-1</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>399</x>
-     <y>306</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
    <sender>actionRenderOffline</sender>
    <signal>triggered()</signal>
    <receiver>MainWindow</receiver>
@@ -365,38 +342,6 @@
     <hint type="destinationlabel">
      <x>399</x>
      <y>299</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>actionStart</sender>
-   <signal>triggered()</signal>
-   <receiver>viewPanel</receiver>
-   <slot>start()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>-1</x>
-     <y>-1</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>399</x>
-     <y>306</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>actionReset</sender>
-   <signal>triggered()</signal>
-   <receiver>viewPanel</receiver>
-   <slot>reset()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>-1</x>
-     <y>-1</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>399</x>
-     <y>306</y>
     </hint>
    </hints>
   </connection>

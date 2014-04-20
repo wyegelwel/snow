@@ -34,6 +34,9 @@ public slots:
 
     void importMesh();
 
+    virtual void resizeEvent( QResizeEvent* );
+    virtual void moveEvent( QMoveEvent* );
+
 public:
 
     explicit MainWindow( QWidget *parent = 0 );

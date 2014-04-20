@@ -65,7 +65,8 @@ HEADERS  += \
     #sim/AppSettings.h
     ui/databinding.h \
     ui/uisettings.h \
-    sim/material.h
+    sim/material.h \
+    sim/parameters.h
 
 FORMS    += ui/mainwindow.ui
 
