@@ -126,6 +126,9 @@ Mesh::render()
     glPushAttrib( GL_DEPTH_TEST );
     glEnable( GL_DEPTH_TEST );
 
+    glEnable( GL_LINE_SMOOTH );
+    glHint( GL_LINE_SMOOTH_HINT, GL_NICEST );
+
     glm::vec4 color = ( m_selected ) ? glm::mix( m_color, UiSettings::selectionColor(), 0.5f ) : m_color;
 
     if ( UiSettings::showSolid() ) {

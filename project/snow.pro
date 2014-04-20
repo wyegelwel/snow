@@ -36,7 +36,8 @@ SOURCES += \
     ui/uisettings.cpp \
     ui/picker.cpp \
     ui/tools/selectiontool.cpp \
-    ui/tools/movetool.cpp
+    ui/tools/movetool.cpp \
+    scene/scenegrid.cpp
 
 
 
@@ -75,7 +76,8 @@ HEADERS  += \
     ui/tools/tool.h \
     ui/tools/selectiontool.h \
     ui/tools/Tools.h \
-    ui/tools/movetool.h
+    ui/tools/movetool.h \
+    scene/scenegrid.h
 
 FORMS    += ui/mainwindow.ui
 

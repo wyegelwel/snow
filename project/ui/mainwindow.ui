@@ -56,7 +56,7 @@
          <x>0</x>
          <y>0</y>
          <width>257</width>
-         <height>636</height>
+         <height>744</height>
         </rect>
        </property>
        <layout class="QGridLayout" name="gridLayout_2">
@@ -295,20 +295,6 @@
            <property name="spacing">
             <number>4</number>
            </property>
-           <item row="0" column="0">
-            <widget class="QPushButton" name="startButton">
-             <property name="text">
-              <string>Start</string>
-             </property>
-            </widget>
-           </item>
-           <item row="1" column="0">
-            <widget class="QCheckBox" name="exportCheckbox">
-             <property name="text">
-              <string>Export</string>
-             </property>
-            </widget>
-           </item>
            <item row="0" column="1">
             <widget class="QPushButton" name="pauseButton">
              <property name="text">
@@ -317,6 +303,79 @@
              <property name="checkable">
               <bool>true</bool>
              </property>
+            </widget>
+           </item>
+           <item row="3" column="0">
+            <widget class="QCheckBox" name="exportCheckbox">
+             <property name="text">
+              <string>Export</string>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="0">
+            <widget class="QPushButton" name="startButton">
+             <property name="text">
+              <string>Start</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="0" colspan="2">
+            <widget class="QGroupBox" name="groupBox_2">
+             <property name="title">
+              <string>Grid</string>
+             </property>
+             <layout class="QGridLayout" name="gridLayout_8">
+              <item row="0" column="0">
+               <widget class="QSpinBox" name="gridXSpinbox">
+                <property name="minimum">
+                 <number>1</number>
+                </property>
+                <property name="maximum">
+                 <number>512</number>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="2">
+               <widget class="QSpinBox" name="gridZSpinbox">
+                <property name="minimum">
+                 <number>1</number>
+                </property>
+                <property name="maximum">
+                 <number>512</number>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="1">
+               <widget class="QSpinBox" name="gridYSpinbox">
+                <property name="minimum">
+                 <number>1</number>
+                </property>
+                <property name="maximum">
+                 <number>512</number>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="2">
+               <widget class="QDoubleSpinBox" name="gridResolutionSpinbox">
+                <property name="singleStep">
+                 <double>0.010000000000000</double>
+                </property>
+                <property name="value">
+                 <double>0.050000000000000</double>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="0" colspan="2">
+               <widget class="QLabel" name="gridResolutionLable">
+                <property name="text">
+                 <string>Resolution</string>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                </property>
+               </widget>
+              </item>
+             </layout>
             </widget>
            </item>
           </layout>

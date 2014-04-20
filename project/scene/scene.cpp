@@ -19,12 +19,22 @@
 #include "scene.h"
 
 #include "common/common.h"
+#include "scene/scenegrid.h"
 #include "scene/scenenode.h"
 #include "scene/scenenodeiterator.h"
+#include "ui/uisettings.h"
 
 Scene::Scene()
     : m_root(new SceneNode)
 {
+    // Add scene grid
+    SceneNode *gridNode = new SceneNode( SceneNode::SIMULATION_GRID );
+    Grid grid;
+    grid.pos = UiSettings::gridPosition();
+    grid.dim = UiSettings::gridDimensions();
+    grid.h = UiSettings::gridResolution();
+    gridNode->setRenderable( new SceneGrid(grid) );
+    m_root->addChild( gridNode );
 }
 
 Scene::~Scene()
@@ -35,10 +45,10 @@ Scene::~Scene()
 void
 Scene::render()
 {
-    if ( m_root ) {
-        setupLights();
-        m_root->render();
-    }
+    setupLights();
+    // Render opaque objects, then overlay with transparent objects
+    m_root->renderOpaque();
+    m_root->renderTransparent();
 }
 
 void
@@ -68,4 +78,16 @@ Scene::begin() const
         i++;
     }
     return SceneNodeIterator( nodes );
+}
+
+SceneNode*
+Scene::getSceneGridNode()
+{
+    for ( int i = 0; i < m_root->getChildren().size(); ++i ) {
+        SceneNode *child = m_root->getChildren()[i];
+        if ( child->hasRenderable() && (child->getType() == SceneNode::SIMULATION_GRID) ) {
+            return child;
+        }
+    }
+    return NULL;
 }
