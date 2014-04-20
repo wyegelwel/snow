@@ -24,6 +24,8 @@ class Viewport;
 class Scene;
 class Engine;
 class SceneNode;
+class Tool;
+class SelectionTool;
 
 class ViewPanel : public QGLWidget
 {
@@ -66,13 +68,16 @@ public slots:
 
     void editSnowConstants();
 
-private:
+    void setTool( int tool );
+
+protected:
 
     QTimer m_ticker;
     QElapsedTimer m_timer;
 
     InfoPanel *m_infoPanel;
     Viewport *m_viewport;
+    Tool *m_tool;
 
     Engine *m_engine;
     Scene *m_scene;
@@ -81,8 +86,10 @@ private:
 
     float m_fps;
 
-    SceneNode* getClickedSceneNode();
-    void clearSelection();
+    void paintGrid();
+
+    friend class SelectionTool;
+    friend class MoveTool;
 
 };
 

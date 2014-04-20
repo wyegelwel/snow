@@ -20,7 +20,6 @@
 #include "viewport/camera.h"
 
 #define ZOOM_SCALE 1.f
-#define PICK_SIZE 2.f
 
 Viewport::Viewport()
 {
@@ -59,7 +58,7 @@ Viewport::popMatrices()
 }
 
 void
-Viewport::loadPickMatrices( const glm::ivec2 &click ) const
+Viewport::loadPickMatrices( const glm::ivec2 &click, float size ) const
 {
     const glm::mat4 &modelview = m_camera->getModelviewMatrix();
     const glm::mat4 &projection = m_camera->getProjectionMatrix();
@@ -69,11 +68,11 @@ Viewport::loadPickMatrices( const glm::ivec2 &click ) const
     glLoadIdentity();
     float width = (float)m_width;
     float height = (float)m_height;
-    float tX = 2.f*(width/2.f-click.x)/PICK_SIZE;
-    float tY = 2.f*(click.y-height/2.f+1.f)/PICK_SIZE;
+    float tX = 2.f*(width/2.f-click.x)/size;
+    float tY = 2.f*(click.y-height/2.f+1.f)/size;
     const glm::mat4 translate = glm::translate( glm::mat4(1.f), glm::vec3(tX,tY,0.f) );
     glMultMatrixf( glm::value_ptr(translate) );
-    const glm::mat4 scale = glm::scale( glm::mat4(1.f), glm::vec3(width/PICK_SIZE, height/PICK_SIZE, 1.f) );
+    const glm::mat4 scale = glm::scale( glm::mat4(1.f), glm::vec3(width/size, height/size, 1.f) );
     glMultMatrixf( glm::value_ptr(scale) );
     glMultMatrixf( glm::value_ptr(projection) );
 

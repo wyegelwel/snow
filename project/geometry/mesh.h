@@ -95,7 +95,7 @@ public:
     virtual void render();
     virtual void renderForPicker();
 
-    BBox getWorldBBox( const glm::mat4 &transform ) const;
+    virtual BBox getBBox( const glm::mat4 &ctm );
     BBox getObjectBBox() const;
 
 private:

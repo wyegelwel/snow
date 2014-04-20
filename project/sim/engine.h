@@ -69,6 +69,8 @@ public:
 
     virtual void render();
 
+    virtual BBox getBBox( const glm::mat4 &ctm );
+
 public slots:
 
     void update();

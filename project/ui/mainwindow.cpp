@@ -20,6 +20,7 @@
 #include "ui/databinding.h"
 #include "ui/uisettings.h"
 #include "ui/viewpanel.h"
+#include "ui/tools/tool.h"
 
 #include "sim/collider.h"
 
@@ -138,7 +139,6 @@ void MainWindow::setupUI()
     assert( connect(ui->editSimConstantsButton, SIGNAL(clicked()), ui->viewPanel, SLOT(editSnowConstants())));
 
     // View Panel
-   // View Panel
     assert( connect(ui->showBBoxCheckbox, SIGNAL(toggled(bool)), ui->showGridCheckbox, SLOT(setEnabled(bool))) );
     assert( connect(ui->wireframeCheckbox, SIGNAL(clicked()), this, SLOT(checkMeshRenderSettings())) );
     assert( connect(ui->solidCheckbox, SIGNAL(clicked()), this, SLOT(checkMeshRenderSettings())) );
@@ -146,6 +146,12 @@ void MainWindow::setupUI()
     BoolBinding::bindCheckBox( ui->solidCheckbox, UiSettings::showSolid(), this );
     BoolBinding::bindCheckBox( ui->showBBoxCheckbox, UiSettings::showBBox(), this );
     BoolBinding::bindCheckBox( ui->showGridCheckbox, UiSettings::showGrid(), this );
+
+    // Tools
+    ui->toolButtonGroup->setId( ui->selectionToolButton, Tool::SELECTION );
+    ui->toolButtonGroup->setId( ui->moveToolButton, Tool::MOVE );
+    assert( connect(ui->toolButtonGroup, SIGNAL(buttonClicked(int)), ui->viewPanel, SLOT(setTool(int))) );
+    ui->selectionToolButton->click();
 }
 
 void MainWindow::checkMeshRenderSettings()

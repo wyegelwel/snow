@@ -16,9 +16,6 @@
 
 #include "common/math.h"
 
-#define GLM_FORCE_RADIANS
-#include "glm/gtc/quaternion.hpp"
-
 struct quat
 {
     union {
@@ -36,13 +33,7 @@ struct quat
     quat( const quat &q ) { x = q.x; y = q.y; z = q.z; w = q.w; }
 
     __host__ __device__ __forceinline__
-    quat( const glm::quat &q ) { x = q.x; y = q.y; z = q.z; w = q.w; }
-
-    __host__ __device__ __forceinline__
     quat& operator = ( const quat &q ) { x = q.x; y = q.y; z = q.z; w = q.w; return *this; }
-
-    __host__ __device__ __forceinline__
-    quat& operator = ( const glm::quat &q ) { x = q.x; y = q.y; z = q.z; w = q.w; return *this; }
 
     __host__ __device__ __forceinline__
     float& operator [] ( int i ) { return data[i]; }

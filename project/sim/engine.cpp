@@ -369,3 +369,8 @@ void Engine::deleteVBO()
         m_gridVBO = 0;
     }
 }
+
+BBox Engine::getBBox( const glm::mat4 &ctm )
+{
+    return m_particleSystem->getBBox( ctm );
+}

@@ -34,7 +34,9 @@ SOURCES += \
     io/sceneparser.cpp \
     #sim/AppSettings.cpp \
     ui/uisettings.cpp \
-    ui/picker.cpp
+    ui/picker.cpp \
+    ui/tools/selectiontool.cpp \
+    ui/tools/movetool.cpp
 
 
 
@@ -69,7 +71,11 @@ HEADERS  += \
     sim/parameters.h \
     sim/particlegridnode.h \
     ui/picker.h \
-    scene/scenenodeiterator.h
+    scene/scenenodeiterator.h \
+    ui/tools/tool.h \
+    ui/tools/selectiontool.h \
+    ui/tools/Tools.h \
+    ui/tools/movetool.h
 
 FORMS    += ui/mainwindow.ui
 
@@ -133,3 +139,6 @@ cuda.input = CUDA_SOURCES
 cuda.output = ${OBJECTS_DIR}${QMAKE_FILE_BASE}_cuda.o # suffix needed for this to work?
 # Tell Qt that we want add more stuff to the Makefile
 QMAKE_EXTRA_COMPILERS += cuda
+
+RESOURCES += \
+    resources/icons/icons.qrc

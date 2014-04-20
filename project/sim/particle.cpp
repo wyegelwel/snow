@@ -11,7 +11,9 @@
 #include "particle.h"
 
 #include <GL/gl.h>
+
 #include "common/common.h"
+#include "geometry/bbox.h"
 
 ParticleSystem::ParticleSystem()
 {
@@ -79,4 +81,16 @@ ParticleSystem::deleteVBO()
         glBindBuffer( GL_ARRAY_BUFFER, 0 );
     }
     m_glVBO = 0;
+}
+
+BBox
+ParticleSystem::getBBox( const glm::mat4 &ctm )
+{
+    BBox box;
+    for ( int i = 0; i < m_particles.size(); ++i ) {
+        const vec3 &p = m_particles[i].position;
+        glm::vec4 point = ctm * glm::vec4( p.x, p.y, p.z, 1.f );
+        box += vec3( point.x, point.y, point.z );
+    }
+    return box;
 }

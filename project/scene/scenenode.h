@@ -12,8 +12,10 @@
 #define SCENENODE_H
 
 #include <QList>
-#include <glm/mat4x4.hpp>
 #include <QString>
+
+#include "glm/mat4x4.hpp"
+#include "geometry/bbox.h"
 
 class Renderable;
 
@@ -44,6 +46,12 @@ public:
     virtual void render();
 
     glm::mat4 getCTM();
+    void setCTMDirty();
+
+    void applyTransformation( const glm::mat4 &transform );
+
+    BBox getBBox();
+    void setBBoxDirty() { m_bboxDirty = true; }
 
     Type getType() { return m_type; }
 
@@ -53,6 +61,9 @@ private:
 
     glm::mat4 m_ctm;
     bool m_ctmDirty;
+
+    BBox m_bbox;
+    bool m_bboxDirty;
 
     glm::mat4 m_transform;
 

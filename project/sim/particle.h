@@ -71,6 +71,8 @@ public:
 
     virtual void render();
 
+    virtual BBox getBBox( const glm::mat4 &ctm );
+
     GLuint vbo() const { return m_glVBO; }
 
     void merge( const ParticleSystem &particles ) { m_particles += particles.m_particles; deleteVBO(); }

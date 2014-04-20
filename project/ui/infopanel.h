@@ -26,7 +26,7 @@
 
 class ViewPanel;
 
-class InfoPanel : public Renderable
+class InfoPanel
 {
 
     struct Entry {
@@ -49,7 +49,7 @@ public:
     void setInfo( const QString &key, const QString &value, bool layout = true );
     void removeInfo( const QString &key );
 
-    virtual void render();
+    void render();
 
 private:
 

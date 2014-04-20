@@ -21,16 +21,6 @@
     <property name="spacing">
      <number>3</number>
     </property>
-    <item row="0" column="1">
-     <widget class="ViewPanel" name="viewPanel" native="true">
-      <property name="sizePolicy">
-       <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-        <horstretch>0</horstretch>
-        <verstretch>0</verstretch>
-       </sizepolicy>
-      </property>
-     </widget>
-    </item>
     <item row="0" column="0">
      <widget class="QScrollArea" name="controlPanel">
       <property name="sizePolicy">
@@ -66,11 +56,11 @@
          <x>0</x>
          <y>0</y>
          <width>257</width>
-         <height>579</height>
+         <height>636</height>
         </rect>
        </property>
        <layout class="QGridLayout" name="gridLayout_2">
-        <item row="9" column="0">
+        <item row="11" column="0">
          <spacer name="verticalSpacer">
           <property name="orientation">
            <enum>Qt::Vertical</enum>
@@ -83,12 +73,19 @@
           </property>
          </spacer>
         </item>
-        <item row="2" column="0">
-         <widget class="QGroupBox" name="simulationBox">
-          <property name="title">
-           <string>Simulation</string>
+        <item row="9" column="0">
+         <widget class="Line" name="line_4">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
           </property>
-          <layout class="QGridLayout" name="gridLayout_4">
+         </widget>
+        </item>
+        <item row="10" column="0">
+         <widget class="QGroupBox" name="sceneBox">
+          <property name="title">
+           <string>Scene</string>
+          </property>
+          <layout class="QGridLayout" name="gridLayout_7">
            <property name="leftMargin">
             <number>4</number>
            </property>
@@ -99,40 +96,37 @@
             <number>4</number>
            </property>
            <item row="0" column="0">
-            <widget class="QPushButton" name="startButton">
+            <widget class="QPushButton" name="saveSceneButton">
              <property name="text">
-              <string>Start</string>
-             </property>
-            </widget>
-           </item>
-           <item row="1" column="0">
-            <widget class="QCheckBox" name="exportCheckbox">
-             <property name="text">
-              <string>Export</string>
+              <string>Save Scene</string>
              </property>
             </widget>
            </item>
            <item row="0" column="1">
-            <widget class="QPushButton" name="pauseButton">
+            <widget class="QPushButton" name="loadSceneButton">
              <property name="text">
-              <string>Pause</string>
+              <string>Load Scene</string>
              </property>
-             <property name="checkable">
-              <bool>true</bool>
+            </widget>
+           </item>
+           <item row="1" column="0" colspan="2">
+            <widget class="QPushButton" name="editSimConstantsButton">
+             <property name="text">
+              <string>Edit Simulation Constants</string>
              </property>
             </widget>
            </item>
           </layout>
          </widget>
         </item>
-        <item row="1" column="0">
+        <item row="3" column="0">
          <widget class="Line" name="line">
           <property name="orientation">
            <enum>Qt::Horizontal</enum>
           </property>
          </widget>
         </item>
-        <item row="0" column="0">
+        <item row="2" column="0">
          <widget class="QGroupBox" name="fillBox">
           <property name="title">
            <string>Fill Object</string>
@@ -240,85 +234,7 @@
           </layout>
          </widget>
         </item>
-        <item row="4" column="0">
-         <widget class="QGroupBox" name="colliderBox">
-          <property name="title">
-           <string>Collider</string>
-          </property>
-          <layout class="QGridLayout" name="gridLayout_6">
-           <property name="leftMargin">
-            <number>4</number>
-           </property>
-           <property name="rightMargin">
-            <number>4</number>
-           </property>
-           <property name="spacing">
-            <number>4</number>
-           </property>
-           <item row="0" column="0">
-            <widget class="QComboBox" name="chooseCollider">
-             <item>
-              <property name="text">
-               <string>Sphere</string>
-              </property>
-             </item>
-             <item>
-              <property name="text">
-               <string>Plane</string>
-              </property>
-             </item>
-            </widget>
-           </item>
-           <item row="0" column="1">
-            <widget class="QPushButton" name="colliderAddButton">
-             <property name="text">
-              <string>addCollider</string>
-             </property>
-            </widget>
-           </item>
-          </layout>
-         </widget>
-        </item>
         <item row="8" column="0">
-         <widget class="QGroupBox" name="sceneBox">
-          <property name="title">
-           <string>Scene</string>
-          </property>
-          <layout class="QGridLayout" name="gridLayout_7">
-           <property name="leftMargin">
-            <number>4</number>
-           </property>
-           <property name="rightMargin">
-            <number>4</number>
-           </property>
-           <property name="spacing">
-            <number>4</number>
-           </property>
-           <item row="0" column="0">
-            <widget class="QPushButton" name="saveSceneButton">
-             <property name="text">
-              <string>Save Scene</string>
-             </property>
-            </widget>
-           </item>
-           <item row="0" column="1">
-            <widget class="QPushButton" name="loadSceneButton">
-             <property name="text">
-              <string>Load Scene</string>
-             </property>
-            </widget>
-           </item>
-           <item row="1" column="0" colspan="2">
-            <widget class="QPushButton" name="editSimConstantsButton">
-             <property name="text">
-              <string>Edit Simulation Constants</string>
-             </property>
-            </widget>
-           </item>
-          </layout>
-         </widget>
-        </item>
-        <item row="6" column="0">
          <widget class="QGroupBox" name="groupBox">
           <property name="title">
            <string>View Panel</string>
@@ -364,22 +280,208 @@
           </layout>
          </widget>
         </item>
-        <item row="5" column="0">
-         <widget class="Line" name="line_3">
-          <property name="orientation">
-           <enum>Qt::Horizontal</enum>
+        <item row="4" column="0">
+         <widget class="QGroupBox" name="simulationBox">
+          <property name="title">
+           <string>Simulation</string>
           </property>
+          <layout class="QGridLayout" name="gridLayout_4">
+           <property name="leftMargin">
+            <number>4</number>
+           </property>
+           <property name="rightMargin">
+            <number>4</number>
+           </property>
+           <property name="spacing">
+            <number>4</number>
+           </property>
+           <item row="0" column="0">
+            <widget class="QPushButton" name="startButton">
+             <property name="text">
+              <string>Start</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="0">
+            <widget class="QCheckBox" name="exportCheckbox">
+             <property name="text">
+              <string>Export</string>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="1">
+            <widget class="QPushButton" name="pauseButton">
+             <property name="text">
+              <string>Pause</string>
+             </property>
+             <property name="checkable">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+          </layout>
          </widget>
         </item>
-        <item row="3" column="0">
+        <item row="6" column="0">
+         <widget class="QGroupBox" name="colliderBox">
+          <property name="title">
+           <string>Collider</string>
+          </property>
+          <layout class="QGridLayout" name="gridLayout_6">
+           <property name="leftMargin">
+            <number>4</number>
+           </property>
+           <property name="rightMargin">
+            <number>4</number>
+           </property>
+           <property name="spacing">
+            <number>4</number>
+           </property>
+           <item row="0" column="0">
+            <widget class="QComboBox" name="chooseCollider">
+             <item>
+              <property name="text">
+               <string>Sphere</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>Plane</string>
+              </property>
+             </item>
+            </widget>
+           </item>
+           <item row="0" column="1">
+            <widget class="QPushButton" name="colliderAddButton">
+             <property name="text">
+              <string>addCollider</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item row="5" column="0">
          <widget class="Line" name="line_2">
           <property name="orientation">
            <enum>Qt::Horizontal</enum>
           </property>
          </widget>
         </item>
+        <item row="0" column="0">
+         <layout class="QHBoxLayout" name="toolBar">
+          <item>
+           <widget class="QPushButton" name="selectionToolButton">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="minimumSize">
+             <size>
+              <width>40</width>
+              <height>40</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>40</width>
+              <height>40</height>
+             </size>
+            </property>
+            <property name="text">
+             <string/>
+            </property>
+            <property name="icon">
+             <iconset resource="../resources/icons/icons.qrc">
+              <normaloff>:/icons/hand.png</normaloff>:/icons/hand.png</iconset>
+            </property>
+            <property name="iconSize">
+             <size>
+              <width>30</width>
+              <height>30</height>
+             </size>
+            </property>
+            <property name="checkable">
+             <bool>true</bool>
+            </property>
+            <property name="checked">
+             <bool>false</bool>
+            </property>
+            <attribute name="buttonGroup">
+             <string notr="true">toolButtonGroup</string>
+            </attribute>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="moveToolButton">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="minimumSize">
+             <size>
+              <width>40</width>
+              <height>40</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>40</width>
+              <height>40</height>
+             </size>
+            </property>
+            <property name="text">
+             <string/>
+            </property>
+            <property name="icon">
+             <iconset resource="../resources/icons/icons.qrc">
+              <normaloff>:/icons/move.png</normaloff>:/icons/move.png</iconset>
+            </property>
+            <property name="iconSize">
+             <size>
+              <width>30</width>
+              <height>30</height>
+             </size>
+            </property>
+            <property name="checkable">
+             <bool>true</bool>
+            </property>
+            <property name="checked">
+             <bool>false</bool>
+            </property>
+            <attribute name="buttonGroup">
+             <string notr="true">toolButtonGroup</string>
+            </attribute>
+           </widget>
+          </item>
+          <item>
+           <spacer name="horizontalSpacer">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+         </layout>
+        </item>
         <item row="7" column="0">
-         <widget class="Line" name="line_4">
+         <widget class="Line" name="line_3">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="0">
+         <widget class="Line" name="line_5">
           <property name="orientation">
            <enum>Qt::Horizontal</enum>
           </property>
@@ -387,6 +489,16 @@
         </item>
        </layout>
       </widget>
+     </widget>
+    </item>
+    <item row="0" column="1">
+     <widget class="ViewPanel" name="viewPanel" native="true">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
      </widget>
     </item>
    </layout>
@@ -450,7 +562,9 @@
    </slots>
   </customwidget>
  </customwidgets>
- <resources/>
+ <resources>
+  <include location="../resources/icons/icons.qrc"/>
+ </resources>
  <connections>
   <connection>
    <sender>actionOpen</sender>
@@ -490,4 +604,7 @@
   <slot>loadFromFile()</slot>
   <slot>renderOffline()</slot>
  </slots>
+ <buttongroups>
+  <buttongroup name="toolButtonGroup"/>
+ </buttongroups>
 </ui>

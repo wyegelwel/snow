@@ -14,6 +14,8 @@
 #include <cuda.h>
 #include <cuda_runtime.h>
 
+#include "glm/vec3.hpp"
+
 #include "common/math.h"
 
 struct vec3
@@ -36,7 +38,16 @@ struct vec3
     vec3( const vec3 &v ) { x = v.x; y = v.y; z = v.z; }
 
     __host__ __device__ __forceinline__
+    vec3( const glm::vec3 &v ) { x = v.x; y = v.y; z = v.z; }
+
+    __host__ __device__ __forceinline__
     vec3& operator = ( const vec3 &rhs ) { x = rhs.x; y = rhs.y; z = rhs.z; return *this; }
+
+    __host__ __device__ __forceinline__
+    vec3& operator = ( const glm::vec3 &rhs ) { x = rhs.x; y = rhs.y; z = rhs.z; return *this; }
+
+    __host__ __device__ __forceinline__
+    int majorAxis() { return ( (x>y) ? ((x>z) ? 0 : 2) : ((y>z) ? 1 : 2) ); }
 
     __host__ __device__ __forceinline__
     float& operator [] ( int i ) { return data[i]; }

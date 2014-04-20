@@ -138,7 +138,25 @@ public:
         return BBox( vec3::min(m_min,rhs), vec3::max(m_max,rhs) );
     }
 
-    void render();
+    virtual void render();
+
+    virtual BBox getBBox( const glm::mat4 &ctm )
+    {
+        BBox box;
+        vec3 corner;
+        for ( int x = 0, index = 0; x <= 1; x++ ) {
+            corner.x = (x?m_max:m_min).x;
+            for ( int y = 0; y <= 1; y++ ) {
+                corner.y = (y?m_max:m_min).y;
+                for ( int z = 0; z <= 1; z++, index++ ) {
+                    corner.z = (z?m_max:m_min).z;
+                    glm::vec4 point = ctm * glm::vec4(corner.x, corner.y, corner.z, 1.f);
+                    box += vec3( point.x, point.y, point.z );
+                }
+            }
+        }
+        return box;
+    }
 
 };
 

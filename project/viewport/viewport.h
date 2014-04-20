@@ -36,7 +36,7 @@ public:
 
     void loadMatrices() const;
     static void popMatrices();
-    void loadPickMatrices( const glm::ivec2 &click ) const;
+    void loadPickMatrices( const glm::ivec2 &click, float size ) const;
 
     void push() const;
     void pop() const;

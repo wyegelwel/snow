@@ -1,0 +1,6 @@
+<RCC>
+    <qresource prefix="/icons">
+        <file>hand.png</file>
+        <file>move.png</file>
+    </qresource>
+</RCC>

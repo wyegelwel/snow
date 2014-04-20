@@ -16,7 +16,6 @@
 
 #include "common/math.h"
 
-#define GLM_FORCE_RADIANS
 #include "glm/mat3x3.hpp"
 #include "glm/gtc/type_ptr.hpp"
 

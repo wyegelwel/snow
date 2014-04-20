@@ -265,12 +265,12 @@ Mesh::fill( ParticleSystem &particles, int particleCount, float h )
 }
 
 BBox
-Mesh::getWorldBBox( const glm::mat4 &transform ) const
+Mesh::getBBox( const glm::mat4 &ctm )
 {
     BBox box;
     for ( int i = 0; i < getNumVertices(); ++i ) {
         const Vertex &v = m_vertices[i];
-        glm::vec4 point = transform * glm::vec4( v.x, v.y, v.z, 1.f );
+        glm::vec4 point = ctm * glm::vec4( v.x, v.y, v.z, 1.f );
         box += vec3( point.x, point.y, point.z );
     }
     return box;
