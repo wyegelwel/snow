@@ -75,7 +75,6 @@ void Engine::addParticleSystem( const ParticleSystem &particles )
 void Engine::clearParticleSystem()
 {
     m_particleSystem->clear();
->>>>>>> c024e7839e296b160e8aa180c269bd1f34aa584c
 }
 
 void Engine::initExporter(QString fprefix)
@@ -156,7 +155,7 @@ void Engine::update()
         {
             // TODO - memcpy the mass data from each ParticleGrid::Node
             // to the m_densities array in the exporter.
-            cudaMemcpy(m_exporter->getNodesPtr(), m_devNodes, m_grid.nodeCount() * sizeof(ParticleGrid::Node), cudaMemcpyDeviceToHost);
+            cudaMemcpy(m_exporter->getNodesPtr(), m_devNodes, m_grid.nodeCount() * sizeof(ParticleGridNode), cudaMemcpyDeviceToHost);
             // TODO - call this in a separate thread so that the simulation isn't slowed down while
             // once that is done, call the export function on a separate thread
             // so the rest of the simulation can continue

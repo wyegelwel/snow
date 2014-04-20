@@ -123,7 +123,7 @@ void MitsubaExporter::exportVolumeData(float t)
 }
 
 
-ParticleGrid::Node * MitsubaExporter::getNodesPtr()
+ParticleGridNode * MitsubaExporter::getNodesPtr()
 {
     return m_nodes;
 }
@@ -289,6 +289,37 @@ ParticleGrid::Node * MitsubaExporter::getNodesPtr()
 //QDomElement MitsubaExporter::appendShape(QDomElement node, SceneNode * sceneNode)
 //{
 //    // appends renderables stored in a sceneNode (but ignores children!)
+
+//QDomElement MitsubaExporter::appendShape(QDomElement node, SceneNode * sceneNode)
+//{
+    // appends renderables stored in a sceneNode (but ignores children!)
+
+    /*
+     *
+     * Currently, sceneNodes can have multiple renderables attached. ImplicitColliders
+     * are renderables with implicit shape types enumerated. This presents some difficulty when
+     * figuring out where to put the obj string attribute - in sceneNode or renderables?
+     * as a temporary solution, the obj attribute will be put in a sceneNode and we are enforcing that
+     * implicitcolliders are sitting in their own scenenode (the obj attribute is added upon collider creation)
+     */
+    // append <shape> to scene
+//    QDomElement s = appendOBJ( node, sceneNode->getObjFile() );
+
+//    // add transformation to the shape node
+//    appendXform(s, sceneNode->getCTM());
+
+//    // add default material to the shape node
+//    appendBSDF(s);
+
+//    if (sceneNode->getType() == IMPLICIT_COLLIDER)
+//    {
+//        // TODO
+//    }
+//    else if (sceneNode->getType() == SNOW_CONTAINER)
+//    {
+//        // TODO
+//    }
+//}
 
 //    /*
 //     *

@@ -20,7 +20,7 @@
 #include "scene/scenenodeiterator.h"
 
 Scene::Scene()
-    : m_root(new SceneNode(NULL))
+    : m_root(new SceneNode)
 {
 }
 

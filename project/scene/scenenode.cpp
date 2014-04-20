@@ -11,32 +11,31 @@
 #include <GL/gl.h>
 #include <glm/gtc/type_ptr.hpp>
 
-#include "scene/scenenode.h"
+#include "common/common.h"
 #include "common/renderable.h"
+#include "scene/scenenode.h"
 
-SceneNode::SceneNode( SceneNode *parent )
-    : m_parent(parent),
-      m_transform(1.f) // identity matrix
-{
-}
-
-SceneNode::SceneNode(SceneNodeType type, QString objfile)
-    : m_type(type),
-      m_objfile(objfile)
+SceneNode::SceneNode( Type type )
+    : m_parent(NULL),
+      m_ctm(1.f),
+      m_ctmDirty(true),
+      m_transform(1.f),
+      m_renderable(NULL),
+      m_type(type)
 {
 }
 
 SceneNode::~SceneNode()
 {
+    SAFE_DELETE( m_renderable );
     clearChildren();
-    clearRenderables();
 }
 
 void
 SceneNode::clearChildren()
 {
     for ( int i = 0; i < m_children.size(); ++i )
-        delete m_children[i];
+        SAFE_DELETE( m_children[i] );
     m_children.clear();
 }
 
@@ -49,17 +48,10 @@ SceneNode::addChild( SceneNode *child )
 }
 
 void
-SceneNode::clearRenderables()
+SceneNode::setRenderable( Renderable *renderable )
 {
-    for ( int i = 0; i < m_renderables.size(); ++i )
-        delete m_renderables[i];
-    m_renderables.clear();
-}
-
-void
-SceneNode::addRenderable( Renderable *renderable )
-{
-    m_renderables += renderable;
+    SAFE_DELETE( m_renderable );
+    m_renderable = renderable;
 }
 
 void
@@ -68,8 +60,7 @@ SceneNode::render()
     glMatrixMode( GL_MODELVIEW );
     glPushMatrix();
     glMultMatrixf( glm::value_ptr(m_transform) );
-    for ( int i = 0; i < m_renderables.size(); ++i )
-        m_renderables[i]->render();
+    if ( m_renderable ) m_renderable->render();
     for ( int i = 0; i < m_children.size(); ++i )
         m_children[i]->render();
     glPopMatrix();
@@ -84,16 +75,4 @@ SceneNode::getCTM()
         m_ctmDirty = false;
     }
     return m_ctm;
-}
-
-QString
-SceneNode::getObjFile()
-{
-    return m_objfile;
-}
-
-SceneNodeType
-SceneNode::getType()
-{
-    return m_type;
 }

@@ -49,7 +49,7 @@ public:
     float getLastUpdateTime();
     void reset(Grid grid);
     void exportVolumeData(float t);
-    ParticleGrid::Node * getNodesPtr();
+    ParticleGridNode * getNodesPtr();
 
 private:
     /**
