@@ -107,7 +107,6 @@ void MainWindow::addCollider()  {
     if(isType)  {
         ui->viewPanel->addCollider(c);
     }
-
     ui->viewPanel->resumeSimulation();
     ui->viewPanel->resumeDrawing();
 }

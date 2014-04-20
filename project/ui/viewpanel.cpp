@@ -313,19 +313,19 @@ void ViewPanel::fillSelectedMesh()
 
 void ViewPanel::addCollider(ColliderType c)  {
     //TODO add a collider to the scene and set it as selected renderable.
-    ImplicitCollider collider;
-    collider.type = c;
+    ImplicitCollider *collider = new ImplicitCollider;
+    vec3 parameter;
     switch(c)  {
         case SPHERE:
-            collider.param = vec3(1,0,0);
+            parameter = vec3(1,0,0);
             break;
         case HALF_PLANE:
-            collider.param = vec3(0,1,0);
+            parameter = vec3(0,1,0);
             break;
         default:
             break;
     }
-    Collider *col = new Collider(collider);
+    Collider *col = new Collider(*collider,c,parameter);
 
     SceneNode *node = new SceneNode( SceneNode::IMPLICIT_COLLIDER );
     node->setRenderable( col );
