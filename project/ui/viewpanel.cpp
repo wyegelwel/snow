@@ -258,3 +258,12 @@ void ViewPanel::fillSelectedMesh()
         m_infoPanel->setInfo( "Particles", QString::number(particles->size()) );
     }
 }
+
+void ViewPanel::addCollider(ColliderType c)  {
+    //TODO add a collider to the scene and set it as selected renderable.
+}
+
+void ViewPanel::editSnowConstants()  {
+    //TODO create popout to edit snow constants? Other (possibly better) option is to have all
+    // constants listed in UI in LineEdits and have them editable, then we could bind it to UISettings.
+}

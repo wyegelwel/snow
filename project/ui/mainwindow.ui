@@ -15,7 +15,16 @@
   </property>
   <widget class="QWidget" name="centralWidget">
    <layout class="QGridLayout" name="gridLayout">
-    <property name="margin">
+    <property name="leftMargin">
+     <number>3</number>
+    </property>
+    <property name="topMargin">
+     <number>3</number>
+    </property>
+    <property name="rightMargin">
+     <number>3</number>
+    </property>
+    <property name="bottomMargin">
      <number>3</number>
     </property>
     <property name="spacing">
@@ -66,10 +75,56 @@
          <x>0</x>
          <y>0</y>
          <width>223</width>
-         <height>524</height>
+         <height>535</height>
         </rect>
        </property>
        <layout class="QGridLayout" name="gridLayout_2">
+        <item row="1" column="0">
+         <widget class="QGroupBox" name="simulationBox">
+          <property name="title">
+           <string>Simulation</string>
+          </property>
+          <layout class="QGridLayout" name="gridLayout_4">
+           <item row="0" column="0">
+            <widget class="QPushButton" name="startButton">
+             <property name="text">
+              <string>Start</string>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="1">
+            <widget class="QPushButton" name="pauseButton">
+             <property name="text">
+              <string>Pause</string>
+             </property>
+             <property name="checkable">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="0">
+            <widget class="QCheckBox" name="exportCheckbox">
+             <property name="text">
+              <string>Export</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item row="4" column="0">
+         <spacer name="verticalSpacer">
+          <property name="orientation">
+           <enum>Qt::Vertical</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>20</width>
+            <height>40</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
         <item row="0" column="0">
          <widget class="QGroupBox" name="fillBox">
           <property name="title">
@@ -170,45 +225,59 @@
          </widget>
         </item>
         <item row="2" column="0">
-         <spacer name="verticalSpacer">
-          <property name="orientation">
-           <enum>Qt::Vertical</enum>
-          </property>
-          <property name="sizeHint" stdset="0">
-           <size>
-            <width>20</width>
-            <height>40</height>
-           </size>
-          </property>
-         </spacer>
-        </item>
-        <item row="1" column="0">
-         <widget class="QGroupBox" name="simulationBox">
+         <widget class="QGroupBox" name="colliderBox">
           <property name="title">
-           <string>Simulation</string>
+           <string>Collider</string>
           </property>
-          <layout class="QGridLayout" name="gridLayout_4">
-           <item row="0" column="0">
-            <widget class="QPushButton" name="startButton">
+          <layout class="QGridLayout" name="gridLayout_5">
+           <item row="0" column="1">
+            <widget class="QPushButton" name="colliderAddButton">
              <property name="text">
-              <string>Start</string>
+              <string>Add Collider</string>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="0">
+            <widget class="QComboBox" name="chooseCollider">
+             <item>
+              <property name="text">
+               <string>Sphere</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>Plane</string>
+              </property>
+             </item>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item row="3" column="0">
+         <widget class="QGroupBox" name="sceneBox">
+          <property name="title">
+           <string>Scene</string>
+          </property>
+          <layout class="QGridLayout" name="gridLayout_6">
+           <item row="0" column="0">
+            <widget class="QPushButton" name="saveSceneButton">
+             <property name="text">
+              <string>Save Scene</string>
              </property>
             </widget>
            </item>
            <item row="0" column="1">
-            <widget class="QPushButton" name="pauseButton">
+            <widget class="QPushButton" name="loadSceneButton">
              <property name="text">
-              <string>Pause</string>
-             </property>
-             <property name="checkable">
-              <bool>true</bool>
+              <string>Load Scene</string>
              </property>
             </widget>
            </item>
-           <item row="1" column="0">
-            <widget class="QCheckBox" name="exportCheckbox">
+           <item row="1" column="0" colspan="2">
+            <widget class="QPushButton" name="editSimConstantsButton">
              <property name="text">
-              <string>Export</string>
+              <string>Edit Simulation Constants</string>
              </property>
             </widget>
            </item>
@@ -227,7 +296,7 @@
      <x>0</x>
      <y>0</y>
      <width>1000</width>
-     <height>29</height>
+     <height>18</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">

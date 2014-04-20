@@ -17,6 +17,7 @@
 #include <QFile>
 #include <QDir>
 #include "geometry/mesh.h"
+#include "sim/collider.h"
 
 class InfoPanel;
 class Viewport;
@@ -26,7 +27,6 @@ class SceneNode;
 
 class ViewPanel : public QGLWidget
 {
-
     Q_OBJECT
 
 public:
@@ -63,6 +63,10 @@ public slots:
     void fillSelectedMesh();
 
     void generateNewMesh(const QString &f);
+
+    void addCollider(ColliderType c);
+
+    void editSnowConstants();
 
 private:
 
