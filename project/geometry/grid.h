@@ -28,6 +28,13 @@ struct Grid
     inline int nodeCount() const { return (dim.x+1)*(dim.y+1)*(dim.z+1); }
     inline int cellCount() const { return dim.x * dim.y * dim.z; }
     inline int index( int i, int j, int k ) const { return (i*(dim.y*dim.z) + j*(dim.z) + k); }
+
+
+//    inline BBox toBBox() const
+//    {
+//
+//    }
+
 };
 
 #endif // GRID_H

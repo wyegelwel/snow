@@ -18,13 +18,12 @@
 #include <QString>
 #include <QtXml>
 #include <glm/geometric.hpp>
+#include "geometry/grid.h"
+#include "geometry/bbox.h"
+#include "sim/particlegridnode.h"
 
-class Engine;
-class Camera;
-class BBox;
-class Particle;
-class ParticleGrid;
 class SceneNode;
+
 
 //class MitsubaRenderSettings
 //{
@@ -36,13 +35,21 @@ class MitsubaExporter
 {
 public:
     MitsubaExporter();
+    MitsubaExporter(QString fprefix, float fps);
+    ~MitsubaExporter();
 
     /**
      * @brief exports scene at a particular time frame to a MITSUBA-renderable file format.
      * writes sceneNode and all of its children (i.e. pass in m_scene->root() to render the whole scene)
      * it also needs access to the camera, so we also need to pass in the cam
      */
-    void exportScene(QString fprefix, int frame); //, Engine * engine, Camera * camera
+
+
+    float getspf();
+    float getLastUpdateTime();
+    void reset(Grid grid);
+    void exportVolumeData(float t);
+    ParticleGridNode * getNodesPtr();
 
 private:
     /**
@@ -52,38 +59,57 @@ private:
      * http://www.mitsuba-renderer.org/misc.html#
      * bounds specifies the maximum bounds of the heterogenous volume. smaller the better
      */
-    void exportVolumeData(QString fprefix);
+
+    //void exportScene(QString fprefix, int frame); //, Engine * engine, Camera * camera
 
     /**
      * adds <medium> tag to XML tree. Also calls exportVolumeData to write out volume.
      * calls exportVolumeData, then if successful, links to the .vol file
-     */
-    QDomElement appendMedium(QDomElement node);
+//     */
+//    QDomElement appendMedium(QDomElement node);
 
-    /// export rendering presets
-    QDomElement appendRenderer(QDomElement node);
+//    /// export rendering presets
+//    QDomElement appendRenderer(QDomElement node);
 
-    /// converts camera into XML node
-    QDomElement appendCamera(QDomElement node, Camera * camera);
+//    /// converts camera into XML node
+//    //QDomElement appendCamera(QDomElement node, Camera * camera);
 
-    /// append transform matrix
-    QDomElement appendXform(QDomElement node, glm::mat4 xform);
+//    /// append transform matrix
+//    QDomElement appendXform(QDomElement node, glm::mat4 xform);
 
-    /// appends sceneNodes
-    QDomElement appendShape(QDomElement node, SceneNode * sceneNode);
+//    /// appends sceneNodes
+//    QDomElement appendShape(QDomElement node, SceneNode * sceneNode);
 
-    /// add obj shape node
-    QDomElement appendOBJ(QDomElement node, QString objfile);
+//    /// add obj shape node
+//    QDomElement appendOBJ(QDomElement node, QString objfile);
 
-    /// add default material
-    QDomElement appendBSDF(QDomElement node);
+//    /// add default material
+//    QDomElement appendBSDF(QDomElement node);
 
     /// adds a light sphere to the scene
-    QDomElement appendLight(QDomElement node);
+    //QDomElement appendLight(QDomElement node);
 
     QDomDocument m_document;
-    QString      m_filename;
+    QString      m_fileprefix;
 
+    float m_lastUpdateTime;
+    float m_fps; // number of frames to export every second of simulation
+    float m_spf; // seconds per frame
+
+    // densities of each grid node
+    //float * m_densities = NULL;
+
+    ParticleGridNode * m_nodes;
+
+    // scattering albedo of each grid node
+    // http://en.wikipedia.org/wiki/Single-scattering_albedo
+    //float * m_albedo = NULL;
+
+    Grid m_grid;
+    BBox m_bbox;
+
+    int m_frame;
+    bool m_busy;
 };
 
 #endif // MITSUBAEXPORTER_H

@@ -29,9 +29,6 @@ public slots:
     /// loads snow simulation parameters from file
     void loadFromFile();
 
-    /// restarts simulation and exports to offline renderer.
-    void renderOffline();
-
     void importMesh();
 
     void checkMeshRenderSettings();

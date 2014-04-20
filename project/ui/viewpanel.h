@@ -36,7 +36,6 @@ public:
 
     void saveToFile(QString fname);
     void loadFromFile(QString fname);
-    void renderOffline(QString file_prefix);
 
 public slots:
 

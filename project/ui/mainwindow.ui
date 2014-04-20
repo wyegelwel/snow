@@ -407,14 +407,7 @@
     <addaction name="actionOpen"/>
     <addaction name="actionSave"/>
    </widget>
-   <widget class="QMenu" name="menuSimulate">
-    <property name="title">
-     <string>Simulation</string>
-    </property>
-    <addaction name="actionRenderOffline"/>
-   </widget>
    <addaction name="menuFile"/>
-   <addaction name="menuSimulate"/>
   </widget>
   <widget class="QToolBar" name="mainToolBar">
    <attribute name="toolBarArea">
@@ -439,14 +432,6 @@
    </property>
    <property name="shortcut">
     <string>Ctrl+S</string>
-   </property>
-  </action>
-  <action name="actionRenderOffline">
-   <property name="text">
-    <string>Export Mitsuba</string>
-   </property>
-   <property name="shortcut">
-    <string>Ctrl+R</string>
    </property>
   </action>
  </widget>
@@ -488,22 +473,6 @@
    <signal>triggered()</signal>
    <receiver>MainWindow</receiver>
    <slot>saveToFile()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>-1</x>
-     <y>-1</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>399</x>
-     <y>299</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>actionRenderOffline</sender>
-   <signal>triggered()</signal>
-   <receiver>MainWindow</receiver>
-   <slot>renderOffline()</slot>
    <hints>
     <hint type="sourcelabel">
      <x>-1</x>
