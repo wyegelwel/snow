@@ -3,7 +3,7 @@
 **   SNOW - CS224 BROWN UNIVERSITY
 **
 **   scene.h
-**   Author: mliberma
+**   Authors: evjang, mliberma, taparson, wyegelwe
 **   Created: 8 Apr 2014
 **
 **************************************************************************/
@@ -11,8 +11,10 @@
 #ifndef SCENE_H
 #define SCENE_H
 
-class SceneNode;
 class ParticleSystem;
+class Renderable;
+class SceneNode;
+class SceneNodeIterator;
 
 class Scene
 {
@@ -26,14 +28,13 @@ public:
 
     SceneNode* root() { return m_root; }
 
-    void setParticleSystem( ParticleSystem *particleSystem ) { m_particleSystem = particleSystem; }
-
+    SceneNodeIterator begin() const;
 
 private:
 
     SceneNode *m_root;
 
-    ParticleSystem *m_particleSystem;
+    void setupLights();
 
 };
 

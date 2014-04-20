@@ -20,6 +20,7 @@
 
 #include <QPoint>
 #include <QSize>
+#include "glm/vec4.hpp"
 
 class UiSettings
 {
@@ -48,6 +49,13 @@ private:
     DEFINE_SETTING( float, fillResolution )
 
     DEFINE_SETTING( bool, exportSimulation )
+
+    DEFINE_SETTING( bool, showWireframe )
+    DEFINE_SETTING( bool, showSolid )
+    DEFINE_SETTING( bool, showBBox )
+    DEFINE_SETTING( bool, showGrid )
+
+    DEFINE_SETTING( glm::vec4, selectionColor )
 
 };
 

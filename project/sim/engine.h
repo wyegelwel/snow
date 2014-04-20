@@ -20,18 +20,20 @@
 #include <QTimer>
 #include <QVector>
 
+#include "common/renderable.h"
+#include "geometry/grid.h"
 #include "sim/collider.h"
 #include "sim/material.h"
-#include "sim/particle.h"
-#include "sim/particlegrid.h"
 #include "sim/parameters.h"
 #include "geometry/grid.h"
 #include "io/mitsubaexporter.h"
 
 struct cudaGraphicsResource;
-class ParticleGridTempData;
+struct Particle;
+struct ParticleGridNode;
+struct ParticleTempData;
 
-class Engine : public QObject
+class Engine : public QObject, public Renderable
 {
 
     Q_OBJECT
@@ -50,11 +52,11 @@ public:
 
     SimulationParameters& parameters() { return m_params; }
 
-    void addParticleSystem( const ParticleSystem &particles ) { *m_particleSystem += particles; }
-    void clearParticleSystem() { m_particleSystem->clear(); }
+    void addParticleSystem( const ParticleSystem &particles );
+    void clearParticleSystem();
     ParticleSystem* particleSystem() { return m_particleSystem; }
 
-    Grid& grid() { return m_grid; }
+    void setGrid( const Grid &grid ) { m_grid = grid; deleteVBO(); }
     MaterialConstants& materialConstants() { return m_materialConstants; }
 
     void addCollider( const ImplicitCollider &collider ) { m_colliders += collider; }
@@ -64,6 +66,8 @@ public:
     void initExporter(QString fprefix);
 
     bool isRunning();
+
+    virtual void render();
 
 public slots:
 
@@ -82,10 +86,16 @@ private:
     // CUDA pointers
     cudaGraphicsResource *m_cudaResource; // Particles
     Grid *m_devGrid;
-    ParticleGrid::Node * m_devNodes;
-    ParticleGridTempData *m_devPGTD;
+
+    ParticleGridNode *m_devNodes;
+    ParticleTempData *m_devPGTD;
+
     ImplicitCollider *m_devColliders;
     MaterialConstants *m_devMaterial;
+
+    // OpenGL rendering
+    GLuint m_gridVBO;
+    int m_vboSize;
 
     SimulationParameters m_params;
     float m_time;
@@ -99,6 +109,10 @@ private:
 
     void initializeCudaResources();
     void freeCudaResources();
+
+    bool hasVBO() const;
+    void buildVBO();
+    void deleteVBO();
 };
 
 #endif // ENGINE_H

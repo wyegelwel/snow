@@ -21,6 +21,8 @@
 #include "ui/uisettings.h"
 #include "ui/viewpanel.h"
 
+#include "sim/collider.h"
+
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
@@ -80,7 +82,28 @@ void MainWindow::importMesh()
 
     QString filename = QFileDialog::getOpenFileName(this, "Select mesh to import.", PROJECT_PATH "/data/models", "*.obj");
     if ( !filename.isEmpty() ) {
-        ui->viewPanel->generateNewMesh(filename);
+        ui->viewPanel->loadMesh( filename );
+    }
+
+    ui->viewPanel->resumeSimulation();
+    ui->viewPanel->resumeDrawing();
+}
+
+void MainWindow::addCollider()  {
+    ui->viewPanel->pauseSimulation();
+    ui->viewPanel->pauseDrawing();
+
+    QString colliderType = ui->chooseCollider->currentText();
+    ColliderType c;
+    if(colliderType == "Sphere") {
+        c = SPHERE;
+    }
+    else if(colliderType == "Plane")  {
+        c = HALF_PLANE;
+    }
+    else {}
+    if(c)  {
+        ui->viewPanel->addCollider(c);
     }
 
     ui->viewPanel->resumeSimulation();
@@ -90,24 +113,46 @@ void MainWindow::importMesh()
 void MainWindow::setupUI()
 {
     // Mesh Filling
-
-    // Connect buttons to slots
     assert( connect(ui->importButton, SIGNAL(clicked()), this, SLOT(importMesh())) );
     assert( connect(ui->fillButton, SIGNAL(clicked()), ui->viewPanel, SLOT(fillSelectedMesh())) );
-
-    // Connect values to settings
     FloatBinding::bindSpinBox( ui->fillResolutionSpinbox, UiSettings::fillResolution(), this );
     IntBinding::bindSpinBox( ui->fillNumParticlesSpinbox, UiSettings::fillNumParticles(), this );
 
     // Simulation
-
-    // Connect button to slots
     assert( connect(ui->startButton, SIGNAL(clicked()), ui->viewPanel, SLOT(startSimulation())) );
     assert( connect(ui->pauseButton, SIGNAL(toggled(bool)), ui->viewPanel, SLOT(pauseSimulation(bool))) );
-
-    // Connect values to settings
     BoolBinding::bindCheckBox( ui->exportCheckbox, UiSettings::exportSimulation(), this );
 
+    // Collider
+
+    // Connect buttons to slots
+    assert( connect(ui->colliderAddButton, SIGNAL(clicked()), this, SLOT(addCollider())));
+
+    // Connect values to settings - not sure how to do this with combo box.
+
+    // Scene
+
+    // Connect buttons to slots
+    assert( connect(ui->saveSceneButton, SIGNAL(clicked()), this, SLOT(saveToFile())));
+    assert( connect(ui->loadSceneButton, SIGNAL(clicked()), this, SLOT(loadFromFile())));
+    assert( connect(ui->editSimConstantsButton, SIGNAL(clicked()), ui->viewPanel, SLOT(editSnowConstants())));
+
+    // View Panel
+   // View Panel
+    assert( connect(ui->showBBoxCheckbox, SIGNAL(toggled(bool)), ui->showGridCheckbox, SLOT(setEnabled(bool))) );
+    assert( connect(ui->wireframeCheckbox, SIGNAL(clicked()), this, SLOT(checkMeshRenderSettings())) );
+    assert( connect(ui->solidCheckbox, SIGNAL(clicked()), this, SLOT(checkMeshRenderSettings())) );
+    BoolBinding::bindCheckBox( ui->wireframeCheckbox, UiSettings::showWireframe(), this );
+    BoolBinding::bindCheckBox( ui->solidCheckbox, UiSettings::showSolid(), this );
+    BoolBinding::bindCheckBox( ui->showBBoxCheckbox, UiSettings::showBBox(), this );
+    BoolBinding::bindCheckBox( ui->showGridCheckbox, UiSettings::showGrid(), this );
+}
+
+void MainWindow::checkMeshRenderSettings()
+{
+    if ( !ui->wireframeCheckbox->isChecked() && !ui->solidCheckbox->isChecked() ) {
+        ui->wireframeCheckbox->click();
+    }
 }
 
 void MainWindow::resizeEvent( QResizeEvent* )

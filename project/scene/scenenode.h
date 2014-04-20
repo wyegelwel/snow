@@ -3,7 +3,7 @@
 **   SNOW - CS224 BROWN UNIVERSITY
 **
 **   scenenode.h
-**   Author: mliberma
+**   Authors: evjang, mliberma, taparson, wyegelwe
 **   Created: 8 Apr 2014
 **
 **************************************************************************/
@@ -38,8 +38,8 @@ public:
     void clearRenderables();
     void addRenderable( Renderable *renderable );
 
-    /// traverses children, collapses all scene nodes into a flat list.
-    QList<SceneNode*> allNodes();
+    QList<SceneNode*> getChildren() { return m_children; }
+    QList<Renderable*> getRenderables() { return m_renderables; }
 
     virtual void render();
 

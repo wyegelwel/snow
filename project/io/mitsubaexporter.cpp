@@ -56,7 +56,7 @@ void MitsubaExporter::reset(Grid grid)
 //    SAFE_DELETE_ARRAY(m_albedo);
     m_grid = grid;
     m_bbox = BBox(grid.pos, grid.h * vec3(grid.dim.x,grid.dim.y,grid.dim.z));
-    m_nodes = new ParticleGrid::Node[m_grid.nodeCount()];
+    m_nodes = new ParticleGridNode[m_grid.nodeCount()];
     //m_densities = new float[m_grid.nodeCount()];
     //m_albedo = new float[m_grid.nodeCount()];
 }

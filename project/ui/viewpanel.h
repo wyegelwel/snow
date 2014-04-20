@@ -3,7 +3,7 @@
 **   SNOW - CS224 BROWN UNIVERSITY
 **
 **   viewpanel.h
-**   Author: mliberma
+**   Authors: evjang, mliberma, taparson, wyegelwe
 **   Created: 6 Apr 2014
 **
 **************************************************************************/
@@ -17,6 +17,7 @@
 #include <QFile>
 #include <QDir>
 #include "geometry/mesh.h"
+#include "sim/collider.h"
 
 class InfoPanel;
 class Viewport;
@@ -26,7 +27,6 @@ class SceneNode;
 
 class ViewPanel : public QGLWidget
 {
-
     Q_OBJECT
 
 public:
@@ -60,8 +60,11 @@ public slots:
 
     // Filling
     void fillSelectedMesh();
+    void loadMesh( const QString &filename );
 
-    void generateNewMesh(const QString &f);
+    void addCollider(ColliderType c);
+
+    void editSnowConstants();
 
 private:
 
@@ -74,11 +77,12 @@ private:
     Engine *m_engine;
     Scene *m_scene;
 
-    Mesh *m_selectedMesh;
-
     bool m_draw;
 
     float m_fps;
+
+    SceneNode* getClickedSceneNode();
+    void clearSelection();
 
 };
 

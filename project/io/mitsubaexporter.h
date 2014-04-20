@@ -20,7 +20,7 @@
 #include <glm/geometric.hpp>
 #include "geometry/grid.h"
 #include "geometry/bbox.h"
-#include "sim/particlegrid.h"
+#include "sim/particlegridnode.h"
 
 class SceneNode;
 
@@ -99,7 +99,7 @@ private:
     // densities of each grid node
     //float * m_densities = NULL;
 
-    ParticleGrid::Node * m_nodes;
+    ParticleGridNode * m_nodes;
 
     // scattering albedo of each grid node
     // http://en.wikipedia.org/wiki/Single-scattering_albedo

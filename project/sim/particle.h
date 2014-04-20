@@ -39,12 +39,19 @@ struct Particle
     }
 };
 
+struct ParticleTempData
+{
+    mat3 sigma;
+    vec3 particleGridPos;
+};
+
 #ifndef CUDA_INCLUDE
 
 #include <QVector>
 typedef unsigned int GLuint;
 
 #include "common/renderable.h"
+#include "geometry/grid.h"
 
 class ParticleSystem : public Renderable
 {

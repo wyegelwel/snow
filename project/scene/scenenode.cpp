@@ -86,17 +86,6 @@ SceneNode::getCTM()
     return m_ctm;
 }
 
-QList<SceneNode*>
-SceneNode::allNodes()
-{
-    QList<SceneNode*> list;
-    for (int i=0; i<m_children.size();++i)
-    {
-        list.append(m_children[i]->allNodes());
-    }
-    return list;
-}
-
 QString
 SceneNode::getObjFile()
 {

@@ -3,12 +3,13 @@
 **   SNOW - CS224 BROWN UNIVERSITY
 **
 **   viewpanel.cpp
-**   Author: mliberma
+**   Authors: evjang, mliberma, taparson, wyegelwe
 **   Created: 6 Apr 2014
 **
 **************************************************************************/
 
 #include <GL/gl.h>
+#include <QQueue>
 
 #include "viewpanel.h"
 
@@ -22,9 +23,11 @@
 #include "geometry/bbox.h"
 #include "scene/scene.h"
 #include "scene/scenenode.h"
+#include "scene/scenenodeiterator.h"
 #include "sim/engine.h"
 #include "sim/particle.h"
 #include "ui/infopanel.h"
+#include "ui/picker.h"
 #include "ui/uisettings.h"
 #include "sim/collider.h"
 
@@ -48,7 +51,6 @@ ViewPanel::ViewPanel( QWidget *parent )
 
     m_scene = new Scene;
     m_engine = new Engine;
-    m_scene->setParticleSystem( m_engine->particleSystem() );
 }
 
 ViewPanel::~ViewPanel()
@@ -62,9 +64,9 @@ ViewPanel::~ViewPanel()
 void
 ViewPanel::resetViewport()
 {
-    m_viewport->orient( glm::vec3( 0, 5, 12.5),
-                        glm::vec3(  0,  0,  0),
-                        glm::vec3(  0,  1,  0) );
+    m_viewport->orient( glm::vec3( 0, 5, 12.5 ),
+                        glm::vec3( 0, 1,    0 ),
+                        glm::vec3( 0, 1,    0 ) );
     m_viewport->setDimensions( width(), height() );
 }
 
@@ -93,29 +95,27 @@ ViewPanel::initializeGL()
 
     // Scene
 
-    SceneNode *node = new SceneNode;
+//    SceneNode *node = new SceneNode;
 
-    QList<Mesh*> meshes;
-    OBJParser::load( PROJECT_PATH "/data/models/teapot.obj", meshes );
-    for ( int i = 0; i < meshes.size(); ++i )
-        node->addRenderable( meshes[i] );
-    m_scene->root()->addChild( node );
+//    QList<Mesh*> meshes;
+//    OBJParser::load( PROJECT_PATH "/data/models/teapot.obj", meshes );
+//    node->setRenderable( meshes[0] );
+//    m_scene->root()->addChild( node );
 
-    this->makeCurrent();
+//    ParticleSystem *particles = new ParticleSystem;
+//    meshes[0]->fill( *particles, 32*512, 0.1f );
+//    m_engine->addParticleSystem( *particles );
+//    delete particles;
 
-    ParticleSystem *particles = new ParticleSystem;
-    meshes[0]->fill( *particles, 64*512, 0.1f );
-    m_engine->addParticleSystem( *particles );
-    delete particles;
+//    Grid grid;
+//    grid.dim = glm::ivec3( 128, 128, 128 );
+//    BBox box = meshes[0]->getWorldBBox( glm::mat4(1.f) );
+//    grid.pos = box.min();
+//    grid.h = box.longestDimSize() / 128.f;
 
-    m_engine->grid().dim = glm::ivec3( 128, 128, 128 );
+//    m_engine->setGrid( grid );
 
-    BBox box = meshes[0]->getObjectBBox();
-    box.expandRel( .2f );
-    m_engine->grid().pos = box.min();
-    m_engine->grid().h = box.longestDimSize() / 256.f;
-
-    m_infoPanel->setInfo( "Particles", QLocale().toString(m_engine->particleSystem()->size()) );
+    m_infoPanel->setInfo( "Particles", 0 );
 
     // Render ticker
     assert( connect(&m_ticker, SIGNAL(timeout()), this, SLOT(update())) );
@@ -134,6 +134,7 @@ ViewPanel::paintGL()
 
     m_viewport->push(); {
         m_scene->render();
+        m_engine->render();
         m_viewport->drawAxis();
     } m_viewport->pop();
 
@@ -155,6 +156,20 @@ ViewPanel::mousePressEvent( QMouseEvent *event )
         if ( UserInput::leftMouse() ) m_viewport->setState( Viewport::TUMBLING );
         else if ( UserInput::rightMouse() ) m_viewport->setState( Viewport::ZOOMING );
         else if ( UserInput::middleMouse() ) m_viewport->setState( Viewport::PANNING );
+    } else {
+        if ( UserInput::leftMouse() ) {
+            SceneNode *clicked = getClickedSceneNode();
+            if ( clicked ) {
+                if ( UserInput::shiftKey() ) {
+                    clicked->getRenderable()->setSelected( !clicked->getRenderable()->isSelected() );
+                } else {
+                    clearSelection();
+                    clicked->getRenderable()->setSelected( true );
+                }
+            } else {
+                clearSelection();
+            }
+        }
     }
 }
 
@@ -224,30 +239,97 @@ void ViewPanel::resumeDrawing()
     m_draw = true;
 }
 
-// single obj file is associated with multiple renderables and a single
-// scene node.
-void ViewPanel::generateNewMesh(const QString &f)  {
-    SceneNode *node = new SceneNode(SNOW_CONTAINER, f);
+void ViewPanel::loadMesh( const QString &filename )
+{
 
+    // single obj file is associated with multiple renderables and a single
+    // scene node.
     QList<Mesh*> meshes;
-    OBJParser::load(f, meshes );
-    for ( int i = 0; i < meshes.size(); ++i )
-        node->addRenderable( meshes[i] );
+    OBJParser::load( filename, meshes );
 
-    m_scene->root()->addChild( node );
-    m_selectedMesh = meshes[0];
+    for ( int i = 0; i < meshes.size(); ++i ) {
+        SceneNode *node = new SceneNode( SceneNode::SNOW_CONTAINER );
+        node->setRenderable( meshes[i] );
+        m_scene->root()->addChild( node );
+    }
+
 }
 
 void ViewPanel::fillSelectedMesh()
 {
+    Mesh *mesh = new Mesh;
+
+    for ( SceneNodeIterator it = m_scene->begin(); it.isValid(); ++it ) {
+        if ( (*it)->hasRenderable() &&
+             (*it)->getType() == SceneNode::SNOW_CONTAINER &&
+             (*it)->getRenderable()->isSelected() ) {
+            Mesh *copy = new Mesh( *dynamic_cast<Mesh*>((*it)->getRenderable()) );
+            const glm::mat4 transformation = (*it)->getCTM();
+            copy->applyTransformation( transformation );
+            mesh->append( *copy );
+            delete copy;
+        }
+    }
+
     // If there's a selection, do mesh->fill...
-    if(m_selectedMesh)  {
+    if ( !mesh->isEmpty() )  {
+
         int nParticles = UiSettings::fillNumParticles();
         float resolution = UiSettings::fillResolution();
-        ParticleSystem *particles = m_engine->particleSystem();
-        m_selectedMesh->fill( *particles, nParticles, resolution );
-        m_scene->root()->addRenderable(particles );
 
-        m_infoPanel->setInfo( "Particles", QString::number(particles->size()) );
+        ParticleSystem *particles = new ParticleSystem;
+        mesh->fill( *particles, nParticles, resolution );
+        m_engine->addParticleSystem( *particles );
+        delete particles;
+
+        m_infoPanel->setInfo( "Particles", QString::number(m_engine->particleSystem()->size()) );
     }
+
+    delete mesh;
+}
+
+SceneNode* ViewPanel::getClickedSceneNode()
+{
+    m_viewport->loadPickMatrices( UserInput::mousePos() );
+
+    SceneNode *clicked = NULL;
+
+    QList<SceneNode*> renderables;
+    for ( SceneNodeIterator it = m_scene->begin(); it.isValid(); ++it ) {
+        if ( (*it)->hasRenderable() ) {
+            renderables += (*it);
+        }
+    }
+    if ( !renderables.empty() ) {
+        Picker picker( renderables.size() );
+        for ( int i = 0; i < renderables.size(); ++i ) {
+            picker.setObjectIndex(i);
+            renderables[i]->getRenderable()->renderForPicker();
+        }
+        unsigned int index = picker.getPick();
+        if ( index != Picker::NO_PICK ) {
+            clicked = renderables[index];
+        }
+    }
+
+    m_viewport->popMatrices();
+
+    return clicked;
+}
+
+void ViewPanel::clearSelection()
+{
+    for ( SceneNodeIterator it = m_scene->begin(); it.isValid(); ++it ) {
+        if ( (*it)->hasRenderable() )
+            (*it)->getRenderable()->setSelected( false );
+    }
+}
+
+void ViewPanel::addCollider(ColliderType c)  {
+    //TODO add a collider to the scene and set it as selected renderable.
+}
+
+void ViewPanel::editSnowConstants()  {
+    //TODO create popout to edit snow constants? Other (possibly better) option is to have all
+    // constants listed in UI in LineEdits and have them editable, then we could bind it to UISettings.
 }
