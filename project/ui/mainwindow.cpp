@@ -21,6 +21,8 @@
 #include "ui/uisettings.h"
 #include "ui/viewpanel.h"
 
+#include "sim/collider.h"
+
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
@@ -100,6 +102,27 @@ void MainWindow::importMesh()
     ui->viewPanel->resumeDrawing();
 }
 
+void MainWindow::addCollider()  {
+    ui->viewPanel->pauseSimulation();
+    ui->viewPanel->pauseDrawing();
+
+    QString colliderType = ui->chooseCollider->currentText();
+    ColliderType c;
+    if(colliderType == "Sphere") {
+        c = SPHERE;
+    }
+    else if(colliderType == "Plane")  {
+        c = HALF_PLANE;
+    }
+    else {}
+    if(c)  {
+        ui->viewPanel->addCollider(c);
+    }
+
+    ui->viewPanel->resumeSimulation();
+    ui->viewPanel->resumeDrawing();
+}
+
 void MainWindow::setupUI()
 {
     // Mesh Filling
@@ -113,7 +136,22 @@ void MainWindow::setupUI()
     assert( connect(ui->pauseButton, SIGNAL(toggled(bool)), ui->viewPanel, SLOT(pauseSimulation(bool))) );
     BoolBinding::bindCheckBox( ui->exportCheckbox, UiSettings::exportSimulation(), this );
 
+    // Collider
+
+    // Connect buttons to slots
+    assert( connect(ui->colliderAddButton, SIGNAL(clicked()), this, SLOT(addCollider())));
+
+    // Connect values to settings - not sure how to do this with combo box.
+
+    // Scene
+
+    // Connect buttons to slots
+    assert( connect(ui->saveSceneButton, SIGNAL(clicked()), this, SLOT(saveToFile())));
+    assert( connect(ui->loadSceneButton, SIGNAL(clicked()), this, SLOT(loadFromFile())));
+    assert( connect(ui->editSimConstantsButton, SIGNAL(clicked()), ui->viewPanel, SLOT(editSnowConstants())));
+
     // View Panel
+   // View Panel
     assert( connect(ui->showBBoxCheckbox, SIGNAL(toggled(bool)), ui->showGridCheckbox, SLOT(setEnabled(bool))) );
     assert( connect(ui->wireframeCheckbox, SIGNAL(clicked()), this, SLOT(checkMeshRenderSettings())) );
     assert( connect(ui->solidCheckbox, SIGNAL(clicked()), this, SLOT(checkMeshRenderSettings())) );

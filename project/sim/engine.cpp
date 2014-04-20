@@ -24,6 +24,10 @@
 #include <helper_functions.h>
 #include <helper_cuda.h>
 
+#include <QtConcurrentRun>
+
+#include "GL/gl.h"
+
 #define TICKS 50
 
 Engine::Engine()

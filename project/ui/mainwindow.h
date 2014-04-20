@@ -36,6 +36,8 @@ public slots:
 
     void checkMeshRenderSettings();
 
+    void addCollider();
+
     virtual void resizeEvent( QResizeEvent* );
     virtual void moveEvent( QMoveEvent* );
 
