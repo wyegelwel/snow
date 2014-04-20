@@ -3,7 +3,7 @@
 **   SNOW - CS224 BROWN UNIVERSITY
 **
 **   mainwindow.h
-**   Author: mliberma
+**   Authors: evjang, mliberma, taparson, wyegelwe
 **   Created: 6 Apr 2014
 **
 **************************************************************************/
@@ -33,6 +33,8 @@ public slots:
     void renderOffline();
 
     void importMesh();
+
+    void checkMeshRenderSettings();
 
     virtual void resizeEvent( QResizeEvent* );
     virtual void moveEvent( QMoveEvent* );

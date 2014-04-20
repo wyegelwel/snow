@@ -25,7 +25,7 @@
 
 void registerVBO( cudaGraphicsResource **resource, GLuint vbo )
 {
-    checkCudaErrors( cudaGraphicsGLRegisterBuffer(resource, vbo, cudaGraphicsMapFlagsWriteDiscard) );
+    checkCudaErrors( cudaGraphicsGLRegisterBuffer(resource, vbo, cudaGraphicsMapFlagsNone) );
 }
 
 void unregisterVBO( cudaGraphicsResource *resource )
@@ -33,23 +33,18 @@ void unregisterVBO( cudaGraphicsResource *resource )
     checkCudaErrors( cudaGraphicsUnregisterResource(resource) );
 }
 
-__global__ void snow_kernel( float time, Particle *particles )
-{
-    int index = blockIdx.x*blockDim.x + threadIdx.x;
-    vec3 pn = vec3::normalize( particles[index].position );
-    particles[index].position += 0.05f*sinf(6*time)*pn;
-}
+//__global__ void snow_kernel( float time, Particle *particles )
+//{
+//    int index = blockIdx.x*blockDim.x + threadIdx.x;
+//    vec3 pn = vec3::normalize( particles[index].position );
+//    particles[index].position += 0.05f*sinf(6*time)*pn;
+////    particles[index].position += 0.01f*pn;
+//}
 
-void updateParticles( cudaGraphicsResource **resource, float time, int particleCount )
-{
-
-    cudaGraphicsMapResources( 1, resource, 0 );
-    Particle *particles;
-    size_t size;
-    cudaGraphicsResourceGetMappedPointer( (void**)&particles, &size, *resource );
-    snow_kernel<<< particleCount/512, 512 >>>( time, particles );
-    checkCudaErrors( cudaDeviceSynchronize() );
-    cudaGraphicsUnmapResources( 1, resource, 0 );
-}
+//void updateParticles( Particle *particles, float time, int particleCount )
+//{
+//    snow_kernel<<< particleCount/512, 512 >>>( time, particles );
+//    checkCudaErrors( cudaDeviceSynchronize() );
+//}
 
 #endif // SNOW_CU

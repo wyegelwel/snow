@@ -3,7 +3,7 @@
 **   SNOW - CS224 BROWN UNIVERSITY
 **
 **   mesh.h
-**   Author: mliberma
+**   Authors: evjang, mliberma, taparson, wyegelwe
 **   Created: 8 Apr 2014
 **
 **************************************************************************/
@@ -85,6 +85,7 @@ public:
     inline const QVector<Normal>& getNormals() const { return m_normals; }
 
     virtual void render();
+    virtual void renderForPicker();
 
     BBox getWorldBBox( const glm::mat4 &transform ) const;
     BBox getObjectBBox() const;

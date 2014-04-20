@@ -3,7 +3,7 @@
 **   SNOW - CS224 BROWN UNIVERSITY
 **
 **   scenenode.h
-**   Author: mliberma
+**   Authors: evjang, mliberma, taparson, wyegelwe
 **   Created: 8 Apr 2014
 **
 **************************************************************************/
@@ -31,6 +31,7 @@ public:
     void addRenderable( Renderable *renderable );
 
     QList<SceneNode*> getChildren();
+    QList<Renderable*> getRenderables();
 
     virtual void render();
 

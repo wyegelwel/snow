@@ -103,24 +103,31 @@ void MainWindow::importMesh()
 void MainWindow::setupUI()
 {
     // Mesh Filling
-
-    // Connect buttons to slots
     assert( connect(ui->importButton, SIGNAL(clicked()), this, SLOT(importMesh())) );
     assert( connect(ui->fillButton, SIGNAL(clicked()), ui->viewPanel, SLOT(fillSelectedMesh())) );
-
-    // Connect values to settings
     FloatBinding::bindSpinBox( ui->fillResolutionSpinbox, UiSettings::fillResolution(), this );
     IntBinding::bindSpinBox( ui->fillNumParticlesSpinbox, UiSettings::fillNumParticles(), this );
 
     // Simulation
-
-    // Connect button to slots
     assert( connect(ui->startButton, SIGNAL(clicked()), ui->viewPanel, SLOT(startSimulation())) );
     assert( connect(ui->pauseButton, SIGNAL(toggled(bool)), ui->viewPanel, SLOT(pauseSimulation(bool))) );
-
-    // Connect values to settings
     BoolBinding::bindCheckBox( ui->exportCheckbox, UiSettings::exportSimulation(), this );
 
+    // View Panel
+    assert( connect(ui->showBBoxCheckbox, SIGNAL(toggled(bool)), ui->showGridCheckbox, SLOT(setEnabled(bool))) );
+    assert( connect(ui->wireframeCheckbox, SIGNAL(clicked()), this, SLOT(checkMeshRenderSettings())) );
+    assert( connect(ui->solidCheckbox, SIGNAL(clicked()), this, SLOT(checkMeshRenderSettings())) );
+    BoolBinding::bindCheckBox( ui->wireframeCheckbox, UiSettings::showWireframe(), this );
+    BoolBinding::bindCheckBox( ui->solidCheckbox, UiSettings::showSolid(), this );
+    BoolBinding::bindCheckBox( ui->showBBoxCheckbox, UiSettings::showBBox(), this );
+    BoolBinding::bindCheckBox( ui->showGridCheckbox, UiSettings::showGrid(), this );
+}
+
+void MainWindow::checkMeshRenderSettings()
+{
+    if ( !ui->wireframeCheckbox->isChecked() && !ui->solidCheckbox->isChecked() ) {
+        ui->wireframeCheckbox->click();
+    }
 }
 
 void MainWindow::resizeEvent( QResizeEvent* )

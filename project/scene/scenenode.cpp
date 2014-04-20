@@ -85,3 +85,9 @@ SceneNode::getChildren()
 {
     return m_children;
 }
+
+QList<Renderable*>
+SceneNode::getRenderables()
+{
+    return m_renderables;
+}

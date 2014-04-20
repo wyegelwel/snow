@@ -12,12 +12,14 @@
 #include <helper_functions.h>
 #include <helper_cuda.h>
 
+#include "math.h"
+
 #define CUDA_INCLUDE
 #include "sim/collider.h"
 #include "sim/material.h"
 #include "sim/parameters.h"
 #include "sim/particle.h"
-#include "sim/particlegrid.h"
+#include "sim/particlegridnode.h"
 
 #include "common/math.h"
 
@@ -27,20 +29,20 @@
 
 #include "cuda/functions.h"
 
-__host__ __device__ __forceinline__
+__device__ __forceinline__
 bool withinBoundsInclusive( const float &v, const float &min, const float &max )
 {
     return ( v >= min && v <= max );
 }
 
-__host__ __device__ __forceinline__
+__device__ __forceinline__
 bool withinBoundsInclusive( const glm::ivec3 &v, const glm::ivec3 &min, const glm::ivec3 &max )
 {
     return withinBoundsInclusive(v.x, min.x, max.x) && withinBoundsInclusive(v.y, min.y, max.y) && withinBoundsInclusive(v.z, min.z, max.z);
 }
 
 
-__host__ __device__ __forceinline__
+__device__ __forceinline__
 void gridIndexToIJK( int idx, int &i, int &j, int &k,const  glm::ivec3 &nodeDim )
 {
     i = idx / (nodeDim.y*nodeDim.z);
@@ -49,19 +51,19 @@ void gridIndexToIJK( int idx, int &i, int &j, int &k,const  glm::ivec3 &nodeDim 
     k = idx % nodeDim.z;
 }
 
-__host__ __device__  __forceinline__
+__device__  __forceinline__
 int getGridIndex( int i, int j, int k, const glm::ivec3 &nodeDim)
 {
     return (i*(nodeDim.y*nodeDim.z) + j*(nodeDim.z) + k);
 }
 
-__host__ __device__ __forceinline__
+__device__ __forceinline__
 void gridIndexToIJK( int idx, const  glm::ivec3 &nodeDim, glm::ivec3 &IJK )
 {
     gridIndexToIJK(idx, IJK.x, IJK.y, IJK.z, nodeDim);
 }
 
-__host__ __device__ __forceinline__
+__device__ __forceinline__
 int getGridIndex( const glm::ivec3 &IJK, const glm::ivec3 &nodeDim )
 {
     return getGridIndex(IJK.x, IJK.y, IJK.z, nodeDim);
@@ -85,12 +87,12 @@ __device__ void computeSigma( Particle &particle, MaterialConstants *material, m
     sigma = (2*muFp*mat3::multiplyABt(Fe-Re, Fe) + mat3(lambdaFp*(Jep-1)*Jep)) * particle.volume;
 }
 
-__global__ void computeParticleGridTempData ( Particle *particleData, Grid *grid, MaterialConstants *material, ParticleGridTempData *particleGridTempData )
+__global__ void computeParticleGridTempData ( Particle *particleData, Grid *grid, MaterialConstants *material, ParticleTempData *particleGridTempData )
 {
     int particleIdx = blockIdx.x*blockDim.x + threadIdx.x;
 
     Particle &particle = particleData[particleIdx];
-    ParticleGridTempData &pgtd = particleGridTempData[particleIdx];
+    ParticleTempData &pgtd = particleGridTempData[particleIdx];
 
     pgtd.particleGridPos = (particle.position - grid->pos)/grid->h;
     computeSigma(particle, material, pgtd.sigma);
@@ -118,19 +120,19 @@ void atomicAdd( vec3 *add, vec3 toAdd )
  * nodes -- list of every node in grid ((dim.x+1)*(dim.y+1)*(dim.z+1))
  *
  */
-__global__ void computeCellMassVelocityAndForceFast( Particle *particleData, Grid *grid, ParticleGridTempData *particleGridTempData, ParticleGrid::Node *nodes )
+__global__ void computeCellMassVelocityAndForceFast( Particle *particleData, Grid *grid, ParticleTempData *particleGridTempData, ParticleGridNode *nodes )
 {
     int particleIdx = blockIdx.y*gridDim.x*blockDim.x + blockIdx.x*blockDim.x + threadIdx.x;
 
     Particle &particle = particleData[particleIdx];
-    ParticleGridTempData &pgtd = particleGridTempData[particleIdx];
+    ParticleTempData &pgtd = particleGridTempData[particleIdx];
 
     glm::ivec3 currIJK;
     gridIndexToIJK(threadIdx.y, glm::ivec3(4,4,4), currIJK);
     currIJK.x += (int) pgtd.particleGridPos.x - 1; currIJK.y += (int) pgtd.particleGridPos.y - 1; currIJK.z += (int) pgtd.particleGridPos.z - 1;
 
     if (withinBoundsInclusive(currIJK, glm::ivec3(0,0,0), grid->dim)){
-        ParticleGrid::Node &node = nodes[getGridIndex(currIJK, grid->dim+1)];
+        ParticleGridNode &node = nodes[getGridIndex(currIJK, grid->dim+1)];
 
         float w;
         vec3 wg;
@@ -160,12 +162,12 @@ __global__ void computeCellMassVelocityAndForceFast( Particle *particleData, Gri
  * nodes -- updated velocity and velocityChange
  *
  */
-__global__ void updateNodeVelocities( ParticleGrid::Node *nodes, float dt, ImplicitCollider* colliders, int numColliders, MaterialConstants *material, Grid *grid, const vec3 gravity )
+__global__ void updateNodeVelocities( ParticleGridNode *nodes, float dt, ImplicitCollider* colliders, int numColliders, MaterialConstants *material, Grid *grid, const vec3 gravity )
 {
     int nodeIdx = blockIdx.x*blockDim.x + threadIdx.x;
     int gridI, gridJ, gridK;
     gridIndexToIJK(nodeIdx, gridI, gridJ, gridK, grid->dim+1);
-    ParticleGrid::Node &node = nodes[nodeIdx];
+    ParticleGridNode &node = nodes[nodeIdx];
     vec3 nodePosition = vec3(gridI, gridJ, gridK)*grid->h + grid->pos;
 
     float scale = ( node.mass > 1e-8 ) ? 1.f/node.mass : 0.f;
@@ -185,7 +187,7 @@ __global__ void updateNodeVelocities( ParticleGrid::Node *nodes, float dt, Impli
 #define CLAMP( X, A, B ) ( (X < A) ? A : ((X > B) ? B : X) )
 
 // Use weighting functions to compute particle velocity gradient and update particle velocity
-__device__ void processGridVelocities( Particle &particle, Grid *grid, const ParticleGrid::Node *nodes, mat3 &velocityGradient, float alpha )
+__device__ void processGridVelocities( Particle &particle, Grid *grid, const ParticleGridNode *nodes, mat3 &velocityGradient, float alpha )
 {
     const vec3 &pos = particle.position;
     const glm::ivec3 &dim = grid->dim;
@@ -219,7 +221,7 @@ __device__ void processGridVelocities( Particle &particle, Grid *grid, const Par
             for ( int k = minIndex.z; k <= maxIndex.z; ++k ) {
                 d.z = k - gridIndex.z;
                 d.z *= ( s.z = ( d.z < 0 ) ? -1.f : 1.f );
-                const ParticleGrid::Node &node = nodes[rowOffset+k];
+                const ParticleGridNode &node = nodes[rowOffset+k];
                 float w;
                 vec3 wg;
                 weightAndGradient( s, d, w, wg );
@@ -257,7 +259,7 @@ __device__ void updateParticleDeformationGradients( Particle &particle, const ma
 // NOTE: assumes particleCount % blockDim.x = 0, so tid is never out of range!
 // criticalCompression = 1 - theta_c
 // criticalStretch = 1 + theta_s
-__global__ void updateParticlesFromGrid( Particle *particles, Grid *grid, const ParticleGrid::Node *nodes, float timeStep, ImplicitCollider *colliders, int numColliders, MaterialConstants *mat )
+__global__ void updateParticlesFromGrid( Particle *particles, Grid *grid, const ParticleGridNode *nodes, float timeStep, ImplicitCollider *colliders, int numColliders, MaterialConstants *mat )
 {
     int tid = threadIdx.x + blockIdx.x * blockDim.x;
 
@@ -278,7 +280,7 @@ __global__ void updateParticlesFromGrid( Particle *particles, Grid *grid, const 
 
 void updateParticles( const SimulationParameters &parameters,
                       Particle *particles, int numParticles,
-                      Grid *grid, ParticleGrid::Node *nodes, int numNodes, ParticleGridTempData *particleGridTempData,
+                      Grid *grid, ParticleGridNode *nodes, int numNodes, ParticleTempData *particleGridTempData,
                       ImplicitCollider *colliders, int numColliders,
                       MaterialConstants *mat )
 {
@@ -289,7 +291,7 @@ void updateParticles( const SimulationParameters &parameters,
     checkCudaErrors( cudaDeviceSynchronize() );
 
     // Clear grid data before update
-    checkCudaErrors( cudaMemset(nodes, 0, numNodes*sizeof(ParticleGrid::Node)) );
+    checkCudaErrors( cudaMemset(nodes, 0, numNodes*sizeof(ParticleGridNode)) );
 
     dim3 blockDim = dim3(numParticles / threadCount, 64);
     dim3 threadDim = dim3(threadCount/64, 64);

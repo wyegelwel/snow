@@ -11,13 +11,14 @@
 #ifndef FUNCTIONS_H
 #define FUNCTIONS_H
 
-#include "sim/particlegrid.h"
+#include "sim/particlegridnode.h"
 
 typedef unsigned int GLuint;
 struct cudaGraphicsResource;
 struct Grid;
 struct Particle;
-struct ParticleGridTempData;
+struct ParticleGridNode;
+struct ParticleTempData;
 struct ImplicitCollider;
 struct MaterialConstants;
 struct SimulationParameters;
@@ -32,7 +33,7 @@ void unregisterVBO( cudaGraphicsResource *resource );
 // Particle simulation
 void updateParticles( const SimulationParameters &parameters,
                       Particle *particles, int numParticles,
-                      Grid *grid, ParticleGrid::Node *nodes, int numNodes, ParticleGridTempData *particleGridTempData,
+                      Grid *grid, ParticleGridNode *nodes, int numNodes, ParticleTempData *particleGridTempData,
                       ImplicitCollider *colliders, int numColliders,
                       MaterialConstants *mat );
 

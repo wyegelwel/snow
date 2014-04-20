@@ -71,10 +71,10 @@ void Tests::runEricTests() {
 
 void Tests::runWilTests() {
     printf("running Wil Tests...\n");
-    testColliderNormal();
-    testColliding();
-    testGridMath();
-    timingTests();
+//    testColliderNormal();
+//    testColliding();
+//    testGridMath();
+//    timingTests();
     printf("done running Wil Tests\n");
 }
 

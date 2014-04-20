@@ -3,7 +3,7 @@
 **   SNOW - CS224 BROWN UNIVERSITY
 **
 **   viewpanel.h
-**   Author: mliberma
+**   Authors: evjang, mliberma, taparson, wyegelwe
 **   Created: 6 Apr 2014
 **
 **************************************************************************/
@@ -80,6 +80,9 @@ private:
     bool m_draw;
 
     float m_fps;
+
+    Renderable* getClickedRenderable();
+    void clearSelection();
 
 };
 

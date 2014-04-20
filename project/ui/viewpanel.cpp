@@ -3,12 +3,13 @@
 **   SNOW - CS224 BROWN UNIVERSITY
 **
 **   viewpanel.cpp
-**   Author: mliberma
+**   Authors: evjang, mliberma, taparson, wyegelwe
 **   Created: 6 Apr 2014
 **
 **************************************************************************/
 
 #include <GL/gl.h>
+#include <QQueue>
 
 #include "viewpanel.h"
 
@@ -21,9 +22,11 @@
 #include "geometry/mesh.h"
 #include "scene/scene.h"
 #include "scene/scenenode.h"
+#include "scene/scenenodeiterator.h"
 #include "sim/engine.h"
 #include "sim/particle.h"
 #include "ui/infopanel.h"
+#include "ui/picker.h"
 #include "ui/uisettings.h"
 
 /// TEMPORARY
@@ -47,7 +50,6 @@ ViewPanel::ViewPanel( QWidget *parent )
 
     m_scene = new Scene;
     m_engine = new Engine;
-    m_scene->setParticleSystem( m_engine->particleSystem() );
 }
 
 ViewPanel::~ViewPanel()
@@ -61,9 +63,9 @@ ViewPanel::~ViewPanel()
 void
 ViewPanel::resetViewport()
 {
-    m_viewport->orient( glm::vec3( 0, 5, 12.5),
-                        glm::vec3(  0,  0,  0),
-                        glm::vec3(  0,  1,  0) );
+    m_viewport->orient( glm::vec3( 0, 5, 12.5 ),
+                        glm::vec3( 0, 1,    0 ),
+                        glm::vec3( 0, 1,    0 ) );
     m_viewport->setDimensions( width(), height() );
 }
 
@@ -103,16 +105,17 @@ ViewPanel::initializeGL()
     this->makeCurrent();
 
     ParticleSystem *particles = new ParticleSystem;
-    meshes[0]->fill( *particles, 64*512, 0.1f );
+    meshes[0]->fill( *particles, 32*512, 0.1f );
     m_engine->addParticleSystem( *particles );
     delete particles;
 
-    m_engine->grid().dim = glm::ivec3( 128, 128, 128 );
+    Grid grid;
+    grid.dim = glm::ivec3( 128, 128, 128 );
+    BBox box = meshes[0]->getWorldBBox( glm::mat4(1.f) );
+    grid.pos = box.min();
+    grid.h = box.longestDimSize() / 128.f;
 
-    BBox box = meshes[0]->getObjectBBox();
-    box.expandRel( .2f );
-    m_engine->grid().pos = box.min();
-    m_engine->grid().h = box.longestDimSize() / 256.f;
+    m_engine->setGrid( grid );
 
     m_infoPanel->setInfo( "Particles", QLocale().toString(m_engine->particleSystem()->size()) );
 
@@ -133,6 +136,7 @@ ViewPanel::paintGL()
 
     m_viewport->push(); {
         m_scene->render();
+        m_engine->render();
         m_viewport->drawAxis();
     } m_viewport->pop();
 
@@ -154,6 +158,16 @@ ViewPanel::mousePressEvent( QMouseEvent *event )
         if ( UserInput::leftMouse() ) m_viewport->setState( Viewport::TUMBLING );
         else if ( UserInput::rightMouse() ) m_viewport->setState( Viewport::ZOOMING );
         else if ( UserInput::middleMouse() ) m_viewport->setState( Viewport::PANNING );
+    } else {
+        if ( UserInput::leftMouse() ) {
+            clearSelection();
+            m_viewport->loadPickMatrices( UserInput::mousePos() );
+            Renderable *clicked = getClickedRenderable();
+            if ( clicked ) {
+                clicked->setSelected( true );
+            }
+            m_viewport->popMatrices();
+        }
     }
 }
 
@@ -234,9 +248,9 @@ void ViewPanel::resumeDrawing()
     m_draw = true;
 }
 
-void ViewPanel::generateNewMesh(const QString &f)  {
+void ViewPanel::generateNewMesh( const QString &f )
+{
     SceneNode *node = new SceneNode;
-
     QList<Mesh*> meshes;
     OBJParser::load(f, meshes );
     for ( int i = 0; i < meshes.size(); ++i )
@@ -248,13 +262,44 @@ void ViewPanel::generateNewMesh(const QString &f)  {
 void ViewPanel::fillSelectedMesh()
 {
     // If there's a selection, do mesh->fill...
-    if(m_selectedMesh)  {
+    if ( m_selectedMesh )  {
         int nParticles = UiSettings::fillNumParticles();
         float resolution = UiSettings::fillResolution();
-        ParticleSystem *particles = m_engine->particleSystem();
+        ParticleSystem *particles = new ParticleSystem;
         m_selectedMesh->fill( *particles, nParticles, resolution );
-        m_scene->root()->addRenderable(particles );
+        m_engine->addParticleSystem( *particles );
+        delete particles;
+        m_infoPanel->setInfo( "Particles", QString::number(m_engine->particleSystem()->size()) );
+    }
+}
 
-        m_infoPanel->setInfo( "Particles", QString::number(particles->size()) );
+Renderable* ViewPanel::getClickedRenderable()
+{
+    QList<Renderable*> renderables;
+    for ( SceneNodeIterator it = m_scene->begin(); it.isValid(); ++it ) {
+        renderables += (*it)->getRenderables();
+    }
+    if ( !renderables.empty() ) {
+        Picker picker( renderables.size() );
+        for ( int i = 0; i < renderables.size(); ++i ) {
+            picker.setObjectIndex(i);
+            renderables[i]->renderForPicker();
+        }
+        unsigned int index = picker.getPick();
+        if ( index != Picker::NO_PICK ) {
+            return renderables[index];
+        }
+    }
+    return NULL;
+}
+
+void ViewPanel::clearSelection()
+{
+    QList<Renderable*> renderables;
+    for ( SceneNodeIterator it = m_scene->begin(); it.isValid(); ++it ) {
+        renderables += (*it)->getRenderables();
+    }
+    for ( int i = 0; i < renderables.size(); ++i ) {
+        renderables[i]->setSelected( false );
     }
 }
