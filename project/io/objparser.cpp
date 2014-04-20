@@ -179,6 +179,7 @@ OBJParser::addMesh()
         LOG( "OBJParser: adding mesh %s...", STR(m_currentName) );
         Mesh *mesh = new Mesh;
         mesh->setName( m_currentName );
+        mesh->setFilename( m_file.fileName() );
         mesh->setVertices( m_vertexPool );
         mesh->setTris( m_triPool );
         if ( m_normalPool.size() == m_vertexPool.size() )

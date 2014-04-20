@@ -37,6 +37,7 @@ Mesh::Mesh( const QVector<Vertex> &vertices,
     : m_vertices(vertices),
       m_tris(tris),
       m_glVBO(0),
+      m_cudaVBO(NULL),
       m_color(0.5f, 0.5f, 0.5f, 1.f)
 {
     computeNormals();
@@ -49,7 +50,20 @@ Mesh::Mesh( const QVector<Vertex> &vertices,
       m_tris(tris),
       m_normals(normals),
       m_glVBO(0),
+      m_cudaVBO(NULL),
       m_color(0.5f, 0.5f, 0.5f, 1.f)
+{
+}
+
+Mesh::Mesh( const Mesh &mesh )
+    : m_name(mesh.m_name),
+      m_filename(mesh.m_filename),
+      m_vertices(mesh.m_vertices),
+      m_tris(mesh.m_tris),
+      m_normals(mesh.m_normals),
+      m_glVBO(0),
+      m_cudaVBO(NULL),
+      m_color(mesh.m_color)
 {
 }
 
@@ -272,3 +286,23 @@ Mesh::getObjectBBox() const
     return box;
 }
 
+void
+Mesh::applyTransformation( const glm::mat4 &transform )
+{
+    for ( int i = 0; i < getNumVertices(); ++i ) {
+        const Vertex &v = m_vertices[i];
+        glm::vec4 point = transform * glm::vec4( v.x, v.y, v.z, 1.f );
+        m_vertices[i] = vec3( point.x, point.y, point.z );
+    }
+    computeNormals();
+    deleteVBO();
+}
+
+void
+Mesh::append( const Mesh &mesh )
+{
+    m_vertices += mesh.m_vertices;
+    m_tris += mesh.m_tris;
+    m_normals += mesh.m_normals;
+    deleteVBO();
+}

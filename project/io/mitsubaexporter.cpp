@@ -257,22 +257,22 @@ QDomElement MitsubaExporter::appendShape(QDomElement node, SceneNode * sceneNode
      * implicitcolliders are sitting in their own scenenode (the obj attribute is added upon collider creation)
      */
     // append <shape> to scene
-    QDomElement s = appendOBJ(node, sceneNode->getObjFile());
+//    QDomElement s = appendOBJ( node, sceneNode->getObjFile() );
 
-    // add transformation to the shape node
-    appendXform(s, sceneNode->getCTM());
+//    // add transformation to the shape node
+//    appendXform(s, sceneNode->getCTM());
 
-    // add default material to the shape node
-    appendBSDF(s);
+//    // add default material to the shape node
+//    appendBSDF(s);
 
-    if (sceneNode->getType() == IMPLICIT_COLLIDER)
-    {
-        // TODO
-    }
-    else if (sceneNode->getType() == SNOW_CONTAINER)
-    {
-        // TODO
-    }
+//    if (sceneNode->getType() == IMPLICIT_COLLIDER)
+//    {
+//        // TODO
+//    }
+//    else if (sceneNode->getType() == SNOW_CONTAINER)
+//    {
+//        // TODO
+//    }
 }
 
 QDomElement MitsubaExporter::appendOBJ(QDomElement node, QString objfile)

@@ -33,6 +33,7 @@ public:
     static IntBinding* bindSpinBox( QSpinBox *spinbox, int &value, QObject *parent = NULL )
     {
         IntBinding *binding = new IntBinding( value, parent );
+        spinbox->setValue( value );
         assert( connect(spinbox, SIGNAL(valueChanged(int)), binding, SLOT(valueChanged(int))) );
         return binding;
     }
@@ -40,6 +41,7 @@ public:
     static IntBinding* bindLineEdit( QLineEdit *lineEdit, int &value, QObject *parent = NULL )
     {
         IntBinding *binding = new IntBinding( value, parent );
+        lineEdit->setText( QString::number(value) );
         assert( connect(lineEdit, SIGNAL(textChanged(QString)), binding, SLOT(valueChanged(QString))) );
         return binding;
     }
@@ -47,6 +49,7 @@ public:
     static IntBinding* bindSlider( QSlider *slider, int &value, QObject *parent = NULL )
     {
         IntBinding *binding = new IntBinding( value, parent );
+        slider->setValue( value );
         assert( connect(slider, SIGNAL(valueChanged(int)), binding, SLOT(valueChanged(int))) );
         return binding;
     }
@@ -83,6 +86,7 @@ public:
     static FloatBinding* bindSpinBox( QDoubleSpinBox *spinbox, float &value, QObject *parent = NULL )
     {
         FloatBinding *binding = new FloatBinding( value, parent );
+        spinbox->setValue( value );
         assert( connect(spinbox, SIGNAL(valueChanged(double)), binding, SLOT(valueChanged(double))) );
         return binding;
     }
@@ -90,6 +94,7 @@ public:
     static FloatBinding* bindLineEdit( QLineEdit *lineEdit, float &value, QObject *parent = NULL )
     {
         FloatBinding *binding = new FloatBinding( value, parent );
+        lineEdit->setText( QString::number(value) );
         assert( connect(lineEdit, SIGNAL(textChanged(QString)), binding, SLOT(valueChanged(QString))) );
         return binding;
     }

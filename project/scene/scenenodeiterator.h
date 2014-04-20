@@ -33,6 +33,8 @@ public:
     bool isValid() const { return m_index < m_nodes.size(); }
     void reset() { m_index = 0; }
 
+    int size() const { return m_nodes.size(); }
+
 private:
 
     QList<SceneNode*> m_nodes;

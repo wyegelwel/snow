@@ -47,6 +47,7 @@ public:
     Mesh();
     Mesh( const QVector<Vertex> &vertices, const QVector<Tri> &tris );
     Mesh( const QVector<Vertex> &vertices, const QVector<Tri> &tris, const QVector<Normal> &normals );
+    Mesh( const Mesh &mesh );
 
     virtual ~Mesh();
 
@@ -55,10 +56,17 @@ public:
     inline bool isEmpty() const { return m_vertices.empty() || m_tris.empty(); }
     inline void clear() { m_vertices.clear(); m_tris.clear(); m_normals.clear(); deleteVBO(); }
 
+    void applyTransformation( const glm::mat4 &transform );
+
+    void append( const Mesh &mesh );
+
     void computeNormals();
 
     inline void setName( const QString &name ) { m_name = name; }
     inline QString getName() const { return m_name; }
+
+    inline void setFilename( const QString &filename ) { m_filename = filename; }
+    inline QString getFilename() const { return m_filename; }
 
     inline void setVertices( const QVector<Vertex> &vertices ) { m_vertices = vertices; }
     inline void addVertex( const Vertex &vertex ) { m_vertices += vertex; }
@@ -93,6 +101,7 @@ public:
 private:
 
     QString m_name;
+    QString m_filename; // The OBJ file source
 
     // List of vertices
     QVector<Vertex> m_vertices;

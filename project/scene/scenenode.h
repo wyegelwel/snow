@@ -17,36 +17,35 @@
 
 class Renderable;
 
-// we could make the type a part of renderable (i.e. make sub-part of OBJ a collider)
-// but that would make the offline rendering pipeline kind of messy. leaving it like this for now.
-enum SceneNodeType{
-    IMPLICIT_COLLIDER, SNOW_CONTAINER, OBJ
-};
-
 class SceneNode
 {
 
 public:
 
-    SceneNode( SceneNode *parent = NULL );
-    SceneNode(SceneNodeType type, QString objfile);
+    enum Type
+    {
+        TRANSFORM,
+        IMPLICIT_COLLIDER,
+        SNOW_CONTAINER
+    };
+
+    SceneNode( Type type = TRANSFORM );
     virtual ~SceneNode();
 
     void clearChildren();
     void addChild( SceneNode *child );
 
-    void clearRenderables();
-    void addRenderable( Renderable *renderable );
-
     QList<SceneNode*> getChildren() { return m_children; }
-    QList<Renderable*> getRenderables() { return m_renderables; }
+
+    bool hasRenderable() const { return m_renderable != NULL; }
+    void setRenderable( Renderable *renderable );
+    Renderable* getRenderable() { return m_renderable; }
 
     virtual void render();
 
     glm::mat4 getCTM();
 
-    SceneNodeType getType();
-    QString getObjFile();
+    Type getType() { return m_type; }
 
 private:
 
@@ -58,10 +57,9 @@ private:
     glm::mat4 m_transform;
 
     QList<SceneNode*> m_children;
-    QList<Renderable*> m_renderables;
+    Renderable* m_renderable;
 
-    SceneNodeType m_type;
-    QString m_objfile;
+    Type m_type;
 };
 
 #endif // SCENENODE_H
