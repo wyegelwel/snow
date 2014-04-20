@@ -74,11 +74,11 @@ SceneNode::renderOpaque()
 {
     glMatrixMode( GL_MODELVIEW );
     glPushMatrix();
-    glMultMatrixf( glm::value_ptr(m_transform) );
+    glMultMatrixf( glm::value_ptr(getCTM()) );
     if ( m_renderable && !isTransparent() ) m_renderable->render();
+    glPopMatrix();
     for ( int i = 0; i < m_children.size(); ++i )
         m_children[i]->renderOpaque();
-    glPopMatrix();
 }
 
 void
@@ -86,11 +86,11 @@ SceneNode::renderTransparent()
 {
     glMatrixMode( GL_MODELVIEW );
     glPushMatrix();
-    glMultMatrixf( glm::value_ptr(m_transform) );
+    glMultMatrixf( glm::value_ptr(getCTM()) );
+    glPopMatrix();
     if ( m_renderable && isTransparent() ) m_renderable->render();
     for ( int i = 0; i < m_children.size(); ++i )
         m_children[i]->renderTransparent();
-    glPopMatrix();
 }
 
 void
