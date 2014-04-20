@@ -20,6 +20,7 @@
 #include "viewport/viewport.h"
 #include "io/objparser.h"
 #include "geometry/mesh.h"
+#include "geometry/bbox.h"
 #include "scene/scene.h"
 #include "scene/scenenode.h"
 #include "scene/scenenodeiterator.h"
@@ -28,6 +29,7 @@
 #include "ui/infopanel.h"
 #include "ui/picker.h"
 #include "ui/uisettings.h"
+#include "sim/collider.h"
 
 /// TEMPORARY
 #include "io/sceneparser.h"
@@ -187,9 +189,10 @@ ViewPanel::mouseReleaseEvent( QMouseEvent *event )
 
 /// temporary hack: I'm calling the SceneParser from here for the file saving
 /// and offline rendering. Ideally this would be handled by the Engine class.
+/// do this after the MitsubaExporter is working
 void ViewPanel::saveToFile(QString fname)
 {
-    // write - not done, do this out later
+    // write - not done, figure this out later
     SceneParser::write(fname, m_scene);
 }
 
@@ -205,19 +208,23 @@ void ViewPanel::renderOffline(QString file_prefix)
      * the exporter handles scene by scene so here, we tell the simulation to start over
      * then call exportScene every frame
      */
+
     resetSimulation();
+
     // step the simulation 1/24 of a second at a time.
 
 //    for (int s=0; s<1; s++)
 //    {
 //        for (int f=0; f<24; f++)
 //        {
-//            MitsubaExporter::exportScene(file_prefix, f, m_scene);
+//            MitsubaExporter::exportScene(file_prefix, f, m_scene, cam);
 //        }
 //    }
 
     // for now, just export the first frame
-    MitsubaExporter::exportScene(file_prefix, 0, m_scene);
+
+    MitsubaExporter exporter;
+    exporter.exportScene(file_prefix, 0);
 }
 
 void ViewPanel::startSimulation()
@@ -250,11 +257,15 @@ void ViewPanel::resumeDrawing()
 
 void ViewPanel::generateNewMesh( const QString &f )
 {
-    SceneNode *node = new SceneNode;
+// single obj file is associated with multiple renderables and a single
+// scene node.
+    SceneNode *node = new SceneNode(SNOW_CONTAINER, f);
+
     QList<Mesh*> meshes;
     OBJParser::load(f, meshes );
     for ( int i = 0; i < meshes.size(); ++i )
         node->addRenderable( meshes[i] );
+
     m_scene->root()->addChild( node );
     m_selectedMesh = meshes[0];
 }

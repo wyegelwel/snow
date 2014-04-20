@@ -79,7 +79,7 @@ void MainWindow::renderOffline()
 
     QDir sceneDir("~/offline_renders");
     sceneDir.makeAbsolute();
-    QString fprefix = QFileDialog::getSaveFileName(this, QString("Save Scene"), sceneDir.absolutePath());
+    QString fprefix = QFileDialog::getSaveFileName(this, QString("Choose Export Filename"), sceneDir.absolutePath());
     ui->viewPanel->renderOffline(fprefix);
 
     ui->viewPanel->resumeSimulation();

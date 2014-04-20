@@ -108,7 +108,6 @@ private:
     bool hasVBO() const;
     void buildVBO();
     void deleteVBO();
-
 };
 
 #endif // ENGINE_H
