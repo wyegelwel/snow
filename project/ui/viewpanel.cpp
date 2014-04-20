@@ -13,8 +13,6 @@
 
 #include "viewpanel.h"
 
-#include <glm/gtc/random.hpp>
-
 #include "common/common.h"
 #include "ui/userinput.h"
 #include "viewport/viewport.h"

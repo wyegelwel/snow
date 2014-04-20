@@ -11,6 +11,9 @@
 #ifndef RENDERABLE_H
 #define RENDERABLE_H
 
+#ifndef GLM_FORCE_RADIANS
+    #define GLM_FORCE_RADIANS
+#endif
 #include "glm/mat4x4.hpp"
 
 struct BBox;

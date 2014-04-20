@@ -14,7 +14,11 @@
 #include <QList>
 #include <QString>
 
+#ifndef GLM_FORCE_RADIANS
+    #define GLM_FORCE_RADIANS
+#endif
 #include "glm/mat4x4.hpp"
+
 #include "geometry/bbox.h"
 
 class Renderable;

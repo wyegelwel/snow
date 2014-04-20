@@ -79,9 +79,6 @@ HEADERS  += \
 
 FORMS    += ui/mainwindow.ui
 
-# GLM
-DEFINES += GLM_FORCE_RADIANS
-
 # C++ flag
 QMAKE_CXXFLAGS_RELEASE=-O3
 QMAKE_CXXFLAGS += -std=c++11

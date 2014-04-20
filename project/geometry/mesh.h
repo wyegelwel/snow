@@ -16,7 +16,10 @@
 #include <QVector>
 #include <QString>
 
-#include <glm/mat4x4.hpp>
+#ifndef GLM_FORCE_RADIANS
+    #define GLM_FORCE_RADIANS
+#endif
+#include "glm/mat4x4.hpp"
 
 #include "common/renderable.h"
 

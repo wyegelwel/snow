@@ -9,7 +9,11 @@
 **************************************************************************/
 
 #include <GL/gl.h>
-#include <glm/gtc/type_ptr.hpp>
+
+#ifndef GLM_FORCE_RADIANS
+    #define GLM_FORCE_RADIANS
+#endif
+#include "glm/gtc/type_ptr.hpp"
 
 #include "common/common.h"
 #include "common/renderable.h"

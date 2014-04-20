@@ -17,6 +17,9 @@
 #include <helper_cuda.h>
 #include <helper_cuda_gl.h>
 
+#ifndef GLM_FORCE_RADIANS
+    #define GLM_FORCE_RADIANS
+#endif
 #include <glm/geometric.hpp>
 
 #define CUDA_INCLUDE

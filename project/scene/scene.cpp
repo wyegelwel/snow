@@ -10,6 +10,9 @@
 
 #include <GL/gl.h>
 
+#ifndef GLM_FORCE_RADIANS
+    #define GLM_FORCE_RADIANS
+#endif
 #include "glm/vec4.hpp"
 #include "glm/gtc/type_ptr.hpp"
 

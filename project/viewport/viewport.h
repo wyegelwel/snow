@@ -11,7 +11,10 @@
 #ifndef VIEWPORT_H
 #define VIEWPORT_H
 
-#include <glm/vec3.hpp>
+#ifndef GLM_FORCE_RADIANS
+    #define GLM_FORCE_RADIANS
+#endif
+#include "glm/vec3.hpp"
 
 class QWidget;
 class Camera;

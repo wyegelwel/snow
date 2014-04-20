@@ -12,7 +12,11 @@
 #define USERINPUT_H
 
 #include <QMouseEvent>
-#include <glm/vec2.hpp>
+
+#ifndef GLM_FORCE_RADIANS
+    #define GLM_FORCE_RADIANS
+#endif
+#include "glm/vec2.hpp"
 
 class UserInput
 {

@@ -20,6 +20,10 @@
 
 #include <QPoint>
 #include <QSize>
+
+#ifndef GLM_FORCE_RADIANS
+    #define GLM_FORCE_RADIANS
+#endif
 #include "glm/vec4.hpp"
 
 class UiSettings

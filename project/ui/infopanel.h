@@ -15,6 +15,9 @@
 #include <QHash>
 #include <QString>
 
+#ifndef GLM_FORCE_RADIANS
+    #define GLM_FORCE_RADIANS
+#endif
 #include <glm/vec2.hpp>
 
 #include "common/renderable.h"

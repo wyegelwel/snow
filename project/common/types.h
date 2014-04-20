@@ -12,6 +12,10 @@
 #define TYPES_H
 
 #include "cuda/vector.cu"
+
+#ifndef GLM_FORCE_RADIANS
+    #define GLM_FORCE_RADIANS
+#endif
 #include <glm/vec4.hpp>
 
 typedef vec3 Vertex;

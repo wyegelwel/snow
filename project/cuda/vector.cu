@@ -14,6 +14,9 @@
 #include <cuda.h>
 #include <cuda_runtime.h>
 
+#ifndef GLM_FORCE_RADIANS
+    #define GLM_FORCE_RADIANS
+#endif
 #include "glm/vec3.hpp"
 
 #include "common/math.h"

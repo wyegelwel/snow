@@ -12,12 +12,14 @@
 
 #include <GL/gl.h>
 
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
-
 #include "common/common.h"
 #include "ui/userinput.h"
 #include "viewport/camera.h"
+
+#ifndef GLM_FORCE_RADIANS
+    #define GLM_FORCE_RADIANS
+#endif
+#include "glm/gtc/type_ptr.hpp"
 
 #define ZOOM_SCALE 1.f
 

@@ -11,6 +11,9 @@
 #ifndef MOVETOOL_H
 #define MOVETOOL_H
 
+#ifndef GLM_FORCE_RADIANS
+    #define GLM_FORCE_RADIANS
+#endif
 #include "glm/vec2.hpp"
 
 #include "ui/tools/selectiontool.h"
