@@ -52,6 +52,17 @@ SceneNode::addChild( SceneNode *child )
 }
 
 void
+SceneNode::deleteChild( SceneNode *child )
+{
+    int index = m_children.indexOf( child );
+    if ( index != -1 ) {
+        SceneNode *child = m_children[index];
+        SAFE_DELETE( child );
+        m_children.removeAt( index );
+    }
+}
+
+void
 SceneNode::setRenderable( Renderable *renderable )
 {
     SAFE_DELETE( m_renderable );

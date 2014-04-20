@@ -12,6 +12,9 @@
 
 #include <QVector>
 
+#include "glm/common.hpp"
+#include "glm/vec4.hpp"
+
 #include "scene/scenegrid.h"
 #include "geometry/bbox.h"
 #include "ui/uisettings.h"
@@ -60,12 +63,15 @@ SceneGrid::render()
         glEnableClientState( GL_VERTEX_ARRAY );
         glVertexPointer( 3, GL_FLOAT, sizeof(vec3), (void*)(0) );
 
-        glColor4f( 0.5f, 0.8f, 1.f, 0.5f );
+        glm::vec4 base = glm::vec4( 0.8f, 0.5f, 1.f, 1.f );
+        glm::vec4 c = ( m_selected ) ? glm::mix( base, UiSettings::selectionColor(), 0.5f ) : base;
+
+        glColor4f( c.x, c.y, c.z, 0.5f );
         glLineWidth( 3.f );
         glDrawArrays( GL_LINES, 0, 24 );
 
         if ( UiSettings::showGrid() ) {
-            glColor4f( 0.5f, 0.8f, 1.f, 0.25f );
+            glColor4f( c.x, c.y, c.z, 0.25f );
             glLineWidth( 0.5f );
             glDrawArrays( GL_LINES, 24, m_vboSize-24 );
         }

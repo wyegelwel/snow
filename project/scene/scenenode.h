@@ -41,6 +41,9 @@ public:
 
     void clearChildren();
     void addChild( SceneNode *child );
+    void deleteChild( SceneNode *child );
+
+    SceneNode* parent() { return m_parent; }
 
     QList<SceneNode*> getChildren() { return m_children; }
 
