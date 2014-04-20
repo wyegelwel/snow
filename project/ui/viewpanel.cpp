@@ -136,7 +136,7 @@ ViewPanel::paintGL()
     m_viewport->push(); {
         m_scene->render();
         m_engine->render();
-        paintGrid();
+        //paintGrid();
         if ( m_tool ) m_tool->render();
         m_viewport->drawAxis();
     } m_viewport->pop();
@@ -306,6 +306,24 @@ void ViewPanel::fillSelectedMesh()
 
 void ViewPanel::addCollider(ColliderType c)  {
     //TODO add a collider to the scene and set it as selected renderable.
+    ImplicitCollider collider;
+    collider.type = c;
+    switch(c)  {
+        case SPHERE:
+            collider.param = vec3(1,0,0);
+            break;
+        case HALF_PLANE:
+            collider.param = vec3(0,1,0);
+            break;
+        default:
+            break;
+    }
+    Collider *col = new Collider(collider);
+
+    SceneNode *node = new SceneNode( SceneNode::IMPLICIT_COLLIDER );
+    node->setRenderable( col );
+    m_scene->root()->addChild( node );
+
 }
 
 void ViewPanel::editSnowConstants()  {
