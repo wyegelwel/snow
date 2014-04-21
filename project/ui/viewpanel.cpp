@@ -32,6 +32,7 @@
 #include "sim/collider.h"
 
 #include <QFileDialog>
+#include <QMessageBox>
 
 
 #define FPS 30
@@ -95,28 +96,7 @@ ViewPanel::initializeGL()
     glEnable( GL_LINE_SMOOTH );
     glHint( GL_LINE_SMOOTH_HINT, GL_NICEST );
 
-    // Scene
-
-//    SceneNode *node = new SceneNode;
-
-//    QList<Mesh*> meshes;
-//    OBJParser::load( PROJECT_PATH "/data/models/teapot.obj", meshes );
-//    node->setRenderable( meshes[0] );
-//    m_scene->root()->addChild( node );
-
-//    ParticleSystem *particles = new ParticleSystem;
-//    meshes[0]->fill( *particles, 32*512, 0.1f );
-//    m_engine->addParticleSystem( *particles );
-//    delete particles;
-
-//    Grid grid;
-//    grid.dim = glm::ivec3( 128, 128, 128 );
-//    BBox box = meshes[0]->getWorldBBox( glm::mat4(1.f) );
-//    grid.pos = box.min();
-//    grid.h = box.longestDimSize() / 128.f;
-
-//    m_engine->setGrid( grid );
-
+//
     m_infoPanel->setInfo( "Particles", 0 );
 
     // Render ticker
@@ -125,6 +105,34 @@ ViewPanel::initializeGL()
     m_timer.start();
 
 }
+
+void
+ViewPanel::teapotDemo()
+{
+    /// TODO - this function is temporary and written for convenience
+    /// in the future, open() and save() will read/write from a file format
+
+    // call load on teapot
+    SceneNode *node = new SceneNode;
+    QList<Mesh*> meshes;
+    OBJParser::load( PROJECT_PATH "/data/models/teapot.obj", meshes );
+    // select teapot renderable so we can fill it
+    node->setRenderable( meshes[0] );
+    m_scene->root()->addChild( node );
+    // call fillSelectedMesh()
+
+    ParticleSystem *particles = new ParticleSystem;
+    meshes[0]->fill( *particles, 32*512, 0.1f );
+    m_engine->addParticleSystem( *particles );
+    delete particles;
+
+    BBox box = meshes[0]->getBBox(glm::mat4(1.f) );
+//    BBox box = meshes[0]->getWorldBBox( glm::mat4(1.f) );
+    UiSettings::gridPosition() = box.min();
+    UiSettings::gridDimensions() = glm::ivec3( 128, 128, 128 );
+    UiSettings::gridResolution() = box.longestDimSize() / 128.f;
+}
+
 
 float t = 0.f;
 
@@ -236,6 +244,13 @@ void ViewPanel::startSimulation()
 //        QDir sceneDir("~/offline_renders");
 //        sceneDir.makeAbsolute();
         QString fprefix = QFileDialog::getSaveFileName(this, QString("Choose Export Name"), QString());
+        if ( fprefix.isEmpty() ) {
+            // cancel
+            QMessageBox msgBox;
+            msgBox.setText("Error : Invalid Volume Export Path");
+            msgBox.exec();
+            return;
+        }
         m_engine->initExporter(fprefix);
     }
     m_engine->setGrid( UiSettings::buildGrid() );
