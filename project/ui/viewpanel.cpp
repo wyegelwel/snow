@@ -338,6 +338,7 @@ void ViewPanel::addCollider(ColliderType c)  {
     SceneNode *node = new SceneNode( SceneNode::IMPLICIT_COLLIDER );
     node->setRenderable( col );
     m_scene->root()->addChild( node );
+    m_engine->addCollider(col->getImplicitCollider());
 
 }
 

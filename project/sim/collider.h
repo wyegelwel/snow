@@ -43,6 +43,8 @@ public:
 
     void initializeMesh();
 
+    ImplicitCollider getImplicitCollider();
+
 private:
 
     ImplicitCollider &m_collider;

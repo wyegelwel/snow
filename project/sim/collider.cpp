@@ -17,6 +17,10 @@ Collider::Collider( ImplicitCollider &collider, ColliderType t, vec3 p, vec3 c, 
     initializeMesh();
 }
 
+ImplicitCollider Collider::getImplicitCollider()  {
+    return m_collider;
+}
+
 void Collider::render()
 {
     glPushMatrix();

@@ -44,11 +44,11 @@ Engine::Engine()
     m_params.endTime = 60.f;
     m_params.gravity = vec3( 0.f, -9.8f, 0.f );
 
-    ImplicitCollider collider;
-    collider.center = vec3( 0.f, 0.5f, 0.f );
-    collider.param = vec3( 0.f, 1.f, 0.f );
-    collider.type = HALF_PLANE;
-    m_colliders += collider;
+//    ImplicitCollider collider;
+//    collider.center = vec3( 0.f, 0.5f, 0.f );
+//    collider.param = vec3( 0.f, 1.f, 0.f );
+//    collider.type = HALF_PLANE;
+//    m_colliders += collider;
 
     assert( connect(&m_ticker, SIGNAL(timeout()), this, SLOT(update())) );
 }
