@@ -29,10 +29,9 @@
 
 struct cudaGraphicsResource;
 struct Particle;
+struct ParticleGrid;
 struct ParticleGridNode;
 struct ParticleTempData;
-
-struct GridDataViewer;
 
 class Engine : public QObject, public Renderable
 {
@@ -57,7 +56,7 @@ public:
     void clearParticleSystem();
     ParticleSystem* particleSystem() { return m_particleSystem; }
 
-    void setGrid( const Grid &grid ) { m_grid = grid; }
+    void setGrid( const Grid &grid );
     MaterialConstants& materialConstants() { return m_materialConstants; }
 
     void addCollider( const ImplicitCollider &collider ) { m_colliders += collider; }
@@ -80,20 +79,18 @@ private:
 
     QTimer m_ticker;
 
-    // For debugging
-    GridDataViewer *m_gridViewer;
-
     // CPU data structures
     ParticleSystem *m_particleSystem;
+    ParticleGrid *m_particleGrid;
     Grid m_grid;
     QVector<ImplicitCollider> m_colliders;
     MaterialConstants m_materialConstants;
 
     // CUDA pointers
-    cudaGraphicsResource *m_cudaResource; // Particles
+    cudaGraphicsResource *m_particlesResource; // Particles
+    cudaGraphicsResource *m_nodesResource; // Particle grid nodes
     Grid *m_devGrid;
 
-    ParticleGridNode *m_devNodes;
     ParticleTempData *m_devPGTD;
 
     ImplicitCollider *m_devColliders;

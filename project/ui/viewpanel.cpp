@@ -186,6 +186,7 @@ ViewPanel::paintGrid()
 void
 ViewPanel::mousePressEvent( QMouseEvent *event )
 {
+    makeCurrent();
     UserInput::update(event);
     if ( UserInput::ctrlKey() ) {
         if ( UserInput::leftMouse() ) m_viewport->setState( Viewport::TUMBLING );
@@ -200,6 +201,7 @@ ViewPanel::mousePressEvent( QMouseEvent *event )
 void
 ViewPanel::mouseMoveEvent( QMouseEvent *event )
 {
+    makeCurrent();
     UserInput::update(event);
     m_viewport->mouseMoved();
     if ( m_tool ) m_tool->mouseMoved();
@@ -209,6 +211,7 @@ ViewPanel::mouseMoveEvent( QMouseEvent *event )
 void
 ViewPanel::mouseReleaseEvent( QMouseEvent *event )
 {
+    makeCurrent();
     UserInput::update(event);
     m_viewport->setState( Viewport::IDLE );
     if ( m_tool ) m_tool->mouseReleased();
@@ -218,6 +221,7 @@ ViewPanel::mouseReleaseEvent( QMouseEvent *event )
 void
 ViewPanel::keyPressEvent( QKeyEvent *event )
 {
+    makeCurrent();
     if ( event->key() == Qt::Key_Backspace ) {
         m_scene->deleteSelectedNodes();
     }
@@ -243,6 +247,8 @@ void ViewPanel::loadFromFile(QString fname)
 
 void ViewPanel::startSimulation()
 {
+    makeCurrent();
+
     if ( !m_engine->isRunning() && UiSettings::exportSimulation() )
     {
         // ask the user where the data should be saved
@@ -258,17 +264,17 @@ void ViewPanel::startSimulation()
         }
         m_engine->initExporter(fprefix);
     }
-    m_engine->setGrid( UiSettings::buildGrid() );
 
     m_engine->clearColliders();
-
     for ( SceneNodeIterator it = m_scene->begin(); it.isValid(); ++it ) {
-        if ( (*it)->hasRenderable() &&
-             (*it)->getType() == SceneNode::IMPLICIT_COLLIDER) {
-
-            Collider* col = dynamic_cast<Collider*>((*it)->getRenderable());
-            ImplicitCollider &c = *(col->getImplicitCollider());
-            m_engine->addCollider(c);
+        if ( (*it)->hasRenderable() ) {
+            if ( (*it)->getType() == SceneNode::SIMULATION_GRID ) {
+                m_engine->setGrid( UiSettings::buildGrid((*it)->getCTM()) );
+            } else if ( (*it)->getType() == SceneNode::IMPLICIT_COLLIDER ) {
+                Collider *collider = dynamic_cast<Collider*>((*it)->getRenderable());
+                ImplicitCollider &c = *(collider->getImplicitCollider());
+                m_engine->addCollider(c);
+            }
         }
     }
 
@@ -425,7 +431,9 @@ void ViewPanel::updateSceneGrid()
     SceneNode *gridNode = m_scene->getSceneGridNode();
     if ( gridNode ) {
         SceneGrid *grid = dynamic_cast<SceneGrid*>( gridNode->getRenderable() );
-        grid->setGrid( UiSettings::buildGrid() );
+        grid->setGrid( UiSettings::buildGrid(glm::mat4(1.f)) );
+        gridNode->setBBoxDirty();
     }
+    if ( m_tool ) m_tool->update();
     update();
 }

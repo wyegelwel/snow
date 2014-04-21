@@ -44,6 +44,7 @@ UiSettings::loadSettings()
                            s.value("gridPositionY", 0.f).toFloat(),
                            s.value("gridPositionZ", 0.f).toFloat() );
 
+
     gridDimensions() = glm::ivec3( s.value("gridDimensionX", 128).toInt(),
                                    s.value("gridDimensionY", 128).toInt(),
                                    s.value("gridDimensionZ", 128).toInt() );
@@ -96,10 +97,11 @@ UiSettings::saveSettings()
 }
 
 Grid
-UiSettings::buildGrid()
+UiSettings::buildGrid( const glm::mat4 &ctm )
 {
     Grid grid;
-    grid.pos = UiSettings::gridPosition();
+    glm::vec4 point = ctm * glm::vec4(0,0,0,1);
+    grid.pos = vec3( point.x, point.y, point.z );
     grid.dim = UiSettings::gridDimensions();
     grid.h = UiSettings::gridResolution();
     return grid;

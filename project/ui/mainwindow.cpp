@@ -42,9 +42,9 @@ MainWindow::MainWindow(QWidget *parent) :
 
 MainWindow::~MainWindow()
 {
-    UiSettings::saveSettings();
     UserInput::deleteInstance();
     delete ui;
+    UiSettings::saveSettings();
 }
 
 void MainWindow::loadFromFile()
@@ -127,14 +127,14 @@ void MainWindow::setupUI()
     // Simulation
     assert( connect(ui->startButton, SIGNAL(clicked()), ui->viewPanel, SLOT(startSimulation())) );
     assert( connect(ui->pauseButton, SIGNAL(toggled(bool)), ui->viewPanel, SLOT(pauseSimulation(bool))) );
-    assert( connect(ui->gridXSpinbox, SIGNAL(valueChanged(int)), ui->viewPanel, SLOT(updateSceneGrid())) );
-    assert( connect(ui->gridYSpinbox, SIGNAL(valueChanged(int)), ui->viewPanel, SLOT(updateSceneGrid())) );
-    assert( connect(ui->gridZSpinbox, SIGNAL(valueChanged(int)), ui->viewPanel, SLOT(updateSceneGrid())) );
-    assert( connect(ui->gridResolutionSpinbox, SIGNAL(valueChanged(double)), ui->viewPanel, SLOT(updateSceneGrid())) );
     IntBinding::bindSpinBox( ui->gridXSpinbox, UiSettings::gridDimensions().x, this );
     IntBinding::bindSpinBox( ui->gridYSpinbox, UiSettings::gridDimensions().y, this );
     IntBinding::bindSpinBox( ui->gridZSpinbox, UiSettings::gridDimensions().z, this );
     FloatBinding::bindSpinBox( ui->gridResolutionSpinbox, UiSettings::gridResolution(), this );
+    assert( connect(ui->gridXSpinbox, SIGNAL(valueChanged(int)), ui->viewPanel, SLOT(updateSceneGrid())) );
+    assert( connect(ui->gridYSpinbox, SIGNAL(valueChanged(int)), ui->viewPanel, SLOT(updateSceneGrid())) );
+    assert( connect(ui->gridZSpinbox, SIGNAL(valueChanged(int)), ui->viewPanel, SLOT(updateSceneGrid())) );
+    assert( connect(ui->gridResolutionSpinbox, SIGNAL(valueChanged(double)), ui->viewPanel, SLOT(updateSceneGrid())) );
 
     BoolBinding::bindCheckBox( ui->exportCheckbox, UiSettings::exportSimulation(), this );
 

@@ -40,12 +40,16 @@ public:
 
     virtual BBox getBBox( const glm::mat4 &ctm );
 
-    GLuint vbo() const { return m_glVBO; }
+    GLuint vbo() { if ( !hasBuffers() ) buildBuffers(); return m_glVBO; }
 
-    void merge( const ParticleSystem &particles ) { m_particles += particles.m_particles; deleteVBO(); }
+    void merge( const ParticleSystem &particles ) { m_particles += particles.m_particles; deleteBuffers(); }
 
-    ParticleSystem& operator += ( const ParticleSystem &particles ) { m_particles += particles.m_particles; deleteVBO(); return *this; }
-    ParticleSystem& operator += ( const Particle &particle ) { m_particles.append(particle); deleteVBO(); return *this; }
+    ParticleSystem& operator += ( const ParticleSystem &particles ) { m_particles += particles.m_particles; deleteBuffers(); return *this; }
+    ParticleSystem& operator += ( const Particle &particle ) { m_particles.append(particle); deleteBuffers(); return *this; }
+
+    bool hasBuffers() const;
+    void buildBuffers();
+    void deleteBuffers();
 
 protected:
 
@@ -55,10 +59,6 @@ protected:
     QVector<Particle> m_particles;
     GLuint m_glVBO;
     GLuint m_glVAO;
-
-    bool hasVBO() const;
-    void buildVBO();
-    void deleteVBO();
 
 };
 

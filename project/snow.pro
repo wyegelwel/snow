@@ -42,8 +42,8 @@ SOURCES += \
     ui/tools/selectiontool.cpp \
     ui/tools/movetool.cpp \
     scene/scenegrid.cpp \
-    sim/griddataviewer.cpp \
-    sim/particlesystem.cpp
+    sim/particlesystem.cpp \
+    sim/particlegrid.cpp
 
 
 
@@ -84,8 +84,8 @@ HEADERS  += \
     ui/tools/Tools.h \
     ui/tools/movetool.h \
     scene/scenegrid.h \
-    sim/griddataviewer.h \
-    sim/particlesystem.h
+    sim/particlesystem.h \
+    sim/particlegrid.h
 
 FORMS    += ui/mainwindow.ui
 
@@ -125,7 +125,9 @@ OTHER_FILES += \
     cuda/simulation.cu \
     cuda/collider.cu \
     resources/shaders/particlesystem.vert \
-    resources/shaders/particlesystem.frag
+    resources/shaders/particlesystem.frag \
+    resources/shaders/particlegrid.frag \
+    resources/shaders/particlegrid.vert
 
 # GPU ARCH
 # this gets passed as the gpu-architecture flag to nvcc compiler

@@ -21,24 +21,25 @@
 ParticleSystem::ParticleSystem()
 {
     m_glVBO = 0;
+    m_glVAO = 0;
 }
 
 ParticleSystem::~ParticleSystem()
 {
-    deleteVBO();
+    deleteBuffers();
 }
 
 void
 ParticleSystem::clear()
 {
     m_particles.clear();
-    deleteVBO();
+    deleteBuffers();
 }
 
 void
 ParticleSystem::render()
 {
-    if ( !hasVBO() ) buildVBO();
+    if ( !hasBuffers() ) buildBuffers();
 
     QGLShaderProgram *shader = ParticleSystem::shader();
     if ( shader ) {
@@ -66,15 +67,15 @@ ParticleSystem::render()
 }
 
 bool
-ParticleSystem::hasVBO() const
+ParticleSystem::hasBuffers() const
 {
     return m_glVBO > 0 && glIsBuffer( m_glVBO );
 }
 
 void
-ParticleSystem::buildVBO()
+ParticleSystem::buildBuffers()
 {
-    deleteVBO();
+    deleteBuffers();
 
     // Build OpenGL VBO
     glGenBuffers( 1, &m_glVBO );
@@ -102,15 +103,14 @@ ParticleSystem::buildVBO()
     glVertexAttribPointer( 3, 1, GL_FLOAT, GL_FALSE, sizeof(Particle), (void*)(2*sizeof(vec3)+sizeof(GLfloat)) );
 
     glBindVertexArray( 0 );
-
     glBindBuffer( GL_ARRAY_BUFFER, 0 );
 }
 
 void
-ParticleSystem::deleteVBO()
+ParticleSystem::deleteBuffers()
 {
     // Delete OpenGL VBO and unregister with CUDA
-    if ( hasVBO() ) {
+    if ( hasBuffers() ) {
         glBindBuffer( GL_ARRAY_BUFFER, m_glVBO );
         glDeleteBuffers( 1, &m_glVBO );
         glDeleteVertexArrays( 1, &m_glVAO );

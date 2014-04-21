@@ -29,7 +29,7 @@ struct Grid
 
     inline bool empty() const { return cellCount() == 0; }
 
-    inline glm::ivec3 nodeDim() const {return dim+1;}
+    inline glm::ivec3 nodeDim() const { return dim + glm::ivec3(1,1,1); }
     inline int nodeCount() const { return (dim.x+1)*(dim.y+1)*(dim.z+1); }
     inline int cellCount() const { return dim.x * dim.y * dim.z; }
     inline int index( int i, int j, int k ) const { return (i*(dim.y*dim.z) + j*(dim.z) + k); }
