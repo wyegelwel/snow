@@ -162,6 +162,7 @@ void MainWindow::setupUI()
     CheckboxBoolAttribute::bindBool( ui->showGridDataCheckbox, &UiSettings::showGridData(), this );
     ComboIntAttribute::bindInt( ui->showGridDataCombo, &UiSettings::showGridDataMode(), this );
     CheckboxBoolAttribute::bindBool( ui->showParticlesCheckbox, &UiSettings::showParticles(), this );
+    ComboIntAttribute::bindInt( ui->showParticlesCombo, &UiSettings::showParticlesMode(), this );
 
     // Tools
     ui->toolButtonGroup->setId( ui->selectionToolButton, Tool::SELECTION );

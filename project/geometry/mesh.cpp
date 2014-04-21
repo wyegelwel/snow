@@ -26,7 +26,7 @@
 #include "cuda/functions.h"
 #include "geometry/bbox.h"
 #include "geometry/grid.h"
-#include "sim/particle.h"
+#include "sim/particlesystem.h"
 #include "ui/uisettings.h"
 
 Mesh::Mesh()

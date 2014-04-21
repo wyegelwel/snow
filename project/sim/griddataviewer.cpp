@@ -82,10 +82,10 @@ GridDataViewer::buildVBO()
 
     void (GridDataViewer::*colorize)( const ParticleGridNode&, float&, float&, float&, float& ) const;
     switch ( (UiSettings::GridDataMode)(UiSettings::showGridDataMode()) ) {
-    case UiSettings::MASS:
+    case UiSettings::NODE_MASS:
         colorize = &GridDataViewer::colorizeWithMass;
         break;
-    case UiSettings::VELOCITY:
+    case UiSettings::NODE_VELOCITY:
         colorize = &GridDataViewer::colorizeWithVelocity;
         break;
     default:

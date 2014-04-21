@@ -55,8 +55,9 @@ UiSettings::loadSettings()
     showGrid() = s.value( "showGrid", false ).toBool();
     showGridMode() = s.value( "showGridMode", HALF_CELLS ).toInt();
     showGridData() = s.value( "showGridData", false ).toBool();
-    showGridDataMode() = s.value( "showGridDataMode", MASS ).toInt();
+    showGridDataMode() = s.value( "showGridDataMode", NODE_MASS ).toInt();
     showParticles() = s.value( "showParticles", true ).toBool();
+    showParticlesMode() = s.value( "showParticlesMode", PARTICLE_MASS ).toInt();
 
     selectionColor() = glm::vec4( 0.302f, 0.773f, 0.839f, 1.f );
 }
@@ -91,6 +92,7 @@ UiSettings::saveSettings()
     s.setValue( "showGridData", showGridData() );
     s.setValue( "showGridDataMode", showGridDataMode() );
     s.setValue( "showParticles", showParticles() );
+    s.setValue( "showParticlesMode", showParticlesMode() );
 }
 
 Grid

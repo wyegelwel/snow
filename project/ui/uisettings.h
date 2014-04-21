@@ -52,8 +52,16 @@ public:
 
     enum GridDataMode
     {
-        MASS,
-        VELOCITY
+        NODE_MASS,
+        NODE_VELOCITY,
+        NODE_SPEED
+    };
+
+    enum ParticlesMode
+    {
+        PARTICLE_MASS,
+        PARTICLE_VELOCITY,
+        PARTICLE_SPEED
     };
 
 public:
@@ -94,6 +102,7 @@ private:
     DEFINE_SETTING( bool, showGridData )
     DEFINE_SETTING( int, showGridDataMode )
     DEFINE_SETTING( bool, showParticles )
+    DEFINE_SETTING( int, showParticlesMode )
 
     DEFINE_SETTING( glm::vec4, selectionColor )
 

@@ -1,0 +1,6 @@
+<RCC>
+    <qresource prefix="/shaders">
+        <file>particlesystem.frag</file>
+        <file>particlesystem.vert</file>
+    </qresource>
+</RCC>

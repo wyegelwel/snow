@@ -15,16 +15,7 @@
   </property>
   <widget class="QWidget" name="centralWidget">
    <layout class="QGridLayout" name="gridLayout">
-    <property name="leftMargin">
-     <number>3</number>
-    </property>
-    <property name="topMargin">
-     <number>3</number>
-    </property>
-    <property name="rightMargin">
-     <number>3</number>
-    </property>
-    <property name="bottomMargin">
+    <property name="margin">
      <number>3</number>
     </property>
     <property name="spacing">
@@ -68,9 +59,9 @@
        <property name="geometry">
         <rect>
          <x>0</x>
-         <y>-113</y>
-         <width>306</width>
-         <height>711</height>
+         <y>-269</y>
+         <width>284</width>
+         <height>777</height>
         </rect>
        </property>
        <layout class="QGridLayout" name="gridLayout_2">
@@ -490,6 +481,30 @@
                <string>Velocity</string>
               </property>
              </item>
+             <item>
+              <property name="text">
+               <string>Speed</string>
+              </property>
+             </item>
+            </widget>
+           </item>
+           <item row="3" column="2">
+            <widget class="QComboBox" name="showParticlesCombo">
+             <item>
+              <property name="text">
+               <string>Mass</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>Velocity</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>Speed</string>
+              </property>
+             </item>
             </widget>
            </item>
           </layout>
@@ -857,7 +872,7 @@
      <x>0</x>
      <y>0</y>
      <width>1000</width>
-     <height>19</height>
+     <height>29</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">

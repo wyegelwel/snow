@@ -8,10 +8,12 @@
 **
 **************************************************************************/
 
+#include <GL/glew.h>
 #include <GL/gl.h>
+
 #include <QQueue>
 
-#include "viewpanel.h"
+#include "ui/viewpanel.h"
 
 #include "common/common.h"
 #include "ui/userinput.h"
@@ -24,7 +26,7 @@
 #include "scene/scenenode.h"
 #include "scene/scenenodeiterator.h"
 #include "sim/engine.h"
-#include "sim/particle.h"
+#include "sim/particlesystem.h"
 #include "ui/infopanel.h"
 #include "ui/picker.h"
 #include "ui/tools/Tools.h"
@@ -53,6 +55,9 @@ ViewPanel::ViewPanel( QWidget *parent )
 
     m_scene = new Scene;
     m_engine = new Engine;
+
+    makeCurrent();
+    glewInit();
 }
 
 ViewPanel::~ViewPanel()
@@ -103,7 +108,6 @@ ViewPanel::initializeGL()
     assert( connect(&m_ticker, SIGNAL(timeout()), this, SLOT(update())) );
     m_ticker.start( 1000/FPS );
     m_timer.start();
-
 }
 
 void
@@ -126,8 +130,7 @@ ViewPanel::teapotDemo()
     m_engine->addParticleSystem( *particles );
     delete particles;
 
-    BBox box = meshes[0]->getBBox(glm::mat4(1.f) );
-//    BBox box = meshes[0]->getWorldBBox( glm::mat4(1.f) );
+    BBox box = meshes[0]->getBBox( glm::mat4(1.f) );
     UiSettings::gridPosition() = box.min();
     UiSettings::gridDimensions() = glm::ivec3( 128, 128, 128 );
     UiSettings::gridResolution() = box.longestDimSize() / 128.f;
@@ -145,7 +148,7 @@ ViewPanel::paintGL()
     m_viewport->push(); {
         m_scene->render();
         m_engine->render();
-        //paintGrid();
+        paintGrid();
         if ( m_tool ) m_tool->render();
         m_viewport->drawAxis();
     } m_viewport->pop();
@@ -218,6 +221,8 @@ ViewPanel::keyPressEvent( QKeyEvent *event )
     if ( event->key() == Qt::Key_Backspace ) {
         m_scene->deleteSelectedNodes();
     }
+    if ( m_tool ) m_tool->update();
+    update();
 }
 
 /// temporary hack: I'm calling the SceneParser from here for the file saving

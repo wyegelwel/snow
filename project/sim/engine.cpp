@@ -14,7 +14,7 @@
 #include "sim/collider.h"
 #include "sim/engine.h"
 #include "sim/griddataviewer.h"
-#include "sim/particle.h"
+#include "sim/particlesystem.h"
 #include "sim/particlegridnode.h"
 #include "ui/uisettings.h"
 
