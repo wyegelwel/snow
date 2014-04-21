@@ -10,6 +10,7 @@
 
 #include <QFileDialog>
 #include <QDir>
+#include <QPixmap>
 #include <iostream>
 
 #include "mainwindow.h"
@@ -174,4 +175,23 @@ void MainWindow::resizeEvent( QResizeEvent* )
 void MainWindow::moveEvent( QMoveEvent* )
 {
     UiSettings::windowPosition() = pos();
+}
+
+void MainWindow::takeScreenshot()
+{
+    ui->viewPanel->pauseDrawing();
+    ui->viewPanel->pauseSimulation();
+
+    QPixmap pixmap(this->rect().size());
+    this->render(&pixmap, QPoint(), QRegion(this->rect()));
+    // prompt user where to save it
+
+    QString fname = QFileDialog::getSaveFileName(this, QString("Save Screenshot"), PROJECT_PATH "/data/");
+    if ( !fname.isEmpty() ) {
+        QFile file(fname);
+        file.open(QIODevice::WriteOnly);
+        pixmap.save(&file, "PNG");
+    }
+    ui->viewPanel->resumeDrawing();
+    ui->viewPanel->resumeSimulation();
 }

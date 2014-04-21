@@ -59,7 +59,7 @@
        <property name="geometry">
         <rect>
          <x>0</x>
-         <y>-150</y>
+         <y>0</y>
          <width>284</width>
          <height>772</height>
         </rect>
@@ -852,6 +852,7 @@
     </property>
     <addaction name="actionOpen"/>
     <addaction name="actionSave"/>
+    <addaction name="actionScreenshot"/>
    </widget>
    <addaction name="menuFile"/>
   </widget>
@@ -878,6 +879,14 @@
    </property>
    <property name="shortcut">
     <string>Ctrl+S</string>
+   </property>
+  </action>
+  <action name="actionScreenshot">
+   <property name="text">
+    <string>Take Screenshot</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+P</string>
    </property>
   </action>
  </widget>
@@ -932,11 +941,27 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>actionScreenshot</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>takeScreenshot()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>499</x>
+     <y>299</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>saveToFile()</slot>
   <slot>loadFromFile()</slot>
-  <slot>renderOffline()</slot>
+  <slot>takeScreenshot()</slot>
  </slots>
  <buttongroups>
   <buttongroup name="toolButtonGroup"/>

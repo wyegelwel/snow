@@ -29,6 +29,9 @@ public slots:
     /// loads snow simulation parameters from file
     void loadFromFile();
 
+    /// saves out screenshot of MainWindow
+    void takeScreenshot();
+
     void importMesh();
 
     void addCollider();
