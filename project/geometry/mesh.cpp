@@ -123,39 +123,48 @@ Mesh::render()
         buildVBO();
     }
 
-    glPushAttrib( GL_DEPTH_TEST );
-    glEnable( GL_DEPTH_TEST );
+    if ( UiSettings::showMesh() ) {
 
-    glEnable( GL_LINE_SMOOTH );
-    glHint( GL_LINE_SMOOTH_HINT, GL_NICEST );
+        glPushAttrib( GL_DEPTH_TEST );
+        glEnable( GL_DEPTH_TEST );
 
-    glm::vec4 color = ( m_selected ) ? glm::mix( m_color, UiSettings::selectionColor(), 0.5f ) : m_color;
+        glEnable( GL_LINE_SMOOTH );
+        glHint( GL_LINE_SMOOTH_HINT, GL_NICEST );
 
-    if ( UiSettings::showSolid() ) {
-        glPushAttrib( GL_LIGHTING_BIT );
-        glEnable( GL_LIGHTING );
-        glMaterialfv( GL_FRONT_AND_BACK, GL_AMBIENT, glm::value_ptr(color*0.2f) );
-        glMaterialfv( GL_FRONT_AND_BACK, GL_DIFFUSE, glm::value_ptr(color) );
-        glPolygonMode( GL_FRONT_AND_BACK, GL_FILL );
-        renderVBO();
+        glPushAttrib( GL_COLOR_BUFFER_BIT );
+        glEnable( GL_BLEND );
+        glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
+
+        glm::vec4 color = ( m_selected ) ? glm::mix( m_color, UiSettings::selectionColor(), 0.5f ) : m_color;
+
+        if ( UiSettings::showMeshMode() == UiSettings::SOLID || UiSettings::showMeshMode() == UiSettings::SOLID_AND_WIREFRAME ) {
+            glPushAttrib( GL_LIGHTING_BIT );
+            glEnable( GL_LIGHTING );
+            glMaterialfv( GL_FRONT_AND_BACK, GL_AMBIENT, glm::value_ptr(color*0.2f) );
+            glMaterialfv( GL_FRONT_AND_BACK, GL_DIFFUSE, glm::value_ptr(color) );
+            glPolygonMode( GL_FRONT_AND_BACK, GL_FILL );
+            renderVBO();
+            glPopAttrib();
+        }
+
+        if ( UiSettings::showMeshMode() == UiSettings::WIREFRAME || UiSettings::showMeshMode() == UiSettings::SOLID_AND_WIREFRAME ) {
+            glPushAttrib( GL_POLYGON_BIT );
+            glEnable( GL_POLYGON_OFFSET_LINE );
+            glPolygonOffset( -1.f, -1.f );
+            glPushAttrib( GL_LIGHTING_BIT );
+            glDisable( GL_LIGHTING );
+            glLineWidth( 1.f );
+            glColor4fv( glm::value_ptr(color*0.8f) );
+            glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
+            renderVBO();
+            glPopAttrib();
+            glPopAttrib();
+        }
+
         glPopAttrib();
+        glPopAttrib();
+
     }
-
-    if ( UiSettings::showWireframe() ) {
-        glPushAttrib( GL_POLYGON_BIT );
-        glEnable( GL_POLYGON_OFFSET_LINE );
-        glPolygonOffset( -1.f, -1.f );
-        glPushAttrib( GL_LIGHTING_BIT );
-        glDisable( GL_LIGHTING );
-        glLineWidth( 1.f );
-        glColor4fv( glm::value_ptr(color*0.8f) );
-        glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
-        renderVBO();
-        glPopAttrib();
-        glPopAttrib();
-    }
-
-    glPopAttrib();
 }
 
 void
@@ -164,19 +173,16 @@ Mesh::renderForPicker()
     if ( !hasVBO() ) {
         buildVBO();
     }
-    glPushAttrib( GL_DEPTH_TEST );
-    glEnable( GL_DEPTH_TEST );
-    glPushAttrib( GL_LIGHTING_BIT );
-    glDisable( GL_LIGHTING );
-    glColor3f( 1.f, 1.f, 1.f );
-    glPushAttrib( GL_POLYGON_BIT );
-    if ( !UiSettings::showSolid() ) {
-        glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
+    if ( UiSettings::showMesh() ) {
+        glPushAttrib( GL_DEPTH_TEST );
+        glEnable( GL_DEPTH_TEST );
+        glPushAttrib( GL_LIGHTING_BIT );
+        glDisable( GL_LIGHTING );
+        glColor3f( 1.f, 1.f, 1.f );
+        renderVBO();
+        glPopAttrib();
+        glPopAttrib();
     }
-    renderVBO();
-    glPopAttrib();
-    glPopAttrib();
-    glPopAttrib();
 }
 
 void

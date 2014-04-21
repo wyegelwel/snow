@@ -10,6 +10,12 @@
 
 #include "selectiontool.h"
 
+#ifndef GLM_FORCE_RADIANS
+    #define GLM_FORCE_RADIANS
+#endif
+#include "glm/mat4x4.hpp"
+#include "glm/gtc/type_ptr.hpp"
+
 #include "common/renderable.h"
 #include "cuda/vector.cu"
 #include "geometry/bbox.h"
@@ -77,8 +83,12 @@ SelectionTool::getSelectedSceneNode()
     if ( !renderables.empty() ) {
         Picker picker( renderables.size() );
         for ( int i = 0; i < renderables.size(); ++i ) {
+            glMatrixMode( GL_MODELVIEW );
+            glPushMatrix();
+            glMultMatrixf( glm::value_ptr(renderables[i]->getCTM()) );
             picker.setObjectIndex(i);
             renderables[i]->getRenderable()->renderForPicker();
+            glPopMatrix();
         }
         unsigned int index = picker.getPick();
         if ( index != Picker::NO_PICK ) {

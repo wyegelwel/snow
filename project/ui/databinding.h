@@ -54,6 +54,15 @@ public:
         return binding;
     }
 
+    static IntBinding* bindTriState( QCheckBox *checkbox, int &value, QObject *parent = NULL )
+    {
+        IntBinding *binding = new IntBinding( value, parent );
+        checkbox->setTristate( true );
+        checkbox->setCheckState( (Qt::CheckState)(value) );
+        assert( connect(checkbox, SIGNAL(stateChanged(int)), binding, SLOT(valueChanged(int))) );
+        return binding;
+    }
+
 public slots:
 
     void valueChanged( int value )

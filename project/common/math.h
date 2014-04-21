@@ -53,9 +53,29 @@
     ( (_X_>_Y_) ? _X_ : _Y_ );          \
 })
 
+#define CLAMP( VALUE, A, B )                            \
+({                                                      \
+    __typeof__ (VALUE) _V_ = (VALUE);                   \
+    __typeof__ (A) _A_ = (A);                           \
+    __typeof__ (B) _B_ = (B);                           \
+    ((_V_ < _A_) ? _A_ : ((_V_ > _B_) ? _B_ : _V_));    \
+})
+
 static inline float urand( float min = 0.f, float max = 1.f )
 {
     return min + (float(rand())/float(RAND_MAX))*(max-min);
+}
+
+static inline float smoothstep( float value, float edge0, float edge1 )
+{
+    float x = CLAMP( (value-edge0)/(edge1-edge0), 0.f, 1.f );
+    return x*x*(3-2*x);
+}
+
+static inline float smootherstep( float value, float edge0, float edge1 )
+{
+    float x = CLAMP( (value-edge0)/(edge1-edge0), 0.f, 1.f );
+    return x*x*x*(x*(x*6-15)+10);
 }
 
 #endif // MATH_H

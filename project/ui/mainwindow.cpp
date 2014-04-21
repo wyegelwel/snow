@@ -85,6 +85,7 @@ void MainWindow::importMesh()
     if ( !filename.isEmpty() ) {
         ui->viewPanel->loadMesh( filename );
     }
+    ui->showMeshCheckbox->setChecked( true );
 
     ui->viewPanel->resumeSimulation();
     ui->viewPanel->resumeDrawing();
@@ -148,26 +149,21 @@ void MainWindow::setupUI()
     assert( connect(ui->editSimConstantsButton, SIGNAL(clicked()), ui->viewPanel, SLOT(editSnowConstants())));
 
     // View Panel
-    assert( connect(ui->showBBoxCheckbox, SIGNAL(toggled(bool)), ui->showGridCheckbox, SLOT(setEnabled(bool))) );
-    assert( connect(ui->wireframeCheckbox, SIGNAL(clicked()), this, SLOT(checkMeshRenderSettings())) );
-    assert( connect(ui->solidCheckbox, SIGNAL(clicked()), this, SLOT(checkMeshRenderSettings())) );
-    BoolBinding::bindCheckBox( ui->wireframeCheckbox, UiSettings::showWireframe(), this );
-    BoolBinding::bindCheckBox( ui->solidCheckbox, UiSettings::showSolid(), this );
-    BoolBinding::bindCheckBox( ui->showBBoxCheckbox, UiSettings::showBBox(), this );
-    BoolBinding::bindCheckBox( ui->showGridCheckbox, UiSettings::showGrid(), this );
+    assert( connect(ui->showGridCheckbox, SIGNAL(toggled(bool)), ui->showGridCombo, SLOT(setEnabled(bool))) );
+    assert( connect(ui->showMeshCheckbox, SIGNAL(toggled(bool)), ui->showMeshCombo, SLOT(setEnabled(bool))) );
+    CheckboxBoolAttribute::bindBool( ui->showMeshCheckbox, &UiSettings::showMesh(), this );
+    ComboIntAttribute::bindInt( ui->showMeshCombo, &UiSettings::showMeshMode(), this );
+    CheckboxBoolAttribute::bindBool( ui->showGridCheckbox, &UiSettings::showGrid(), this );
+    ComboIntAttribute::bindInt( ui->showGridCombo, &UiSettings::showGridMode(), this );
+    CheckboxBoolAttribute::bindBool( ui->showGridDataCheckbox, &UiSettings::showGridData(), this );
+    ComboIntAttribute::bindInt( ui->showGridDataCombo, &UiSettings::showGridDataMode(), this );
+    CheckboxBoolAttribute::bindBool( ui->showParticlesCheckbox, &UiSettings::showParticles(), this );
 
     // Tools
     ui->toolButtonGroup->setId( ui->selectionToolButton, Tool::SELECTION );
     ui->toolButtonGroup->setId( ui->moveToolButton, Tool::MOVE );
     assert( connect(ui->toolButtonGroup, SIGNAL(buttonClicked(int)), ui->viewPanel, SLOT(setTool(int))) );
     ui->selectionToolButton->click();
-}
-
-void MainWindow::checkMeshRenderSettings()
-{
-    if ( !ui->wireframeCheckbox->isChecked() && !ui->solidCheckbox->isChecked() ) {
-        ui->wireframeCheckbox->click();
-    }
 }
 
 void MainWindow::resizeEvent( QResizeEvent* )

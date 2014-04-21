@@ -37,7 +37,8 @@ SOURCES += \
     ui/picker.cpp \
     ui/tools/selectiontool.cpp \
     ui/tools/movetool.cpp \
-    scene/scenegrid.cpp
+    scene/scenegrid.cpp \
+    sim/griddataviewer.cpp
 
 
 
@@ -77,7 +78,8 @@ HEADERS  += \
     ui/tools/selectiontool.h \
     ui/tools/Tools.h \
     ui/tools/movetool.h \
-    scene/scenegrid.h
+    scene/scenegrid.h \
+    sim/griddataviewer.h
 
 FORMS    += ui/mainwindow.ui
 
