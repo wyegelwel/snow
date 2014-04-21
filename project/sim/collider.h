@@ -25,16 +25,21 @@ struct ImplicitCollider {
 
 #include "common/renderable.h"
 #include "geometry/mesh.h"
+#include "geometry/bbox.h"
 
 class Collider : public Renderable {
 
 public:
 
 
-    Collider( ImplicitCollider &collider );
+    Collider( ImplicitCollider &collider, ColliderType t, vec3 p, vec3 c = vec3(0,0,0), vec3 v = vec3(0,0,0));
     virtual void render();//{mesh->render();}
 
-    virtual void init() = 0;
+//    virtual void init() = 0;
+
+    virtual void renderForPicker();
+
+    virtual BBox getBBox(const glm::mat4 &ctm);
 
     void initializeMesh();
 

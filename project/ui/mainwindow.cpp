@@ -96,6 +96,7 @@ void MainWindow::addCollider()  {
     ui->viewPanel->pauseDrawing();
 
     QString colliderType = ui->chooseCollider->currentText();
+    bool isType = true;
     ColliderType c;
     if(colliderType == "Sphere") {
         c = SPHERE;
@@ -103,11 +104,10 @@ void MainWindow::addCollider()  {
     else if(colliderType == "Plane")  {
         c = HALF_PLANE;
     }
-    else {}
-    if(c)  {
+    else {isType = false;}
+    if(isType)  {
         ui->viewPanel->addCollider(c);
     }
-
     ui->viewPanel->resumeSimulation();
     ui->viewPanel->resumeDrawing();
 }
