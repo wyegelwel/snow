@@ -32,6 +32,8 @@ struct Particle;
 struct ParticleGridNode;
 struct ParticleTempData;
 
+struct GridDataViewer;
+
 class Engine : public QObject, public Renderable
 {
 
@@ -77,6 +79,9 @@ public slots:
 private:
 
     QTimer m_ticker;
+
+    // For debugging
+    GridDataViewer *m_gridViewer;
 
     // CPU data structures
     ParticleSystem *m_particleSystem;

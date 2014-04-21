@@ -3,13 +3,17 @@
 #include "qgl.h"
 #include <iostream>
 
-//#define PLANE_CONSTANT 50.0;
+#define PLANE_CONSTANT 10.0
 
-float const PLANE_CONSTANT = 10.0f;
+//float const PLANE_CONSTANT = 10.0f;
 
-Collider::Collider( ImplicitCollider &collider )
+Collider::Collider( ImplicitCollider &collider, ColliderType t, vec3 p, vec3 c, vec3 v)
     : m_collider(collider)
 {
+    m_collider.center = c;
+    m_collider.param = p;
+    m_collider.velocity = v;
+    m_collider.type = t;
     initializeMesh();
 }
 
@@ -29,6 +33,27 @@ void Collider::render()
     }
     m_mesh->render();
     glPopMatrix();
+}
+
+void Collider::renderForPicker()  {
+    glPushMatrix();
+    glTranslatef( m_collider.center.x, m_collider.center.y, m_collider.center.z );
+    switch( m_collider.type )  {
+    case(SPHERE):
+        renderSphere();
+        break;
+    case(HALF_PLANE):
+        renderPlane();
+        break;
+    default:
+        break;
+    }
+    m_mesh->renderForPicker();
+    glPopMatrix();
+}
+
+BBox Collider::getBBox(const glm::mat4 &ctm) {
+    m_mesh->getBBox(ctm);
 }
 
 void Collider::renderSphere()

@@ -47,7 +47,7 @@ SceneGrid::render()
         buildVBO();
     }
 
-    if ( m_vboSize > 0 && UiSettings::showBBox() ) {
+    if ( UiSettings::showGrid() ) {
 
         glPushAttrib( GL_DEPTH_BUFFER_BIT );
         glEnable( GL_DEPTH_TEST );
@@ -70,7 +70,11 @@ SceneGrid::render()
         glLineWidth( 3.f );
         glDrawArrays( GL_LINES, 0, 24 );
 
-        if ( UiSettings::showGrid() ) {
+        if ( UiSettings::showGridMode() == UiSettings::HALF_CELLS ) {
+            glColor4f( c.x, c.y, c.z, 0.25f );
+            glLineWidth( 0.5f );
+            glDrawArrays( GL_LINES, 24, (m_vboSize-24)/2 );
+        } else if ( UiSettings::showGridMode() == UiSettings::FULL_CELLS ) {
             glColor4f( c.x, c.y, c.z, 0.25f );
             glLineWidth( 0.5f );
             glDrawArrays( GL_LINES, 24, m_vboSize-24 );
@@ -129,50 +133,74 @@ SceneGrid::buildVBO()
     data += vec3( min.x, max.y, min.z );
     data += vec3( max.x, max.y, min.z );
 
-    // yz faces
+    // -yz face
     for ( int i = 1; i < dim.y; ++i ) {
         float y = min.y + i*h;
         data += vec3( min.x, y, min.z );
         data += vec3( min.x, y, max.z );
-        data += vec3( max.x, y, min.z );
-        data += vec3( max.x, y, max.z );
     }
     for ( int i = 1; i < dim.z; ++i ) {
         float z = min.z + i*h;
         data += vec3( min.x, min.y, z );
         data += vec3( min.x, max.y, z );
-        data += vec3( max.x, min.y, z );
-        data += vec3( max.x, max.y, z );
     }
 
-    // xy faces
+    // -xy face
     for ( int i = 1; i < dim.x; ++i ) {
         float x = min.x + i*h;
         data += vec3( x, min.y, min.z );
         data += vec3( x, max.y, min.z );
-        data += vec3( x, min.y, max.z );
-        data += vec3( x, max.y, max.z );
     }
     for ( int i = 1; i < dim.y; ++i ) {
         float y = min.y + i*h;
         data += vec3( min.x, y, min.z );
         data += vec3( max.x, y, min.z );
-        data += vec3( min.x, y, max.z );
-        data += vec3( max.x, y, max.z );
     }
 
-    // xz faces
+    // -xz face
     for ( int i = 1; i < dim.x; ++i ) {
         float x = min.x + i*h;
         data += vec3( x, min.y, min.z );
         data += vec3( x, min.y, max.z );
-        data += vec3( x, max.y, min.z );
-        data += vec3( x, max.y, max.z );
     }
     for ( int i = 1; i < dim.z; ++i ) {
         float z = min.z + i*h;
         data += vec3( min.x, min.y, z );
         data += vec3( max.x, min.y, z );
+    }
+
+    // +yz face
+    for ( int i = 1; i < dim.y; ++i ) {
+        float y = min.y + i*h;
+        data += vec3( max.x, y, min.z );
+        data += vec3( max.x, y, max.z );
+    }
+    for ( int i = 1; i < dim.z; ++i ) {
+        float z = min.z + i*h;
+        data += vec3( max.x, min.y, z );
+        data += vec3( max.x, max.y, z );
+    }
+
+    // +xy face
+    for ( int i = 1; i < dim.x; ++i ) {
+        float x = min.x + i*h;
+        data += vec3( x, min.y, max.z );
+        data += vec3( x, max.y, max.z );
+    }
+    for ( int i = 1; i < dim.y; ++i ) {
+        float y = min.y + i*h;
+        data += vec3( min.x, y, max.z );
+        data += vec3( max.x, y, max.z );
+    }
+
+    // +xz face
+    for ( int i = 1; i < dim.x; ++i ) {
+        float x = min.x + i*h;
+        data += vec3( x, max.y, min.z );
+        data += vec3( x, max.y, max.z );
+    }
+    for ( int i = 1; i < dim.z; ++i ) {
+        float z = min.z + i*h;
         data += vec3( min.x, max.y, z );
         data += vec3( max.x, max.y, z );
     }

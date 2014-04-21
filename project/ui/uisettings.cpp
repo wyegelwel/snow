@@ -50,10 +50,13 @@ UiSettings::loadSettings()
 
     gridResolution() = s.value( "gridResolution", 0.05f ).toFloat();
 
-    showWireframe() = s.value( "showWireframe", true ).toBool();
-    showSolid() = s.value( "showSolid", true ).toBool();
-    showBBox() = s.value( "showBBox", true ).toBool();
+    showMesh() = s.value( "showMesh", true ).toBool();
+    showMeshMode() = s.value( "showMeshMode", WIREFRAME ).toInt();
     showGrid() = s.value( "showGrid", false ).toBool();
+    showGridMode() = s.value( "showGridMode", HALF_CELLS ).toInt();
+    showGridData() = s.value( "showGridData", false ).toBool();
+    showGridDataMode() = s.value( "showGridDataMode", MASS ).toInt();
+    showParticles() = s.value( "showParticles", true ).toBool();
 
     selectionColor() = glm::vec4( 0.302f, 0.773f, 0.839f, 1.f );
 }
@@ -81,10 +84,13 @@ UiSettings::saveSettings()
 
     s.setValue( "gridResolution", gridResolution() );
 
-    s.setValue( "showWireframe", showWireframe() );
-    s.setValue( "showSolid", showSolid() );
-    s.setValue( "showBBox", showBBox() );
+    s.setValue( "showMesh", showMesh() );
+    s.setValue( "showMeshMode", showMeshMode() );
     s.setValue( "showGrid", showGrid() );
+    s.setValue( "showGridMode", showGridMode() );
+    s.setValue( "showGridData", showGridData() );
+    s.setValue( "showGridDataMode", showGridDataMode() );
+    s.setValue( "showParticles", showParticles() );
 }
 
 Grid

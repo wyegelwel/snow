@@ -13,6 +13,7 @@
 #include "common/common.h"
 #include "sim/collider.h"
 #include "sim/engine.h"
+#include "sim/griddataviewer.h"
 #include "sim/particle.h"
 #include "sim/particlegridnode.h"
 #include "ui/uisettings.h"
@@ -24,11 +25,6 @@
 #include <helper_functions.h>
 #include <helper_cuda.h>
 
-#include <QtConcurrentRun>
-
-#include "GL/gl.h"
-#include <QFileDialog>
-
 #define TICKS 50
 
 Engine::Engine()
@@ -37,6 +33,8 @@ Engine::Engine()
       m_running( false ),
       m_paused( false )
 {
+    m_gridViewer = NULL;
+
     m_particleSystem = new ParticleSystem;
 
     m_exporter = NULL;
@@ -45,7 +43,6 @@ Engine::Engine()
     m_params.startTime = 0.f;
     m_params.endTime = 60.f;
     m_params.gravity = vec3( 0.f, -9.8f, 0.f );
-
 
     ImplicitCollider collider;
     collider.center = vec3( 0.f, 0.5f, 0.f );
@@ -60,8 +57,9 @@ Engine::~Engine()
 {
     if ( m_running ) stop();
     SAFE_DELETE( m_particleSystem );
-    if (m_export)
+    if ( m_export )
         SAFE_DELETE(m_exporter);
+    SAFE_DELETE( m_gridViewer );
 }
 
 void Engine::addParticleSystem( const ParticleSystem &particles )
@@ -86,6 +84,9 @@ void Engine::start( bool exportScene )
         if ( (m_export = exportScene) ) m_exporter->reset( m_grid );
 
         LOG( "STARTING SIMULATION" );
+
+        SAFE_DELETE( m_gridViewer );
+        m_gridViewer = new GridDataViewer( m_grid );
 
         m_time = 0.f;
         initializeCudaResources();
@@ -151,6 +152,10 @@ void Engine::update()
         updateParticles( m_params, devParticles, m_particleSystem->size(), m_devGrid,
                          m_devNodes, m_grid.nodeCount(), m_devPGTD, m_devColliders, m_colliders.size(), m_devMaterial );
 
+        if ( UiSettings::showGridData() ) {
+            cudaMemcpy( m_gridViewer->data(), m_devNodes, m_gridViewer->byteCount(), cudaMemcpyDeviceToHost );
+            m_gridViewer->update();
+        }
 
         if (m_export && (m_time - m_exporter->getLastUpdateTime() >= m_exporter->getspf()))
         {
@@ -237,7 +242,8 @@ void Engine::freeCudaResources()
 
 void Engine::render()
 {
-    m_particleSystem->render();
+    if ( UiSettings::showParticles() ) m_particleSystem->render();
+    if ( m_gridViewer && UiSettings::showGridData() ) m_gridViewer->render();
 }
 
 BBox Engine::getBBox( const glm::mat4 &ctm )

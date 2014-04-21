@@ -36,6 +36,28 @@ class UiSettings
 
 public:
 
+    enum MeshMode
+    {
+        WIREFRAME,
+        SOLID,
+        SOLID_AND_WIREFRAME
+    };
+
+    enum GridMode
+    {
+        BOX,
+        HALF_CELLS,
+        FULL_CELLS
+    };
+
+    enum GridDataMode
+    {
+        MASS,
+        VELOCITY
+    };
+
+public:
+
     static UiSettings* instance();
     static void deleteInstance();
 
@@ -65,10 +87,13 @@ private:
     DEFINE_SETTING( glm::ivec3, gridDimensions )
     DEFINE_SETTING( float, gridResolution )
 
-    DEFINE_SETTING( bool, showWireframe )
-    DEFINE_SETTING( bool, showSolid )
-    DEFINE_SETTING( bool, showBBox )
+    DEFINE_SETTING( bool, showMesh )
+    DEFINE_SETTING( int, showMeshMode )
     DEFINE_SETTING( bool, showGrid )
+    DEFINE_SETTING( int, showGridMode )
+    DEFINE_SETTING( bool, showGridData )
+    DEFINE_SETTING( int, showGridDataMode )
+    DEFINE_SETTING( bool, showParticles )
 
     DEFINE_SETTING( glm::vec4, selectionColor )
 

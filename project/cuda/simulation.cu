@@ -184,8 +184,6 @@ __global__ void updateNodeVelocities( ParticleGridNode *nodes, float dt, Implici
 
 #define VEC2IVEC( V ) ( glm::ivec3((int)V.x, (int)V.y, (int)V.z) )
 
-#define CLAMP( X, A, B ) ( (X < A) ? A : ((X > B) ? B : X) )
-
 // Use weighting functions to compute particle velocity gradient and update particle velocity
 __device__ void processGridVelocities( Particle &particle, Grid *grid, const ParticleGridNode *nodes, mat3 &velocityGradient, float alpha )
 {
