@@ -120,7 +120,10 @@ MoveTool::intersectAxis( const glm::ivec2 &mouse ) const
     vec3 direction = m_panel->m_viewport->getCamera()->getCameraRay( uv );
     vec3 origin = m_panel->m_viewport->getCamera()->getPosition();
     unsigned int majorAxis = direction.majorAxis();
-    int axis = ( majorAxis == m_axisSelection ) ? !m_axisSelection : majorAxis;
+    int axis = majorAxis;
+    if ( majorAxis == m_axisSelection ) {
+        axis = ( majorAxis == 0 ) ? 1 : 0;
+    }
     float t = (m_center[axis]-origin[axis])/direction[axis];
     vec3 point = origin + t*direction;
     vec3 a = vec3(0,0,0); a[m_axisSelection] = 1.f;
@@ -140,9 +143,15 @@ MoveTool::mouseMoved()
         for ( SceneNodeIterator it = m_panel->m_scene->begin(); it.isValid(); ++it ) {
             if ( (*it)->hasRenderable() && (*it)->getRenderable()->isSelected() ) {
                 (*it)->applyTransformation( transform );
-                if ( (*it)->getType() == SceneNode::SIMULATION_GRID ) {
-                    UiSettings::gridPosition() += translate;
-                }
+//                if ( (*it)->getType() == SceneNode::IMPLICIT_COLLIDER)  {
+//                    dynamic_cast<Collider*>((*it)->getRenderable())->getImplicitCollider()->center += translate;
+//                }
+//                else  {
+//                    (*it)->applyTransformation( transform );
+//                }
+//                if ( (*it)->getType() == SceneNode::SIMULATION_GRID ) {
+//                    UiSettings::gridPosition() += translate;
+//                }
             }
         }
     }

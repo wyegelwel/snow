@@ -43,6 +43,10 @@ public:
 
     void initializeMesh();
 
+    virtual void setSelected( bool selected ) { m_selected = selected; m_mesh->setSelected(selected);}
+
+    ImplicitCollider* getImplicitCollider();
+
 private:
 
     ImplicitCollider &m_collider;

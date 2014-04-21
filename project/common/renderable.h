@@ -28,7 +28,7 @@ public:
     virtual void render() {}
     virtual void renderForPicker() {}
 
-    void setSelected( bool selected ) { m_selected = selected; }
+    virtual void setSelected( bool selected ) { m_selected = selected; }
     bool isSelected() const { return m_selected; }
 
     virtual BBox getBBox( const glm::mat4 &ctm = glm::mat4(1.f) ) = 0;

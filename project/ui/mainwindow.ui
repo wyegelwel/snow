@@ -59,9 +59,9 @@
        <property name="geometry">
         <rect>
          <x>0</x>
-         <y>0</y>
+         <y>-269</y>
          <width>284</width>
-         <height>772</height>
+         <height>777</height>
         </rect>
        </property>
        <layout class="QGridLayout" name="gridLayout_2">
@@ -481,6 +481,35 @@
                <string>Velocity</string>
               </property>
              </item>
+             <item>
+              <property name="text">
+               <string>Speed</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>Force</string>
+              </property>
+             </item>
+            </widget>
+           </item>
+           <item row="3" column="2">
+            <widget class="QComboBox" name="showParticlesCombo">
+             <item>
+              <property name="text">
+               <string>Mass</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>Velocity</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>Speed</string>
+              </property>
+             </item>
             </widget>
            </item>
           </layout>
@@ -549,7 +578,12 @@
              </item>
              <item>
               <property name="text">
-               <string>Plane</string>
+               <string>Vertical Plane</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>Horizontal Plane</string>
               </property>
              </item>
             </widget>

@@ -16,7 +16,6 @@
 #include "cuda/matrix.cu"
 #include "cuda/vector.cu"
 
-
 struct ParticleGridNode
 {  
     float mass;

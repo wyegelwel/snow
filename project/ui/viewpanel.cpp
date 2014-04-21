@@ -8,10 +8,12 @@
 **
 **************************************************************************/
 
+#include <GL/glew.h>
 #include <GL/gl.h>
+
 #include <QQueue>
 
-#include "viewpanel.h"
+#include "ui/viewpanel.h"
 
 #include "common/common.h"
 #include "ui/userinput.h"
@@ -24,7 +26,7 @@
 #include "scene/scenenode.h"
 #include "scene/scenenodeiterator.h"
 #include "sim/engine.h"
-#include "sim/particle.h"
+#include "sim/particlesystem.h"
 #include "ui/infopanel.h"
 #include "ui/picker.h"
 #include "ui/tools/Tools.h"
@@ -53,6 +55,9 @@ ViewPanel::ViewPanel( QWidget *parent )
 
     m_scene = new Scene;
     m_engine = new Engine;
+
+    makeCurrent();
+    glewInit();
 }
 
 ViewPanel::~ViewPanel()
@@ -103,7 +108,6 @@ ViewPanel::initializeGL()
     assert( connect(&m_ticker, SIGNAL(timeout()), this, SLOT(update())) );
     m_ticker.start( 1000/FPS );
     m_timer.start();
-
 }
 
 void
@@ -126,8 +130,7 @@ ViewPanel::teapotDemo()
     m_engine->addParticleSystem( *particles );
     delete particles;
 
-    BBox box = meshes[0]->getBBox(glm::mat4(1.f) );
-//    BBox box = meshes[0]->getWorldBBox( glm::mat4(1.f) );
+    BBox box = meshes[0]->getBBox( glm::mat4(1.f) );
     UiSettings::gridPosition() = box.min();
     UiSettings::gridDimensions() = glm::ivec3( 128, 128, 128 );
     UiSettings::gridResolution() = box.longestDimSize() / 128.f;
@@ -145,7 +148,7 @@ ViewPanel::paintGL()
     m_viewport->push(); {
         m_scene->render();
         m_engine->render();
-        //paintGrid();
+        paintGrid();
         if ( m_tool ) m_tool->render();
         m_viewport->drawAxis();
     } m_viewport->pop();
@@ -183,6 +186,7 @@ ViewPanel::paintGrid()
 void
 ViewPanel::mousePressEvent( QMouseEvent *event )
 {
+    makeCurrent();
     UserInput::update(event);
     if ( UserInput::ctrlKey() ) {
         if ( UserInput::leftMouse() ) m_viewport->setState( Viewport::TUMBLING );
@@ -197,6 +201,7 @@ ViewPanel::mousePressEvent( QMouseEvent *event )
 void
 ViewPanel::mouseMoveEvent( QMouseEvent *event )
 {
+    makeCurrent();
     UserInput::update(event);
     m_viewport->mouseMoved();
     if ( m_tool ) m_tool->mouseMoved();
@@ -206,6 +211,7 @@ ViewPanel::mouseMoveEvent( QMouseEvent *event )
 void
 ViewPanel::mouseReleaseEvent( QMouseEvent *event )
 {
+    makeCurrent();
     UserInput::update(event);
     m_viewport->setState( Viewport::IDLE );
     if ( m_tool ) m_tool->mouseReleased();
@@ -215,9 +221,12 @@ ViewPanel::mouseReleaseEvent( QMouseEvent *event )
 void
 ViewPanel::keyPressEvent( QKeyEvent *event )
 {
+    makeCurrent();
     if ( event->key() == Qt::Key_Backspace ) {
         m_scene->deleteSelectedNodes();
     }
+    if ( m_tool ) m_tool->update();
+    update();
 }
 
 /// temporary hack: I'm calling the SceneParser from here for the file saving
@@ -238,6 +247,8 @@ void ViewPanel::loadFromFile(QString fname)
 
 void ViewPanel::startSimulation()
 {
+    makeCurrent();
+
     if ( !m_engine->isRunning() && UiSettings::exportSimulation() )
     {
         // ask the user where the data should be saved
@@ -255,7 +266,20 @@ void ViewPanel::startSimulation()
         m_engine->initExporter(fprefix);
         resumeDrawing();
     }
-    m_engine->setGrid( UiSettings::buildGrid() );
+
+    m_engine->clearColliders();
+    for ( SceneNodeIterator it = m_scene->begin(); it.isValid(); ++it ) {
+        if ( (*it)->hasRenderable() ) {
+            if ( (*it)->getType() == SceneNode::SIMULATION_GRID ) {
+                m_engine->setGrid( UiSettings::buildGrid((*it)->getCTM()) );
+            } else if ( (*it)->getType() == SceneNode::IMPLICIT_COLLIDER ) {
+                Collider *collider = dynamic_cast<Collider*>((*it)->getRenderable());
+                ImplicitCollider &c = *(collider->getImplicitCollider());
+                m_engine->addCollider(c);
+            }
+        }
+    }
+
     m_engine->start( UiSettings::exportSimulation() );
 }
 
@@ -301,6 +325,11 @@ void ViewPanel::loadMesh( const QString &filename )
         m_scene->root()->addChild( node );
     }
 
+    clearSelection();
+    meshes[0]->setSelected(true);
+
+    m_tool->update();
+
 }
 
 void ViewPanel::fillSelectedMesh()
@@ -336,7 +365,7 @@ void ViewPanel::fillSelectedMesh()
     delete mesh;
 }
 
-void ViewPanel::addCollider(ColliderType c)  {
+void ViewPanel::addCollider(ColliderType c,QString planeType)  {
     //TODO add a collider to the scene and set it as selected renderable.
     ImplicitCollider *collider = new ImplicitCollider;
     vec3 parameter;
@@ -345,7 +374,9 @@ void ViewPanel::addCollider(ColliderType c)  {
             parameter = vec3(1,0,0);
             break;
         case HALF_PLANE:
-            parameter = vec3(0,1,0);
+            if(planeType == "Horizontal Plane")
+                parameter = vec3(0,1,0);
+            else parameter = vec3(1,0,0);
             break;
         default:
             break;
@@ -355,7 +386,14 @@ void ViewPanel::addCollider(ColliderType c)  {
     SceneNode *node = new SceneNode( SceneNode::IMPLICIT_COLLIDER );
     node->setRenderable( col );
     m_scene->root()->addChild( node );
+    ImplicitCollider &ic = *(col->getImplicitCollider());
+    m_engine->addCollider(ic);
 
+    clearSelection();
+
+    col->setSelected(true);
+
+    m_tool->update();
 }
 
 void ViewPanel::editSnowConstants()  {
@@ -380,12 +418,24 @@ void ViewPanel::setTool( int tool )
     update();
 }
 
+void
+ViewPanel::clearSelection()
+{
+    for ( SceneNodeIterator it = m_scene->begin(); it.isValid(); ++it ) {
+        if ( (*it)->hasRenderable() ) {
+            (*it)->getRenderable()->setSelected( false );
+        }
+    }
+}
+
 void ViewPanel::updateSceneGrid()
 {
     SceneNode *gridNode = m_scene->getSceneGridNode();
     if ( gridNode ) {
         SceneGrid *grid = dynamic_cast<SceneGrid*>( gridNode->getRenderable() );
-        grid->setGrid( UiSettings::buildGrid() );
+        grid->setGrid( UiSettings::buildGrid(glm::mat4(1.f)) );
+        gridNode->setBBoxDirty();
     }
+    if ( m_tool ) m_tool->update();
     update();
 }

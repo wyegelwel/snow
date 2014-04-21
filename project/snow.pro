@@ -5,7 +5,12 @@
 #-------------------------------------------------
 
 QT       += core gui opengl xml
+
+# OpenGL stuff
+LIBS += -L/contrib/projects/glew/lib -lGLEW -lGLEWmx
 DEFINES += GL_GLEXT_PROTOTYPES
+
+
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -21,7 +26,6 @@ SOURCES += \
     ui/userinput.cpp \
     ui/infopanel.cpp \
     viewport/viewport.cpp \
-    sim/particle.cpp \
     geometry/mesh.cpp \
     io/objparser.cpp \
     io/mitsubaexporter.cpp \
@@ -38,7 +42,8 @@ SOURCES += \
     ui/tools/selectiontool.cpp \
     ui/tools/movetool.cpp \
     scene/scenegrid.cpp \
-    sim/griddataviewer.cpp
+    sim/particlesystem.cpp \
+    sim/particlegrid.cpp
 
 
 
@@ -79,7 +84,8 @@ HEADERS  += \
     ui/tools/Tools.h \
     ui/tools/movetool.h \
     scene/scenegrid.h \
-    sim/griddataviewer.h
+    sim/particlesystem.h \
+    sim/particlegrid.h
 
 FORMS    += ui/mainwindow.ui
 
@@ -117,7 +123,11 @@ OTHER_FILES += \
     cuda/vector.cu \
     cuda/quaternion.cu \
     cuda/simulation.cu \
-    cuda/collider.cu
+    cuda/collider.cu \
+    resources/shaders/particlesystem.vert \
+    resources/shaders/particlesystem.frag \
+    resources/shaders/particlegrid.frag \
+    resources/shaders/particlegrid.vert
 
 # GPU ARCH
 # this gets passed as the gpu-architecture flag to nvcc compiler
@@ -142,4 +152,5 @@ cuda.output = ${OBJECTS_DIR}${QMAKE_FILE_BASE}_cuda.o # suffix needed for this t
 QMAKE_EXTRA_COMPILERS += cuda
 
 RESOURCES += \
-    resources/icons/icons.qrc
+    resources/icons/icons.qrc \
+    resources/shaders/shaders.qrc

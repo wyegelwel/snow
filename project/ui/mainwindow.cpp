@@ -42,9 +42,9 @@ MainWindow::MainWindow(QWidget *parent) :
 
 MainWindow::~MainWindow()
 {
-    UiSettings::saveSettings();
     UserInput::deleteInstance();
     delete ui;
+    UiSettings::saveSettings();
 }
 
 void MainWindow::loadFromFile()
@@ -102,12 +102,15 @@ void MainWindow::addCollider()  {
     if(colliderType == "Sphere") {
         c = SPHERE;
     }
-    else if(colliderType == "Plane")  {
+    else if(colliderType == "Vertical Plane")  {
+        c = HALF_PLANE;
+    }
+    else if(colliderType == "Horizontal Plane")  {
         c = HALF_PLANE;
     }
     else {isType = false;}
     if(isType)  {
-        ui->viewPanel->addCollider(c);
+        ui->viewPanel->addCollider(c,colliderType);
     }
     ui->viewPanel->resumeSimulation();
     ui->viewPanel->resumeDrawing();
@@ -124,14 +127,14 @@ void MainWindow::setupUI()
     // Simulation
     assert( connect(ui->startButton, SIGNAL(clicked()), ui->viewPanel, SLOT(startSimulation())) );
     assert( connect(ui->pauseButton, SIGNAL(toggled(bool)), ui->viewPanel, SLOT(pauseSimulation(bool))) );
-    assert( connect(ui->gridXSpinbox, SIGNAL(valueChanged(int)), ui->viewPanel, SLOT(updateSceneGrid())) );
-    assert( connect(ui->gridYSpinbox, SIGNAL(valueChanged(int)), ui->viewPanel, SLOT(updateSceneGrid())) );
-    assert( connect(ui->gridZSpinbox, SIGNAL(valueChanged(int)), ui->viewPanel, SLOT(updateSceneGrid())) );
-    assert( connect(ui->gridResolutionSpinbox, SIGNAL(valueChanged(double)), ui->viewPanel, SLOT(updateSceneGrid())) );
     IntBinding::bindSpinBox( ui->gridXSpinbox, UiSettings::gridDimensions().x, this );
     IntBinding::bindSpinBox( ui->gridYSpinbox, UiSettings::gridDimensions().y, this );
     IntBinding::bindSpinBox( ui->gridZSpinbox, UiSettings::gridDimensions().z, this );
     FloatBinding::bindSpinBox( ui->gridResolutionSpinbox, UiSettings::gridResolution(), this );
+    assert( connect(ui->gridXSpinbox, SIGNAL(valueChanged(int)), ui->viewPanel, SLOT(updateSceneGrid())) );
+    assert( connect(ui->gridYSpinbox, SIGNAL(valueChanged(int)), ui->viewPanel, SLOT(updateSceneGrid())) );
+    assert( connect(ui->gridZSpinbox, SIGNAL(valueChanged(int)), ui->viewPanel, SLOT(updateSceneGrid())) );
+    assert( connect(ui->gridResolutionSpinbox, SIGNAL(valueChanged(double)), ui->viewPanel, SLOT(updateSceneGrid())) );
 
     BoolBinding::bindCheckBox( ui->exportCheckbox, UiSettings::exportSimulation(), this );
 
@@ -159,6 +162,7 @@ void MainWindow::setupUI()
     CheckboxBoolAttribute::bindBool( ui->showGridDataCheckbox, &UiSettings::showGridData(), this );
     ComboIntAttribute::bindInt( ui->showGridDataCombo, &UiSettings::showGridDataMode(), this );
     CheckboxBoolAttribute::bindBool( ui->showParticlesCheckbox, &UiSettings::showParticles(), this );
+    ComboIntAttribute::bindInt( ui->showParticlesCombo, &UiSettings::showParticlesMode(), this );
 
     // Tools
     ui->toolButtonGroup->setId( ui->selectionToolButton, Tool::SELECTION );
