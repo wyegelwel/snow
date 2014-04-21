@@ -149,14 +149,13 @@ void MitsubaExporter::exportVolumeData(float t)
 
     // the bounding box of the snow volume
     // corresponds to exactly where the heterogenous medium
-    // will be positioned.
+    // will be positioned in the scene. irrelevant to everything else.
     float minX=-.5;
     float maxX=.5;
     float minY=0;
     float maxY=1;
     float minZ=-.5;
     float maxZ=.5;
-
     // bounding box
     os.write((char *) &minX, sizeof(float));
     os.write((char *) &minY, sizeof(float));
@@ -164,6 +163,8 @@ void MitsubaExporter::exportVolumeData(float t)
     os.write((char *) &maxX, sizeof(float));
     os.write((char *) &maxY, sizeof(float));
     os.write((char *) &maxZ, sizeof(float));
+
+
 
     float h = m_grid.h;
     float v = h*h*h;
@@ -173,20 +174,18 @@ void MitsubaExporter::exportVolumeData(float t)
     yres = m_grid.dim.y;
     zres = m_grid.dim.z;
 
-    float x,y,z;
-    float dx,dy,dz;
-    float sx,sy,sz;
+//    float x,y,z;
+//    float dx,dy,dz;
+//    float sx,sy,sz;
 
-    sx = m_grid.pos.x + m_grid.dim.x * h/2;
-    sy = m_grid.pos.y + m_grid.dim.y * h/2; // center of simulation box
-    sz = m_grid.pos.z + m_grid.dim.z * h/2;
-    printf("sim box center : %f, %f, %f \n", sx, sy, sz);
-    // data[((zpos*yres + ypos)*xres + xpos)*channels + chan]
-    float r2 = .2 * .2;
+//    sx = m_grid.pos.x + m_grid.dim.x * h/2;
+//    sy = m_grid.pos.y + m_grid.dim.y * h/2; // center of simulation box
+//    sz = m_grid.pos.z + m_grid.dim.z * h/2;
+//    float r2 = .2 * .2;
     for (size_t i=0; i<m_grid.nodeCount(); ++i) {
         // for each mitsuba-ordered index (z-major,x-minor), find the index of OUR grid
         // that it corresponds to, then write it.
-
+        // mitsuba's grid indexing scheme = data[((zpos*yres + ypos)*xres + xpos)*channels + chan]
         int j=i;
         int xpos = j%xres;
         j = (j-xpos)/xres;
@@ -194,25 +193,31 @@ void MitsubaExporter::exportVolumeData(float t)
         j = (j-ypos)/yres;
         int zpos = j;
 
-        // index for our grid indexing scheme
-        //int index = (xpos*yres + ypos)*zres + zpos;
-        //float density = m_nodes[index].mass/v;
+        // index into our grid data
+        int index = (xpos*yres + ypos)*zres + zpos;
+        float density = m_nodes[index].mass/v;
+//        if (density > .00001)
+//        {
+//            int foo = 1;
+//        }
+        density *= 10000;
+        density = std::min(1.f,density);
 
-        x = m_grid.pos.x + xpos*h;
-        y = m_grid.pos.y + ypos*h;
-        z = m_grid.pos.z + zpos*h;
-        dx = x-sx;
-        dy = y-sy;
-        dz = z-sz;
+//        x = m_grid.pos.x + xpos*h;
+//        y = m_grid.pos.y + ypos*h;
+//        z = m_grid.pos.z + zpos*h;
+//        dx = x-sx;
+//        dy = y-sy;
+//        dz = z-sz;
 
         //float density = (dx*dx + dy*dy + dz*dz < r2) ? 1.f : 0.f;
         //float density = sin(z*20);
-        float density = 0;
-        if (dx*dx + dy*dy + dz*dz < r2)
-        {
-            //printf("success\n");
-            density = 1;
-        }
+//        float density = 0;
+//        if (dx*dx + dy*dy + dz*dz < r2)
+//        {
+//            //printf("success\n");
+//            density = 1;
+//        }
 
         os.write((char *) &density, sizeof(float));
     }
