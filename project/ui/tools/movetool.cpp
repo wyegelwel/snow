@@ -139,7 +139,12 @@ MoveTool::mouseMoved()
         glm::mat4 transform = glm::translate( glm::mat4(1.f), translate );
         for ( SceneNodeIterator it = m_panel->m_scene->begin(); it.isValid(); ++it ) {
             if ( (*it)->hasRenderable() && (*it)->getRenderable()->isSelected() ) {
-                (*it)->applyTransformation( transform );
+                if ( (*it)->getType() == SceneNode::IMPLICIT_COLLIDER)  {
+                    dynamic_cast<Collider*>((*it)->getRenderable())->getImplicitCollider()->center += translate;
+                }
+                else  {
+                    (*it)->applyTransformation( transform );
+                }
                 if ( (*it)->getType() == SceneNode::SIMULATION_GRID ) {
                     UiSettings::gridPosition() += translate;
                 }

@@ -66,7 +66,7 @@ public slots:
     void fillSelectedMesh();
     void loadMesh( const QString &filename );
 
-    void addCollider(ColliderType c);
+    void addCollider(ColliderType c,QString planeType);
 
     void editSnowConstants();
 
@@ -76,6 +76,8 @@ public slots:
 
     // Demo Scenes
     void teapotDemo();
+
+    void clearSelection();
 
 protected:
 

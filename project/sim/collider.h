@@ -43,7 +43,9 @@ public:
 
     void initializeMesh();
 
-    ImplicitCollider getImplicitCollider();
+    virtual void setSelected( bool selected ) { m_selected = selected; m_mesh->setSelected(selected);}
+
+    ImplicitCollider* getImplicitCollider();
 
 private:
 

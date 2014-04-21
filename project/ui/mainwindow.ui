@@ -15,7 +15,16 @@
   </property>
   <widget class="QWidget" name="centralWidget">
    <layout class="QGridLayout" name="gridLayout">
-    <property name="margin">
+    <property name="leftMargin">
+     <number>3</number>
+    </property>
+    <property name="topMargin">
+     <number>3</number>
+    </property>
+    <property name="rightMargin">
+     <number>3</number>
+    </property>
+    <property name="bottomMargin">
      <number>3</number>
     </property>
     <property name="spacing">
@@ -59,9 +68,9 @@
        <property name="geometry">
         <rect>
          <x>0</x>
-         <y>0</y>
-         <width>284</width>
-         <height>772</height>
+         <y>-113</y>
+         <width>306</width>
+         <height>711</height>
         </rect>
        </property>
        <layout class="QGridLayout" name="gridLayout_2">
@@ -549,7 +558,12 @@
              </item>
              <item>
               <property name="text">
-               <string>Plane</string>
+               <string>Vertical Plane</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>Horizontal Plane</string>
               </property>
              </item>
             </widget>
@@ -843,7 +857,7 @@
      <x>0</x>
      <y>0</y>
      <width>1000</width>
-     <height>29</height>
+     <height>19</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">

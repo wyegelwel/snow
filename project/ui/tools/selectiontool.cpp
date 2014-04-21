@@ -60,11 +60,12 @@ SelectionTool::mouseReleased()
 void
 SelectionTool::clearSelection()
 {
-    for ( SceneNodeIterator it = m_panel->m_scene->begin(); it.isValid(); ++it ) {
-        if ( (*it)->hasRenderable() ) {
-            (*it)->getRenderable()->setSelected( false );
-        }
-    }
+//    for ( SceneNodeIterator it = m_panel->m_scene->begin(); it.isValid(); ++it ) {
+//        if ( (*it)->hasRenderable() ) {
+//            (*it)->getRenderable()->setSelected( false );
+//        }
+//    }
+    m_panel->clearSelection();
 }
 
 SceneNode*

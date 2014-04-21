@@ -102,12 +102,15 @@ void MainWindow::addCollider()  {
     if(colliderType == "Sphere") {
         c = SPHERE;
     }
-    else if(colliderType == "Plane")  {
+    else if(colliderType == "Vertical Plane")  {
+        c = HALF_PLANE;
+    }
+    else if(colliderType == "Horizontal Plane")  {
         c = HALF_PLANE;
     }
     else {isType = false;}
     if(isType)  {
-        ui->viewPanel->addCollider(c);
+        ui->viewPanel->addCollider(c,colliderType);
     }
     ui->viewPanel->resumeSimulation();
     ui->viewPanel->resumeDrawing();

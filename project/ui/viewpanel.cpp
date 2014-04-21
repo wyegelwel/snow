@@ -254,6 +254,19 @@ void ViewPanel::startSimulation()
         m_engine->initExporter(fprefix);
     }
     m_engine->setGrid( UiSettings::buildGrid() );
+
+    m_engine->clearColliders();
+
+    for ( SceneNodeIterator it = m_scene->begin(); it.isValid(); ++it ) {
+        if ( (*it)->hasRenderable() &&
+             (*it)->getType() == SceneNode::IMPLICIT_COLLIDER) {
+
+            Collider* col = dynamic_cast<Collider*>((*it)->getRenderable());
+            ImplicitCollider &c = *(col->getImplicitCollider());
+            m_engine->addCollider(c);
+        }
+    }
+
     m_engine->start( UiSettings::exportSimulation() );
 }
 
@@ -299,6 +312,11 @@ void ViewPanel::loadMesh( const QString &filename )
         m_scene->root()->addChild( node );
     }
 
+    clearSelection();
+    meshes[0]->setSelected(true);
+
+    m_tool->update();
+
 }
 
 void ViewPanel::fillSelectedMesh()
@@ -334,7 +352,7 @@ void ViewPanel::fillSelectedMesh()
     delete mesh;
 }
 
-void ViewPanel::addCollider(ColliderType c)  {
+void ViewPanel::addCollider(ColliderType c,QString planeType)  {
     //TODO add a collider to the scene and set it as selected renderable.
     ImplicitCollider *collider = new ImplicitCollider;
     vec3 parameter;
@@ -343,7 +361,9 @@ void ViewPanel::addCollider(ColliderType c)  {
             parameter = vec3(1,0,0);
             break;
         case HALF_PLANE:
-            parameter = vec3(0,1,0);
+            if(planeType == "Horizontal Plane")
+                parameter = vec3(0,1,0);
+            else parameter = vec3(1,0,0);
             break;
         default:
             break;
@@ -353,8 +373,14 @@ void ViewPanel::addCollider(ColliderType c)  {
     SceneNode *node = new SceneNode( SceneNode::IMPLICIT_COLLIDER );
     node->setRenderable( col );
     m_scene->root()->addChild( node );
-    m_engine->addCollider(col->getImplicitCollider());
+    ImplicitCollider &ic = *(col->getImplicitCollider());
+    m_engine->addCollider(ic);
 
+    clearSelection();
+
+    col->setSelected(true);
+
+    m_tool->update();
 }
 
 void ViewPanel::editSnowConstants()  {
@@ -377,6 +403,16 @@ void ViewPanel::setTool( int tool )
     }
     if ( m_tool ) m_tool->update();
     update();
+}
+
+void
+ViewPanel::clearSelection()
+{
+    for ( SceneNodeIterator it = m_scene->begin(); it.isValid(); ++it ) {
+        if ( (*it)->hasRenderable() ) {
+            (*it)->getRenderable()->setSelected( false );
+        }
+    }
 }
 
 void ViewPanel::updateSceneGrid()

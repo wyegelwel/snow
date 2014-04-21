@@ -17,8 +17,8 @@ Collider::Collider( ImplicitCollider &collider, ColliderType t, vec3 p, vec3 c, 
     initializeMesh();
 }
 
-ImplicitCollider Collider::getImplicitCollider()  {
-    return m_collider;
+ImplicitCollider* Collider::getImplicitCollider()  {
+    return &m_collider;
 }
 
 void Collider::render()
@@ -57,7 +57,9 @@ void Collider::renderForPicker()  {
 }
 
 BBox Collider::getBBox(const glm::mat4 &ctm) {
-    m_mesh->getBBox(ctm);
+    BBox box;
+    box += m_collider.center;
+    return box;
 }
 
 void Collider::renderSphere()
