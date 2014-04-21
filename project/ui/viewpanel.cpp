@@ -243,6 +243,7 @@ void ViewPanel::startSimulation()
         // ask the user where the data should be saved
 //        QDir sceneDir("~/offline_renders");
 //        sceneDir.makeAbsolute();
+        pauseDrawing();
         QString fprefix = QFileDialog::getSaveFileName(this, QString("Choose Export Name"), QString());
         if ( fprefix.isEmpty() ) {
             // cancel
@@ -252,6 +253,7 @@ void ViewPanel::startSimulation()
             return;
         }
         m_engine->initExporter(fprefix);
+        resumeDrawing();
     }
     m_engine->setGrid( UiSettings::buildGrid() );
     m_engine->start( UiSettings::exportSimulation() );
