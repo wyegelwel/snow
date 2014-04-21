@@ -854,7 +854,14 @@
     <addaction name="actionSave"/>
     <addaction name="actionScreenshot"/>
    </widget>
+   <widget class="QMenu" name="menuDemo">
+    <property name="title">
+     <string>Demo</string>
+    </property>
+    <addaction name="actionDemoTeapot"/>
+   </widget>
    <addaction name="menuFile"/>
+   <addaction name="menuDemo"/>
   </widget>
   <widget class="QToolBar" name="mainToolBar">
    <attribute name="toolBarArea">
@@ -894,6 +901,11 @@
     <string>Record Screen</string>
    </property>
   </action>
+  <action name="actionDemoTeapot">
+   <property name="text">
+    <string>Teapot</string>
+   </property>
+  </action>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <customwidgets>
@@ -907,6 +919,7 @@
     <slot>resume()</slot>
     <slot>start()</slot>
     <slot>reset()</slot>
+    <slot>teapotDemo()</slot>
    </slots>
   </customwidget>
  </customwidgets>
@@ -959,6 +972,22 @@
     <hint type="destinationlabel">
      <x>499</x>
      <y>299</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>actionDemoTeapot</sender>
+   <signal>triggered()</signal>
+   <receiver>viewPanel</receiver>
+   <slot>teapotDemo()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>651</x>
+     <y>307</y>
     </hint>
    </hints>
   </connection>

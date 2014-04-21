@@ -36,6 +36,7 @@ public:
     ViewPanel( QWidget *parent );
     virtual ~ViewPanel();
 
+    // not implemented
     void saveToFile(QString fname);
     void loadFromFile(QString fname);
 
@@ -72,6 +73,9 @@ public slots:
     void setTool( int tool );
 
     void updateSceneGrid();
+
+    // Demo Scenes
+    void teapotDemo();
 
 protected:
 
