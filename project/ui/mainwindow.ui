@@ -889,6 +889,11 @@
     <string>Ctrl+P</string>
    </property>
   </action>
+  <action name="actionRecord_Window">
+   <property name="text">
+    <string>Record Screen</string>
+   </property>
+  </action>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <customwidgets>
