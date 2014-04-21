@@ -51,6 +51,7 @@ public:
     void exportVolumeData(float t);
     ParticleGridNode * getNodesPtr();
     void test(float t);
+    void applyDensity();
 
 private:
     /**
@@ -98,7 +99,7 @@ private:
     float m_spf; // seconds per frame
 
     // densities of each grid node
-    //float * m_densities = NULL;
+    float * m_densities = NULL;
 
     ParticleGridNode * m_nodes;
 

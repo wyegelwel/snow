@@ -159,13 +159,9 @@ void Engine::update()
 
         if (m_export && (m_time - m_exporter->getLastUpdateTime() >= m_exporter->getspf()))
         {
-            // TODO - memcpy the mass data from each ParticleGrid::Node
-            // to the m_densities array in the exporter.
+            // TODO - this has to be multithreaded
             cudaMemcpy(m_exporter->getNodesPtr(), m_devNodes, m_grid.nodeCount() * sizeof(ParticleGridNode), cudaMemcpyDeviceToHost);
-            // TODO - call this in a separate thread so that the simulation isn't slowed down while
-            // once that is done, call the export function on a separate thread
-            // so the rest of the simulation can continue
-            //m_exporter->test(m_time);
+            m_exporter->applyDensity();
             m_exporter->exportVolumeData(m_time);
         }
 
