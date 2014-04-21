@@ -26,7 +26,6 @@ SOURCES += \
     ui/userinput.cpp \
     ui/infopanel.cpp \
     viewport/viewport.cpp \
-    sim/particle.cpp \
     geometry/mesh.cpp \
     io/objparser.cpp \
     io/mitsubaexporter.cpp \
