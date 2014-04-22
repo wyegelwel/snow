@@ -15,7 +15,9 @@
 #ifndef GLM_FORCE_RADIANS
     #define GLM_FORCE_RADIANS
 #endif
+#include "glm/mat4x4.hpp"
 #include "glm/vec4.hpp"
+#include "glm/gtc/matrix_transform.hpp"
 #include "glm/gtc/type_ptr.hpp"
 
 #include "scene.h"
@@ -32,15 +34,25 @@ Scene::Scene()
     // Add scene grid
     SceneNode *gridNode = new SceneNode( SceneNode::SIMULATION_GRID );
     Grid grid;
-    grid.pos = UiSettings::gridPosition();
+    grid.pos = vec3(0,0,0);
     grid.dim = UiSettings::gridDimensions();
     grid.h = UiSettings::gridResolution();
     gridNode->setRenderable( new SceneGrid(grid) );
+    glm::mat4 transform = glm::translate( glm::mat4(1.f), glm::vec3(UiSettings::gridPosition().x,UiSettings::gridPosition().y,UiSettings::gridPosition().z) );
+    gridNode->applyTransformation( transform );
     m_root->addChild( gridNode );
 }
 
 Scene::~Scene()
 {
+    for ( SceneNodeIterator it = begin(); it.isValid(); ++it ) {
+        if ( (*it)->hasRenderable() && (*it)->getType() == SceneNode::SIMULATION_GRID ) {
+            glm::vec4 point = (*it)->getCTM() * glm::vec4(0,0,0,1);
+            UiSettings::gridPosition() = vec3(point.x, point.y, point.z);
+            break;
+        }
+    }
+    UiSettings::saveSettings();
     SAFE_DELETE( m_root );
 }
 

@@ -26,7 +26,7 @@
 #include "cuda/functions.h"
 #include "geometry/bbox.h"
 #include "geometry/grid.h"
-#include "sim/particle.h"
+#include "sim/particlesystem.h"
 #include "ui/uisettings.h"
 
 Mesh::Mesh()
@@ -288,6 +288,18 @@ Mesh::getBBox( const glm::mat4 &ctm )
     return box;
 }
 
+vec3
+Mesh::getCentroid( const glm::mat4 &ctm )
+{
+    vec3 c(0,0,0);
+    for ( int i = 0; i < getNumVertices(); ++i ) {
+        const Vertex &v = m_vertices[i];
+        glm::vec4 point = ctm * glm::vec4( v.x, v.y, v.z, 1.f );
+        c += vec3( point.x, point.y, point.z );
+    }
+    return c / (float)getNumVertices();
+}
+
 BBox
 Mesh::getObjectBBox() const
 {
@@ -313,8 +325,13 @@ Mesh::applyTransformation( const glm::mat4 &transform )
 void
 Mesh::append( const Mesh &mesh )
 {
+    int offset = m_vertices.size();
+    for ( int i = 0; i < mesh.m_tris.size(); ++i ) {
+        Tri tri = mesh.m_tris[i];
+        tri.offset( offset );
+        m_tris += tri;
+    }
     m_vertices += mesh.m_vertices;
-    m_tris += mesh.m_tris;
     m_normals += mesh.m_normals;
     deleteVBO();
 }

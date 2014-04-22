@@ -13,8 +13,8 @@
 #include "common/common.h"
 #include "sim/collider.h"
 #include "sim/engine.h"
-#include "sim/griddataviewer.h"
-#include "sim/particle.h"
+#include "sim/particlesystem.h"
+#include "sim/particlegrid.h"
 #include "sim/particlegridnode.h"
 #include "ui/uisettings.h"
 
@@ -28,14 +28,14 @@
 #define TICKS 50
 
 Engine::Engine()
-    : m_particleSystem( NULL ),
-      m_time( 0.f ),
-      m_running( false ),
-      m_paused( false )
+    : m_particleSystem(NULL),
+      m_particleGrid(NULL),
+      m_time(0.f),
+      m_running(false),
+      m_paused(false)
 {
-    m_gridViewer = NULL;
-
     m_particleSystem = new ParticleSystem;
+    m_particleGrid =  new ParticleGrid;
 
     m_exporter = NULL;
 
@@ -44,12 +44,6 @@ Engine::Engine()
     m_params.endTime = 60.f;
     m_params.gravity = vec3( 0.f, -9.8f, 0.f );
 
-//    ImplicitCollider collider;
-//    collider.center = vec3( 0.f, 0.5f, 0.f );
-//    collider.param = vec3( 0.f, 1.f, 0.f );
-//    collider.type = HALF_PLANE;
-//    m_colliders += collider;
-
     assert( connect(&m_ticker, SIGNAL(timeout()), this, SLOT(update())) );
 }
 
@@ -57,9 +51,15 @@ Engine::~Engine()
 {
     if ( m_running ) stop();
     SAFE_DELETE( m_particleSystem );
+    SAFE_DELETE( m_particleGrid );
     if ( m_export )
-        SAFE_DELETE(m_exporter);
-    SAFE_DELETE( m_gridViewer );
+        SAFE_DELETE( m_exporter );
+}
+
+void Engine::setGrid(const Grid &grid)
+{
+    m_grid = grid;
+    m_particleGrid->setGrid( grid );
 }
 
 void Engine::addParticleSystem( const ParticleSystem &particles )
@@ -84,9 +84,6 @@ void Engine::start( bool exportScene )
         if ( (m_export = exportScene) ) m_exporter->reset( m_grid );
 
         LOG( "STARTING SIMULATION" );
-
-        SAFE_DELETE( m_gridViewer );
-        m_gridViewer = new GridDataViewer( m_grid );
 
         m_time = 0.f;
         initializeCudaResources();
@@ -140,28 +137,33 @@ void Engine::update()
 
         m_busy = true;
 
-        cudaGraphicsMapResources( 1, &m_cudaResource, 0 );
+        cudaGraphicsMapResources( 1, &m_particlesResource, 0 );
         Particle *devParticles;
         size_t size;
-        checkCudaErrors( cudaGraphicsResourceGetMappedPointer( (void**)&devParticles, &size, m_cudaResource ) );
+        checkCudaErrors( cudaGraphicsResourceGetMappedPointer( (void**)&devParticles, &size, m_particlesResource ) );
+        checkCudaErrors( cudaDeviceSynchronize() );
 
         if ( (int)(size/sizeof(Particle)) != m_particleSystem->size() ) {
             LOG( "Particle resource error : %lu bytes (%lu expected)", size, m_particleSystem->size()*sizeof(Particle) );
         }
 
-        updateParticles( m_params, devParticles, m_particleSystem->size(), m_devGrid,
-                         m_devNodes, m_grid.nodeCount(), m_devPGTD, m_devColliders, m_colliders.size(), m_devMaterial );
+        cudaGraphicsMapResources( 1, &m_nodesResource, 0 );
+        ParticleGridNode *devNodes;
+        checkCudaErrors( cudaGraphicsResourceGetMappedPointer( (void**)&devNodes, &size, m_nodesResource ) );
+        checkCudaErrors( cudaDeviceSynchronize() );
 
-        if ( UiSettings::showGridData() ) {
-            cudaMemcpy( m_gridViewer->data(), m_devNodes, m_gridViewer->byteCount(), cudaMemcpyDeviceToHost );
-            m_gridViewer->update();
+        if ( (int)(size/sizeof(ParticleGridNode)) != m_particleGrid->size() ) {
+            LOG( "Grid nodes resource error : %lu bytes (%lu expected)", size, m_particleGrid->size()*sizeof(ParticleGridNode) );
         }
+
+        updateParticles( m_params, devParticles, m_particleSystem->size(), m_devGrid,
+                         devNodes, m_grid.nodeCount(), m_devPGTD, m_devColliders, m_colliders.size(), m_devMaterial );
 
         if (m_export && (m_time - m_exporter->getLastUpdateTime() >= m_exporter->getspf()))
         {
             // TODO - memcpy the mass data from each ParticleGrid::Node
             // to the m_densities array in the exporter.
-            cudaMemcpy(m_exporter->getNodesPtr(), m_devNodes, m_grid.nodeCount() * sizeof(ParticleGridNode), cudaMemcpyDeviceToHost);
+            cudaMemcpy(m_exporter->getNodesPtr(), devNodes, m_grid.nodeCount() * sizeof(ParticleGridNode), cudaMemcpyDeviceToHost);
             // TODO - call this in a separate thread so that the simulation isn't slowed down while
             // once that is done, call the export function on a separate thread
             // so the rest of the simulation can continue
@@ -169,15 +171,9 @@ void Engine::update()
             m_exporter->exportVolumeData(m_time);
         }
 
-
-//        cudaMemcpy( m_particleSystem->particles().data(), devParticles, 12*sizeof(Particle), cudaMemcpyDeviceToHost );
-//        for ( int i = 0; i < 12; ++i ) {
-//            Particle &p = m_particleSystem->particles()[i];
-//             LOG( "Position: (%f, %f, %f), Velocity: (%f, %f, %f), mass: %g", p.position.x, p.position.y, p.position.z, p.velocity.x, p.velocity.y, p.velocity.z, p.mass );
-//        }
-//        LOG("\n");
-
-        checkCudaErrors( cudaGraphicsUnmapResources( 1, &m_cudaResource, 0 ) );
+        checkCudaErrors( cudaGraphicsUnmapResources( 1, &m_particlesResource, 0 ) );
+        checkCudaErrors( cudaGraphicsUnmapResources( 1, &m_nodesResource, 0 ) );
+        checkCudaErrors( cudaDeviceSynchronize() );
 
         m_time += m_params.timeStep;
 
@@ -200,18 +196,18 @@ void Engine::initializeCudaResources()
     LOG( "Initializing CUDA resources..." );
 
     // Particles
-    registerVBO( &m_cudaResource, m_particleSystem->vbo() );
+    registerVBO( &m_particlesResource, m_particleSystem->vbo() );
     float particlesSize = m_particleSystem->size()*sizeof(Particle) / 1e6;
     LOG( "Allocated %.2f MB for particle system.", particlesSize );
+
+    // Grid Nodes
+    registerVBO( &m_nodesResource, m_particleGrid->vbo() );
+    float nodesSize =  m_grid.nodeCount()*sizeof(ParticleGridNode) / 1e6;
+    LOG( "Allocating %.2f MB for grid nodes.", nodesSize );
 
     // Grid
     checkCudaErrors(cudaMalloc( (void**)&m_devGrid, sizeof(Grid) ));
     checkCudaErrors(cudaMemcpy( m_devGrid, &m_grid, sizeof(Grid), cudaMemcpyHostToDevice ));
-
-    // Grid Nodes
-    checkCudaErrors(cudaMalloc( (void**)&m_devNodes, m_grid.nodeCount()*sizeof(ParticleGridNode) ));
-    float nodesSize =  m_grid.nodeCount()*sizeof(ParticleGridNode) / 1e6;
-    LOG( "Allocating %.2f MB for grid nodes.", nodesSize );
 
     // Colliders
     checkCudaErrors(cudaMalloc( (void**)&m_devColliders, m_colliders.size()*sizeof(ImplicitCollider) ));
@@ -253,9 +249,9 @@ void Engine::initializeCudaResources()
 void Engine::freeCudaResources()
 {
     LOG( "Freeing CUDA resources..." );
-    unregisterVBO( m_cudaResource );
+    unregisterVBO( m_particlesResource );
+    unregisterVBO( m_nodesResource );
     cudaFree( m_devGrid );
-    cudaFree( m_devNodes );
     cudaFree( m_devColliders );
     cudaFree( m_devPGTD );
     cudaFree( m_devMaterial );
@@ -264,10 +260,15 @@ void Engine::freeCudaResources()
 void Engine::render()
 {
     if ( UiSettings::showParticles() ) m_particleSystem->render();
-    if ( m_gridViewer && UiSettings::showGridData() ) m_gridViewer->render();
+    if ( UiSettings::showGridData() ) m_particleGrid->render();
 }
 
 BBox Engine::getBBox( const glm::mat4 &ctm )
 {
-    return m_particleSystem->getBBox( ctm );
+    return m_particleGrid->getBBox( ctm );
+}
+
+vec3 Engine::getCentroid( const glm::mat4 &ctm )
+{
+    return m_particleGrid->getCentroid( ctm );
 }

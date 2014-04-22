@@ -2,14 +2,14 @@
 **
 **   SNOW - CS224 BROWN UNIVERSITY
 **
-**   movetool.h
+**   rotatetool.h
 **   Authors: evjang, mliberma, taparson, wyegelwe
-**   Created: 20 Apr 2014
+**   Created: 21 Apr 2014
 **
 **************************************************************************/
 
-#ifndef MOVETOOL_H
-#define MOVETOOL_H
+#ifndef ROTATETOOL_H
+#define ROTATETOOL_H
 
 #ifndef GLM_FORCE_RADIANS
     #define GLM_FORCE_RADIANS
@@ -22,13 +22,13 @@
 
 typedef unsigned int GLuint;
 
-class MoveTool : public SelectionTool
+class RotateTool : public SelectionTool
 {
 
 public:
 
-    MoveTool( ViewPanel *panel );
-    virtual ~MoveTool();
+    RotateTool( ViewPanel *panel );
+    virtual ~RotateTool();
 
     virtual void mousePressed();
     virtual void mouseMoved();
@@ -43,7 +43,7 @@ protected:
     unsigned int m_axisSelection;
 
     bool m_active;
-    bool m_moving;
+    bool m_rotating;
     vec3 m_center;
 
     GLuint m_vbo;
@@ -51,7 +51,8 @@ protected:
 
     void renderAxis( unsigned int i ) const;
     unsigned int getAxisPick() const;
-    vec3 intersectAxis( const glm::ivec2 &mouse ) const;
+
+    float intersectAxis( const glm::ivec2 &mouse ) const;
 
     bool hasVBO() const;
     void buildVBO();
@@ -59,4 +60,4 @@ protected:
 
 };
 
-#endif // MOVETOOL_H
+#endif // ROTATETOOL_H

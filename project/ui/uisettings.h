@@ -26,6 +26,7 @@
 #endif
 #include "glm/vec3.hpp"
 #include "glm/vec4.hpp"
+#include "glm/mat4x4.hpp"
 
 #include "cuda/vector.cu"
 
@@ -52,8 +53,17 @@ public:
 
     enum GridDataMode
     {
-        MASS,
-        VELOCITY
+        NODE_MASS,
+        NODE_VELOCITY,
+        NODE_SPEED,
+        NODE_FORCE
+    };
+
+    enum ParticlesMode
+    {
+        PARTICLE_MASS,
+        PARTICLE_VELOCITY,
+        PARTICLE_SPEED
     };
 
 public:
@@ -64,7 +74,7 @@ public:
     static void loadSettings();
     static void saveSettings();
 
-    static Grid buildGrid();
+    static Grid buildGrid( const glm::mat4 &ctm );
 
 protected:
 
@@ -94,6 +104,7 @@ private:
     DEFINE_SETTING( bool, showGridData )
     DEFINE_SETTING( int, showGridDataMode )
     DEFINE_SETTING( bool, showParticles )
+    DEFINE_SETTING( int, showParticlesMode )
 
     DEFINE_SETTING( glm::vec4, selectionColor )
 

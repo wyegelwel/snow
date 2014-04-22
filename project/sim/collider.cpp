@@ -56,10 +56,16 @@ void Collider::renderForPicker()  {
     glPopMatrix();
 }
 
-BBox Collider::getBBox(const glm::mat4 &ctm) {
-    BBox box;
-    box += m_collider.center;
-    return box;
+BBox
+Collider::getBBox( const glm::mat4 &ctm )
+{
+    return m_mesh->getBBox( ctm );
+}
+
+vec3
+Collider::getCentroid( const glm::mat4 &ctm )
+{
+    return m_mesh->getCentroid( ctm );
 }
 
 void Collider::renderSphere()

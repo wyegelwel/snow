@@ -14,5 +14,6 @@
 #include "ui/tools/tool.h"
 #include "ui/tools/selectiontool.h"
 #include "ui/tools/movetool.h"
+#include "ui/tools/rotatetool.h"
 
 #endif // TOOLS_H

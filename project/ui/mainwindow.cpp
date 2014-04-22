@@ -42,9 +42,9 @@ MainWindow::MainWindow(QWidget *parent) :
 
 MainWindow::~MainWindow()
 {
-    UiSettings::saveSettings();
     UserInput::deleteInstance();
     delete ui;
+    UiSettings::saveSettings();
 }
 
 void MainWindow::loadFromFile()
@@ -127,14 +127,14 @@ void MainWindow::setupUI()
     // Simulation
     assert( connect(ui->startButton, SIGNAL(clicked()), ui->viewPanel, SLOT(startSimulation())) );
     assert( connect(ui->pauseButton, SIGNAL(toggled(bool)), ui->viewPanel, SLOT(pauseSimulation(bool))) );
-    assert( connect(ui->gridXSpinbox, SIGNAL(valueChanged(int)), ui->viewPanel, SLOT(updateSceneGrid())) );
-    assert( connect(ui->gridYSpinbox, SIGNAL(valueChanged(int)), ui->viewPanel, SLOT(updateSceneGrid())) );
-    assert( connect(ui->gridZSpinbox, SIGNAL(valueChanged(int)), ui->viewPanel, SLOT(updateSceneGrid())) );
-    assert( connect(ui->gridResolutionSpinbox, SIGNAL(valueChanged(double)), ui->viewPanel, SLOT(updateSceneGrid())) );
     IntBinding::bindSpinBox( ui->gridXSpinbox, UiSettings::gridDimensions().x, this );
     IntBinding::bindSpinBox( ui->gridYSpinbox, UiSettings::gridDimensions().y, this );
     IntBinding::bindSpinBox( ui->gridZSpinbox, UiSettings::gridDimensions().z, this );
     FloatBinding::bindSpinBox( ui->gridResolutionSpinbox, UiSettings::gridResolution(), this );
+    assert( connect(ui->gridXSpinbox, SIGNAL(valueChanged(int)), ui->viewPanel, SLOT(updateSceneGrid())) );
+    assert( connect(ui->gridYSpinbox, SIGNAL(valueChanged(int)), ui->viewPanel, SLOT(updateSceneGrid())) );
+    assert( connect(ui->gridZSpinbox, SIGNAL(valueChanged(int)), ui->viewPanel, SLOT(updateSceneGrid())) );
+    assert( connect(ui->gridResolutionSpinbox, SIGNAL(valueChanged(double)), ui->viewPanel, SLOT(updateSceneGrid())) );
 
     BoolBinding::bindCheckBox( ui->exportCheckbox, UiSettings::exportSimulation(), this );
 
@@ -155,6 +155,8 @@ void MainWindow::setupUI()
     // View Panel
     assert( connect(ui->showGridCheckbox, SIGNAL(toggled(bool)), ui->showGridCombo, SLOT(setEnabled(bool))) );
     assert( connect(ui->showMeshCheckbox, SIGNAL(toggled(bool)), ui->showMeshCombo, SLOT(setEnabled(bool))) );
+    assert( connect(ui->showGridDataCheckbox, SIGNAL(toggled(bool)), ui->showGridDataCombo, SLOT(setEnabled(bool))) );
+    assert( connect(ui->showParticlesCheckbox, SIGNAL(toggled(bool)), ui->showParticlesCombo, SLOT(setEnabled(bool))) );
     CheckboxBoolAttribute::bindBool( ui->showMeshCheckbox, &UiSettings::showMesh(), this );
     ComboIntAttribute::bindInt( ui->showMeshCombo, &UiSettings::showMeshMode(), this );
     CheckboxBoolAttribute::bindBool( ui->showGridCheckbox, &UiSettings::showGrid(), this );
@@ -162,10 +164,12 @@ void MainWindow::setupUI()
     CheckboxBoolAttribute::bindBool( ui->showGridDataCheckbox, &UiSettings::showGridData(), this );
     ComboIntAttribute::bindInt( ui->showGridDataCombo, &UiSettings::showGridDataMode(), this );
     CheckboxBoolAttribute::bindBool( ui->showParticlesCheckbox, &UiSettings::showParticles(), this );
+    ComboIntAttribute::bindInt( ui->showParticlesCombo, &UiSettings::showParticlesMode(), this );
 
     // Tools
     ui->toolButtonGroup->setId( ui->selectionToolButton, Tool::SELECTION );
     ui->toolButtonGroup->setId( ui->moveToolButton, Tool::MOVE );
+    ui->toolButtonGroup->setId( ui->rotateToolButton, Tool::ROTATE );
     assert( connect(ui->toolButtonGroup, SIGNAL(buttonClicked(int)), ui->viewPanel, SLOT(setTool(int))) );
     ui->selectionToolButton->click();
 }
@@ -194,6 +198,7 @@ void MainWindow::takeScreenshot()
         QFile file(fname);
         file.open(QIODevice::WriteOnly);
         pixmap.save(&file, "PNG");
+        file.close();
     }
     ui->viewPanel->resumeDrawing();
     ui->viewPanel->resumeSimulation();

@@ -2,13 +2,15 @@
 **
 **   SNOW - CS224 BROWN UNIVERSITY
 **
-**   movetool.cpp
+**   rotatetool.cpp
 **   Authors: evjang, mliberma, taparson, wyegelwe
-**   Created: 20 Apr 2014
+**   Created: 21 Apr 2014
 **
 **************************************************************************/
 
 #include <GL/gl.h>
+
+#include <QVector>
 
 #ifndef GLM_FORCE_RADIANS
     #define GLM_FORCE_RADIANS
@@ -17,44 +19,43 @@
 #include "glm/gtc/matrix_transform.hpp"
 #include "glm/gtc/type_ptr.hpp"
 
-#include "movetool.h"
+#include "rotatetool.h"
 
-#include "common/common.h"
 #include "scene/scene.h"
 #include "scene/scenenode.h"
 #include "scene/scenenodeiterator.h"
 #include "ui/picker.h"
-#include "ui/uisettings.h"
 #include "ui/userinput.h"
+#include "ui/uisettings.h"
 #include "ui/viewpanel.h"
 #include "viewport/camera.h"
 #include "viewport/viewport.h"
 
-MoveTool::MoveTool( ViewPanel *panel )
+RotateTool::RotateTool( ViewPanel *panel )
     : SelectionTool(panel),
       m_axisSelection(Picker::NO_PICK),
       m_active(false),
-      m_moving(false),
+      m_rotating(false),
       m_center(0,0,0),
       m_vbo(0)
 {
 }
 
-MoveTool::~MoveTool()
+RotateTool::~RotateTool()
 {
     deleteVBO();
 }
 
 void
-MoveTool::update()
+RotateTool::update()
 {
-    if ( (m_active = SelectionTool::hasSelection()) ) {
-        m_center = SelectionTool::getSelectionCenter();
+    if ( (m_active = SelectionTool::hasRotatableSelection()) ) {
+        m_center = SelectionTool::getRotatableSelectionCenter();
     }
 }
 
 void
-MoveTool::renderAxis( unsigned int i ) const
+RotateTool::renderAxis( unsigned int i ) const
 {
     glMatrixMode( GL_MODELVIEW );
     glPushMatrix();
@@ -64,15 +65,14 @@ MoveTool::renderAxis( unsigned int i ) const
     glEnableClientState( GL_VERTEX_ARRAY );
     glVertexPointer( 3, GL_FLOAT, sizeof(vec3), (void*)(0) );
     glLineWidth( 2.f );
-    glDrawArrays( GL_LINES, 0, 2 );
-    glDrawArrays( GL_TRIANGLES, 2, m_vboSize-2 );
+    glDrawArrays( GL_LINE_LOOP, 0, m_vboSize );
     glDisableClientState( GL_VERTEX_ARRAY );
     glBindBuffer( GL_ARRAY_BUFFER, 0 );
     glPopMatrix();
 }
 
 void
-MoveTool::render()
+RotateTool::render()
 {
     if ( m_active ) {
 
@@ -101,7 +101,7 @@ MoveTool::render()
 }
 
 unsigned int
-MoveTool::getAxisPick() const
+RotateTool::getAxisPick() const
 {
     unsigned int pick = Picker::NO_PICK;
     if ( m_active ) {
@@ -118,11 +118,11 @@ MoveTool::getAxisPick() const
 }
 
 void
-MoveTool::mousePressed()
+RotateTool::mousePressed()
 {
     if ( m_active ) {
         m_axisSelection = getAxisPick();
-        m_moving = ( m_axisSelection != Picker::NO_PICK );
+        m_rotating = ( m_axisSelection != Picker::NO_PICK );
         if ( m_axisSelection == Picker::NO_PICK ) {
             SelectionTool::mousePressed();
         }
@@ -132,35 +132,35 @@ MoveTool::mousePressed()
     update();
 }
 
-vec3
-MoveTool::intersectAxis( const glm::ivec2 &mouse ) const
+float
+RotateTool::intersectAxis( const glm::ivec2 &mouse ) const
 {
     glm::vec2 uv = glm::vec2( (float)mouse.x/m_panel->width(), (float)mouse.y/m_panel->height() );
     vec3 direction = m_panel->m_viewport->getCamera()->getCameraRay( uv );
     vec3 origin = m_panel->m_viewport->getCamera()->getPosition();
-    unsigned int majorAxis = direction.majorAxis();
-    int axis = majorAxis;
-    if ( majorAxis == m_axisSelection ) {
-        axis = ( majorAxis == 0 ) ? 1 : 0;
-    }
-    float t = (m_center[axis]-origin[axis])/direction[axis];
-    vec3 point = origin + t*direction;
-    vec3 a = vec3(0,0,0); a[m_axisSelection] = 1.f;
-    float d = vec3::dot( a, point-m_center );
-    return m_center + d*a;
+    vec3 normal(0,0,0); normal[m_axisSelection] = 1.f;
+    float t = (m_center[m_axisSelection]-origin[m_axisSelection])/direction[m_axisSelection];
+    vec3 circle = (origin + t*direction)-m_center;
+    float y = circle[(m_axisSelection+2)%3];
+    float x = circle[(m_axisSelection+1)%3];
+    return atan2( y, x );
 }
 
 void
-MoveTool::mouseMoved()
+RotateTool::mouseMoved()
 {
-    if ( m_moving ) {
-        vec3 p0 = intersectAxis( UserInput::mousePos()-UserInput::mouseMove() );
-        vec3 p1 = intersectAxis( UserInput::mousePos() );
-        vec3 t = p1-p0;
-        glm::vec3 translate = glm::vec3( t.x, t.y, t.z );
-        glm::mat4 transform = glm::translate( glm::mat4(1.f), translate );
+    if ( m_rotating ) {
+        float theta0 = intersectAxis( UserInput::mousePos()-UserInput::mouseMove() );
+        float theta1 = intersectAxis( UserInput::mousePos() );
+        float theta = theta1-theta0;
+        glm::mat4 Tinv = glm::translate( glm::mat4(1.f), glm::vec3(-m_center.x, -m_center.y, -m_center.z) );
+        glm::mat4 T = glm::translate( glm::mat4(1.f), glm::vec3(m_center.x, m_center.y, m_center.z) );
+        glm::vec3 axis(0,0,0); axis[m_axisSelection] = 1.f;
+        glm::mat4 R = glm::rotate( glm::mat4(1.f), theta, axis );
+        glm::mat4 transform = T * R * Tinv;
         for ( SceneNodeIterator it = m_panel->m_scene->begin(); it.isValid(); ++it ) {
-            if ( (*it)->hasRenderable() && (*it)->getRenderable()->isSelected() ) {
+            if ( (*it)->hasRenderable() && (*it)->getRenderable()->isSelected() &&
+                 (*it)->getType() != SceneNode::SIMULATION_GRID ) {
                 (*it)->applyTransformation( transform );
             }
         }
@@ -169,40 +169,31 @@ MoveTool::mouseMoved()
 }
 
 void
-MoveTool::mouseReleased()
+RotateTool::mouseReleased()
 {
     m_axisSelection = Picker::NO_PICK;
-    m_moving = false;
+    m_rotating = false;
     SelectionTool::mouseReleased();
     update();
 }
 
 bool
-MoveTool::hasVBO() const
+RotateTool::hasVBO() const
 {
     return m_vbo > 0 && glIsBuffer( m_vbo );
 }
 
 void
-MoveTool::buildVBO()
+RotateTool::buildVBO()
 {
     deleteVBO();
 
     QVector<vec3> data;
-    data += vec3( 0, 0, 0 );
-    data += vec3( 0, 1, 0 );
 
     static const int resolution = 60;
     static const float dTheta = 2.f*M_PI/resolution;
-    static const float coneHeight = 0.1f;
-    static const float coneRadius = 0.05f;
-    for ( int i = 0; i < resolution; ++i ) {
-        data += vec3( 0, 1, 0 );
-        float theta0 = i*dTheta;
-        float theta1 = (i+1)*dTheta;
-        data += (vec3(0,1-coneHeight,0)+coneRadius*vec3(cosf(theta0),0,-sinf(theta0)));
-        data += (vec3(0,1-coneHeight,0)+coneRadius*vec3(cosf(theta1),0,-sinf(theta1)));
-    }
+    for ( int i = 0; i < resolution; ++i )
+        data += vec3( cosf(i*dTheta), 0.f, -sinf(i*dTheta) );
 
     glGenBuffers( 1, &m_vbo );
     glBindBuffer( GL_ARRAY_BUFFER, m_vbo );
@@ -210,10 +201,11 @@ MoveTool::buildVBO()
     glBindBuffer( GL_ARRAY_BUFFER, 0 );
 
     m_vboSize = data.size();
+
 }
 
 void
-MoveTool::deleteVBO()
+RotateTool::deleteVBO()
 {
     if ( m_vbo > 0 ) {
         glBindBuffer( GL_ARRAY_BUFFER, m_vbo );

@@ -43,6 +43,7 @@ public:
         Tri( int i0, int i1, int i2 ) : a(i0), b(i1), c(i2) {}
         Tri( const Tri &other ) : a(other.a), b(other.b), c(other.c) {}
         inline void reverse() { int tmp = a; a = c; c = tmp; }
+        inline void offset( int offset ) { a += offset; b += offset; c += offset; }
         inline int& operator [] ( int i ) { return corners[i]; }
         inline int operator [] ( int i ) const { return corners[i]; }
     };
@@ -99,6 +100,8 @@ public:
     virtual void renderForPicker();
 
     virtual BBox getBBox( const glm::mat4 &ctm );
+    virtual vec3 getCentroid( const glm::mat4 &ctm );
+
     BBox getObjectBBox() const;
 
 private:

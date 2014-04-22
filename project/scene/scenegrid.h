@@ -30,6 +30,7 @@ public:
     virtual void renderForPicker() { render(); }
 
     virtual BBox getBBox( const glm::mat4 &ctm );
+    virtual vec3 getCentroid( const glm::mat4 &ctm );
 
     void setGrid( const Grid &grid ) { m_grid = grid; deleteVBO(); }
 
