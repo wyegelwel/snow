@@ -35,6 +35,8 @@ public slots:
     virtual void resizeEvent( QResizeEvent* );
     virtual void moveEvent( QMoveEvent* );
 
+    virtual void keyPressEvent( QKeyEvent *event );
+
 public:
 
     explicit MainWindow( QWidget *parent = 0 );

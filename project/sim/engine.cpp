@@ -39,7 +39,7 @@ Engine::Engine()
 
     m_exporter = NULL;
 
-    m_params.timeStep = 0.001f;
+    m_params.timeStep = 1e-5;
     m_params.startTime = 0.f;
     m_params.endTime = 60.f;
     m_params.gravity = vec3( 0.f, -9.8f, 0.f );
@@ -70,6 +70,11 @@ void Engine::addParticleSystem( const ParticleSystem &particles )
 void Engine::clearParticleSystem()
 {
     m_particleSystem->clear();
+}
+
+void Engine::clearParticleGrid()
+{
+    m_particleGrid->clear();
 }
 
 void Engine::initExporter( QString fprefix )
@@ -134,6 +139,7 @@ void Engine::reset()
     if ( !m_running ) {
         clearColliders();
         clearParticleSystem();
+        clearParticleGrid();
         m_time = 0.f;
     }
 }

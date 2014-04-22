@@ -59,6 +59,8 @@ public:
     ParticleSystem* particleSystem() { return m_particleSystem; }
 
     void setGrid( const Grid &grid );
+    void clearParticleGrid();
+
     MaterialConstants& materialConstants() { return m_materialConstants; }
 
     void addCollider( const ImplicitCollider &collider ) { m_colliders += collider; }

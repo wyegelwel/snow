@@ -107,6 +107,9 @@ void MainWindow::stopSimulation()
     ui->colliderGroup->setEnabled( true );
     ui->toolGroup->setEnabled( true );
     ui->stopButton->setEnabled( false );
+    if ( ui->pauseButton->isChecked() ) {
+        ui->pauseButton->click();
+    }
     ui->pauseButton->setEnabled( false );
     ui->resetButton->setEnabled( true );
 }
@@ -182,6 +185,25 @@ void MainWindow::setupUI()
     ui->toolButtonGroup->setId( ui->scaleToolButton, Tool::SCALE );
     assert( connect(ui->toolButtonGroup, SIGNAL(buttonClicked(int)), ui->viewPanel, SLOT(setTool(int))) );
     ui->selectionToolButton->click();
+}
+
+void MainWindow::keyPressEvent( QKeyEvent *event )
+{
+    if ( event->key() == Qt::Key_Q ) {
+        ui->selectionToolButton->click();
+        event->accept();
+    } else if ( event->key() == Qt::Key_W ) {
+        ui->moveToolButton->click();
+        event->accept();
+    } else if ( event->key() == Qt::Key_E ) {
+        ui->rotateToolButton->click();
+        event->accept();
+    } else if ( event->key() == Qt::Key_R ) {
+        ui->scaleToolButton->click();
+        event->accept();
+    } else {
+        event->setAccepted( false );
+    }
 }
 
 void MainWindow::resizeEvent( QResizeEvent* )

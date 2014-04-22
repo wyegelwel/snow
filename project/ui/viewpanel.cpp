@@ -175,7 +175,6 @@ ViewPanel::paintGL()
 void
 ViewPanel::mousePressEvent( QMouseEvent *event )
 {
-    makeCurrent();
     UserInput::update(event);
     if ( UserInput::ctrlKey() ) {
         if ( UserInput::leftMouse() ) m_viewport->setState( Viewport::TUMBLING );
@@ -190,7 +189,6 @@ ViewPanel::mousePressEvent( QMouseEvent *event )
 void
 ViewPanel::mouseMoveEvent( QMouseEvent *event )
 {
-    makeCurrent();
     UserInput::update(event);
     m_viewport->mouseMoved();
     if ( m_tool ) m_tool->mouseMoved();
@@ -200,7 +198,6 @@ ViewPanel::mouseMoveEvent( QMouseEvent *event )
 void
 ViewPanel::mouseReleaseEvent( QMouseEvent *event )
 {
-    makeCurrent();
     UserInput::update(event);
     m_viewport->setState( Viewport::IDLE );
     if ( m_tool ) m_tool->mouseReleased();
@@ -210,9 +207,11 @@ ViewPanel::mouseReleaseEvent( QMouseEvent *event )
 void
 ViewPanel::keyPressEvent( QKeyEvent *event )
 {
-    makeCurrent();
     if ( event->key() == Qt::Key_Backspace ) {
         m_scene->deleteSelectedNodes();
+        event->accept();
+    } else {
+        event->setAccepted( false );
     }
     if ( m_tool ) m_tool->update();
     update();

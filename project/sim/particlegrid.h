@@ -29,6 +29,8 @@ public:
 
     virtual void render();
 
+    void clear() { deleteBuffers(); }
+
     void setGrid( const Grid &grid );
     Grid getGrid() const { return m_grid; }
 
