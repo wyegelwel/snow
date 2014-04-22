@@ -176,6 +176,11 @@ Viewport::drawAxis()
     glm::vec3 y = c + length*glm::vec3(0,1,0);
     glm::vec3 z = c + length*glm::vec3(0,0,1);
 
+    glPushAttrib( GL_DEPTH_BUFFER_BIT );
+    glDisable( GL_DEPTH_TEST );
+    glPushAttrib( GL_COLOR_BUFFER_BIT );
+    glEnable( GL_BLEND );
+    glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
     glEnable( GL_LINE_SMOOTH );
     glHint( GL_LINE_SMOOTH, GL_NICEST );
     glBegin( GL_LINES ); {
@@ -189,4 +194,6 @@ Viewport::drawAxis()
         glVertex3f( c.x, c.y, c.z );
         glVertex3f( z.x, z.y, z.z );
     } glEnd();
+    glPopAttrib();
+    glPopAttrib();
 }

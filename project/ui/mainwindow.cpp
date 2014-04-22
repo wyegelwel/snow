@@ -155,6 +155,8 @@ void MainWindow::setupUI()
     // View Panel
     assert( connect(ui->showGridCheckbox, SIGNAL(toggled(bool)), ui->showGridCombo, SLOT(setEnabled(bool))) );
     assert( connect(ui->showMeshCheckbox, SIGNAL(toggled(bool)), ui->showMeshCombo, SLOT(setEnabled(bool))) );
+    assert( connect(ui->showGridDataCheckbox, SIGNAL(toggled(bool)), ui->showGridDataCombo, SLOT(setEnabled(bool))) );
+    assert( connect(ui->showParticlesCheckbox, SIGNAL(toggled(bool)), ui->showParticlesCombo, SLOT(setEnabled(bool))) );
     CheckboxBoolAttribute::bindBool( ui->showMeshCheckbox, &UiSettings::showMesh(), this );
     ComboIntAttribute::bindInt( ui->showMeshCombo, &UiSettings::showMeshMode(), this );
     CheckboxBoolAttribute::bindBool( ui->showGridCheckbox, &UiSettings::showGrid(), this );
@@ -167,6 +169,7 @@ void MainWindow::setupUI()
     // Tools
     ui->toolButtonGroup->setId( ui->selectionToolButton, Tool::SELECTION );
     ui->toolButtonGroup->setId( ui->moveToolButton, Tool::MOVE );
+    ui->toolButtonGroup->setId( ui->rotateToolButton, Tool::ROTATE );
     assert( connect(ui->toolButtonGroup, SIGNAL(buttonClicked(int)), ui->viewPanel, SLOT(setTool(int))) );
     ui->selectionToolButton->click();
 }
@@ -195,6 +198,7 @@ void MainWindow::takeScreenshot()
         QFile file(fname);
         file.open(QIODevice::WriteOnly);
         pixmap.save(&file, "PNG");
+        file.close();
     }
     ui->viewPanel->resumeDrawing();
     ui->viewPanel->resumeSimulation();

@@ -352,6 +352,8 @@ void ViewPanel::fillSelectedMesh()
         int nParticles = UiSettings::fillNumParticles();
         float resolution = UiSettings::fillResolution();
 
+        makeCurrent();
+
         ParticleSystem *particles = new ParticleSystem;
         mesh->fill( *particles, nParticles, resolution );
         m_engine->addParticleSystem( *particles );
@@ -408,6 +410,9 @@ void ViewPanel::setTool( int tool )
         break;
     case Tool::MOVE:
         m_tool = new MoveTool(this);
+        break;
+    case Tool::ROTATE:
+        m_tool = new RotateTool(this);
         break;
     default:
         break;

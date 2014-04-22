@@ -43,7 +43,8 @@ SOURCES += \
     ui/tools/movetool.cpp \
     scene/scenegrid.cpp \
     sim/particlesystem.cpp \
-    sim/particlegrid.cpp
+    sim/particlegrid.cpp \
+    ui/tools/rotatetool.cpp
 
 
 
@@ -85,7 +86,8 @@ HEADERS  += \
     ui/tools/movetool.h \
     scene/scenegrid.h \
     sim/particlesystem.h \
-    sim/particlegrid.h
+    sim/particlegrid.h \
+    ui/tools/rotatetool.h
 
 FORMS    += ui/mainwindow.ui
 

@@ -39,6 +39,9 @@ protected:
     void clearSelection();
     SceneNode* getSelectedSceneNode();
 
+    bool hasRotatableSelection() const;
+    vec3 getRotatableSelectionCenter() const;
+
 };
 
 #endif // SELECTIONTOOL_H

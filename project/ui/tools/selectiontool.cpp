@@ -113,14 +113,43 @@ SelectionTool::hasSelection() const
     return false;
 }
 
+bool
+SelectionTool::hasRotatableSelection() const
+{
+    for ( SceneNodeIterator it = m_panel->m_scene->begin(); it.isValid(); ++it ) {
+        if ( (*it)->hasRenderable() && (*it)->getRenderable()->isSelected() &&
+             (*it)->getType() != SceneNode::SIMULATION_GRID ) {
+            return true;
+        }
+    }
+    return false;
+}
+
 vec3
 SelectionTool::getSelectionCenter() const
 {
-    BBox box;
+    vec3 center;
+    float count = 0.f;
     for ( SceneNodeIterator it = m_panel->m_scene->begin(); it.isValid(); ++it ) {
         if ( (*it)->hasRenderable() && (*it)->getRenderable()->isSelected() ) {
-            box += (*it)->getBBox();
+            center += (*it)->getCentroid();
+            count += 1.f;
         }
     }
-    return box.center();
+    return ( count == 0.f ) ? center : center / count;
+}
+
+vec3
+SelectionTool::getRotatableSelectionCenter() const
+{
+    vec3 center;
+    float count = 0.f;
+    for ( SceneNodeIterator it = m_panel->m_scene->begin(); it.isValid(); ++it ) {
+        if ( (*it)->hasRenderable() && (*it)->getRenderable()->isSelected() &&
+             (*it)->getType() != SceneNode::SIMULATION_GRID ) {
+            center += (*it)->getCentroid();
+            count += 1.f;
+        }
+    }
+    return ( count == 0.f ) ? center : center / count;
 }

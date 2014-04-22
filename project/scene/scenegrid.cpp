@@ -227,5 +227,13 @@ SceneGrid::deleteVBO()
 BBox
 SceneGrid::getBBox( const glm::mat4 &ctm )
 {
-    return (BBox(m_grid.pos,m_grid.pos+m_grid.h*vec3(m_grid.dim.x, m_grid.dim.y, m_grid.dim.z))).getBBox( ctm );
+    return BBox(m_grid).getBBox(ctm);
 }
+
+vec3
+SceneGrid::getCentroid( const glm::mat4 &ctm )
+{
+    return BBox(m_grid).getCentroid(ctm);
+}
+
+

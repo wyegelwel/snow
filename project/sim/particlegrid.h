@@ -38,6 +38,7 @@ public:
     inline int nodeCount() const { return m_size; }
 
     virtual BBox getBBox( const glm::mat4 &ctm );
+    virtual vec3 getCentroid( const glm::mat4 &ctm );
 
     bool hasBuffers() const;
     void buildBuffers();

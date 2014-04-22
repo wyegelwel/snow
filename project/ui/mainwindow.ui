@@ -59,7 +59,7 @@
        <property name="geometry">
         <rect>
          <x>0</x>
-         <y>-269</y>
+         <y>0</y>
          <width>284</width>
          <height>777</height>
         </rect>
@@ -632,12 +632,12 @@
             </property>
             <property name="icon">
              <iconset resource="../resources/icons/icons.qrc">
-              <normaloff>:/icons/hand.png</normaloff>:/icons/hand.png</iconset>
+              <normaloff>:/icons/cursor.png</normaloff>:/icons/cursor.png</iconset>
             </property>
             <property name="iconSize">
              <size>
-              <width>30</width>
-              <height>30</height>
+              <width>25</width>
+              <height>25</height>
              </size>
             </property>
             <property name="checkable">
@@ -680,8 +680,52 @@
             </property>
             <property name="iconSize">
              <size>
-              <width>30</width>
-              <height>30</height>
+              <width>25</width>
+              <height>25</height>
+             </size>
+            </property>
+            <property name="checkable">
+             <bool>true</bool>
+            </property>
+            <property name="checked">
+             <bool>false</bool>
+            </property>
+            <attribute name="buttonGroup">
+             <string notr="true">toolButtonGroup</string>
+            </attribute>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="rotateToolButton">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="minimumSize">
+             <size>
+              <width>40</width>
+              <height>40</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>40</width>
+              <height>40</height>
+             </size>
+            </property>
+            <property name="text">
+             <string/>
+            </property>
+            <property name="icon">
+             <iconset resource="../resources/icons/icons.qrc">
+              <normaloff>:/icons/rotate.png</normaloff>:/icons/rotate.png</iconset>
+            </property>
+            <property name="iconSize">
+             <size>
+              <width>25</width>
+              <height>25</height>
              </size>
             </property>
             <property name="checkable">

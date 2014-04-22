@@ -44,12 +44,6 @@ Engine::Engine()
     m_params.endTime = 60.f;
     m_params.gravity = vec3( 0.f, -9.8f, 0.f );
 
-//    ImplicitCollider collider;
-//    collider.center = vec3( 0.f, 0.5f, 0.f );
-//    collider.param = vec3( 0.f, 1.f, 0.f );
-//    collider.type = HALF_PLANE;
-//    m_colliders += collider;
-
     assert( connect(&m_ticker, SIGNAL(timeout()), this, SLOT(update())) );
 }
 
@@ -147,6 +141,7 @@ void Engine::update()
         Particle *devParticles;
         size_t size;
         checkCudaErrors( cudaGraphicsResourceGetMappedPointer( (void**)&devParticles, &size, m_particlesResource ) );
+        checkCudaErrors( cudaDeviceSynchronize() );
 
         if ( (int)(size/sizeof(Particle)) != m_particleSystem->size() ) {
             LOG( "Particle resource error : %lu bytes (%lu expected)", size, m_particleSystem->size()*sizeof(Particle) );
@@ -155,6 +150,7 @@ void Engine::update()
         cudaGraphicsMapResources( 1, &m_nodesResource, 0 );
         ParticleGridNode *devNodes;
         checkCudaErrors( cudaGraphicsResourceGetMappedPointer( (void**)&devNodes, &size, m_nodesResource ) );
+        checkCudaErrors( cudaDeviceSynchronize() );
 
         if ( (int)(size/sizeof(ParticleGridNode)) != m_particleGrid->size() ) {
             LOG( "Grid nodes resource error : %lu bytes (%lu expected)", size, m_particleGrid->size()*sizeof(ParticleGridNode) );
@@ -177,6 +173,7 @@ void Engine::update()
 
         checkCudaErrors( cudaGraphicsUnmapResources( 1, &m_particlesResource, 0 ) );
         checkCudaErrors( cudaGraphicsUnmapResources( 1, &m_nodesResource, 0 ) );
+        checkCudaErrors( cudaDeviceSynchronize() );
 
         m_time += m_params.timeStep;
 
@@ -248,4 +245,9 @@ void Engine::render()
 BBox Engine::getBBox( const glm::mat4 &ctm )
 {
     return m_particleGrid->getBBox( ctm );
+}
+
+vec3 Engine::getCentroid( const glm::mat4 &ctm )
+{
+    return m_particleGrid->getCentroid( ctm );
 }
