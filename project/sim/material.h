@@ -4,6 +4,9 @@
 #define YOUNGS_MODULUS 1.4e5
 #define POISSONS_RATIO 0.2
 
+#include "cuda.h"
+#include "cuda_runtime.h"
+
 struct MaterialConstants
 {
     float lambda; // first Lame parameter
@@ -14,7 +17,8 @@ struct MaterialConstants
     float criticalStretch;
 
     // Constants from paper
-    MaterialConstants()
+
+    __host__ __device__ MaterialConstants()
     {
         lambda = (YOUNGS_MODULUS*POISSONS_RATIO)/((1-POISSONS_RATIO)*(1-2*POISSONS_RATIO));
         mu = YOUNGS_MODULUS/(2*(1+POISSONS_RATIO));

@@ -11,6 +11,7 @@
 #include "tests.h"
 #include <stdio.h>
 #include <string.h>
+#include <iostream>
 
 //#include "cuda/testFunctions.h"
 extern "C"
@@ -24,6 +25,8 @@ extern "C"
     void grid2ParticlesTests();
     void testGridMath();
     void timingTests();
+    void testFillParticleVolume();
+    void testcomputeCellMasses();
 }
 
 void Tests::runTests(char *argv[])  {
@@ -75,6 +78,8 @@ void Tests::runWilTests() {
 //    testColliding();
 //    testGridMath();
 //    timingTests();
+    testFillParticleVolume();
+//    testcomputeCellMasses();
     printf("done running Wil Tests\n");
 }
 

@@ -235,6 +235,27 @@ void Engine::initializeCudaResources()
     checkCudaErrors(cudaMemcpy( m_devMaterial, &m_materialConstants, sizeof(MaterialConstants), cudaMemcpyHostToDevice ));
 
     LOG("Allocated %.2f MB in total", particlesSize + nodesSize + tempSize );
+
+    LOG("Computing particle volumes:");
+
+    cudaGraphicsMapResources( 1, &m_cudaResource, 0 );
+    Particle *devParticles;
+    size_t size;
+    checkCudaErrors( cudaGraphicsResourceGetMappedPointer( (void**)&devParticles, &size, m_cudaResource ) );
+
+    if ( (int)(size/sizeof(Particle)) != m_particleSystem->size() ) {
+        LOG( "Particle resource error : %lu bytes (%lu expected)", size, m_particleSystem->size()*sizeof(Particle) );
+    }
+
+//    fillParticleVolume(devParticles, m_particleSystem->size(), m_devGrid, m_grid.nodeCount());
+
+    checkCudaErrors(cudaMemcpy( m_particleSystem->particles().data(), devParticles, m_particleSystem->size()*sizeof(Particle), cudaMemcpyDeviceToHost ));
+
+    for (int i = 0; i < 30; i++){
+        LOG("Volume: %f\n", m_particleSystem->particles().at(i).volume);
+    }
+
+    checkCudaErrors( cudaGraphicsUnmapResources( 1, &m_cudaResource, 0 ) );
 }
 
 void Engine::freeCudaResources()
