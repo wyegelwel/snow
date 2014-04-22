@@ -48,6 +48,11 @@ __host__ __device__ __forceinline__ void weight( vec3 &dx, float &w )
     w = N( dx.x ) * N( dx.y ) * N( dx.z );
 }
 
+__host__ __device__ __forceinline__ float weight( vec3 &dx)
+{
+    return N( dx.x ) * N( dx.y ) * N( dx.z );
+}
+
 /*
  * derivative of N with respect to d
  */
