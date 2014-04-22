@@ -113,6 +113,7 @@ SelectionTool::hasSelection( vec3 &center ) const
             count++;
         }
     }
+    center /= (float)count;
     return ( count > 0 );
 }
 
@@ -128,6 +129,7 @@ SelectionTool::hasRotatableSelection( vec3 &center ) const
             count++;
         }
     }
+    center /= (float)count;
     return ( count > 0 );
 }
 

@@ -30,6 +30,7 @@ InfoPanel::addInfo( const QString &key,
                     const QString &value )
 {
     m_info.insert( key, Entry(key, value) );
+    m_order += key;
     updateLayout();
 }
 
@@ -40,6 +41,7 @@ InfoPanel::setInfo( const QString &key,
 {
     if ( !m_info.contains(key) ) {
         m_info.insert( key, Entry(key, value) );
+        m_order += key;
     } else {
         m_info[key].value = value;
     }
@@ -49,7 +51,10 @@ InfoPanel::setInfo( const QString &key,
 void
 InfoPanel::removeInfo( const QString &key )
 {
-    if ( m_info.contains(key) ) m_info.remove( key );
+    if ( m_info.contains(key) ) {
+        m_info.remove( key );
+        m_order.removeAll( key );
+    }
     updateLayout();
 }
 
@@ -60,9 +65,10 @@ InfoPanel::updateLayout()
     int h = metrics.height();
     int y = metrics.ascent() + m_margin;
     int x0 = m_margin;
-    for ( QHash<QString, Entry>::iterator it = m_info.begin(); it != m_info.end(); ++it ) {
-        (*it).pos.y = y;
-        (*it).pos.x = x0;
+    for ( int i = 0; i < m_order.size(); ++i ) {
+        Entry &entry = m_info[m_order[i]];
+        entry.pos.y = y;
+        entry.pos.x = x0;
         y += (h+m_spacing);
     }
 }

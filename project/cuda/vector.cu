@@ -50,6 +50,9 @@ struct vec3
     vec3& operator = ( const glm::vec3 &rhs ) { x = rhs.x; y = rhs.y; z = rhs.z; return *this; }
 
     __host__ __device__ __forceinline__
+    glm::vec3 toGLM() const { return glm::vec3( x, y, z ); }
+
+    __host__ __device__ __forceinline__
     int majorAxis() { return ( (fabsf(x)>fabsf(y)) ? ((fabsf(x)>fabsf(z)) ? 0 : 2) : ((fabsf(y)>fabsf(z)) ? 1 : 2) ); }
 
     __host__ __device__ __forceinline__

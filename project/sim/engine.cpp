@@ -238,10 +238,10 @@ void Engine::initializeCudaResources()
 
     LOG("Computing particle volumes:");
 
-    cudaGraphicsMapResources( 1, &m_cudaResource, 0 );
+    cudaGraphicsMapResources( 1, &m_particlesResource, 0 );
     Particle *devParticles;
     size_t size;
-    checkCudaErrors( cudaGraphicsResourceGetMappedPointer( (void**)&devParticles, &size, m_cudaResource ) );
+    checkCudaErrors( cudaGraphicsResourceGetMappedPointer( (void**)&devParticles, &size, m_particlesResource ) );
 
     if ( (int)(size/sizeof(Particle)) != m_particleSystem->size() ) {
         LOG( "Particle resource error : %lu bytes (%lu expected)", size, m_particleSystem->size()*sizeof(Particle) );
@@ -255,7 +255,7 @@ void Engine::initializeCudaResources()
         LOG("Volume: %f\n", m_particleSystem->particles().at(i).volume);
     }
 
-    checkCudaErrors( cudaGraphicsUnmapResources( 1, &m_cudaResource, 0 ) );
+    checkCudaErrors( cudaGraphicsUnmapResources( 1, &m_particlesResource, 0 ) );
 }
 
 void Engine::freeCudaResources()

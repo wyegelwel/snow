@@ -38,6 +38,7 @@ ScaleTool::ScaleTool( ViewPanel *panel )
       m_active(false),
       m_scaling(false),
       m_center(0,0,0),
+      m_scale(1.f),
       m_mouseDownPos(0,0),
       m_transformInverse(1.f),
       m_transform(1.f),
@@ -55,7 +56,9 @@ ScaleTool::~ScaleTool()
 void
 ScaleTool::update()
 {
-    m_active = SelectionTool::hasScalableSelection( m_center );
+    if ( (m_active = SelectionTool::hasScalableSelection(m_center)) ) {
+        m_scale = Tool::getHandleSize( m_center );
+    }
 }
 
 void
@@ -64,7 +67,8 @@ ScaleTool::renderAxis( unsigned int i ) const
     glMatrixMode( GL_MODELVIEW );
     glPushMatrix();
     glm::mat4 translate = glm::translate( glm::mat4(1.f), glm::vec3(m_center.x, m_center.y, m_center.z) );
-    glMultMatrixf( glm::value_ptr(translate*Tool::axialBasis(i)) );
+    glm::mat4 basis = glm::scale( Tool::getAxialBasis(i), glm::vec3(m_scale) );
+    glMultMatrixf( glm::value_ptr(translate*basis) );
     glBindBuffer( GL_ARRAY_BUFFER, m_vbo );
     glEnableClientState( GL_VERTEX_ARRAY );
     glVertexPointer( 3, GL_FLOAT, sizeof(vec3), (void*)(0) );
@@ -81,8 +85,9 @@ ScaleTool::renderCenter() const
 {
     glMatrixMode( GL_MODELVIEW );
     glPushMatrix();
-    glm::mat4 translate = glm::translate( glm::mat4(1.f), glm::vec3(m_center.x, m_center.y-(1.f-m_radius), m_center.z) );
-    glMultMatrixf( glm::value_ptr(translate) );
+    glm::mat4 translate = glm::translate( glm::mat4(1.f), glm::vec3(m_center.x, m_center.y-m_scale*(1.f-m_radius), m_center.z) );
+    glm::mat4 scale = glm::scale( glm::mat4(1.f), glm::vec3(m_scale) );
+    glMultMatrixf( glm::value_ptr(translate*scale) );
     glBindBuffer( GL_ARRAY_BUFFER, m_vbo );
     glEnableClientState( GL_VERTEX_ARRAY );
     glVertexPointer( 3, GL_FLOAT, sizeof(vec3), (void*)(0) );
@@ -109,13 +114,10 @@ ScaleTool::render()
         glEnable( GL_LINE_SMOOTH );
         glHint( GL_LINE_SMOOTH_HINT, GL_NICEST );
         for ( unsigned int i = 0; i < 3; ++i ) {
-            vec3 color( 0, 0, 0 );
-            if ( m_axisSelection == i ) color = vec3( 1, 1, 0 );
-            else color[i] = 1;
-            glColor3fv( color.data );
+            glColor3fv( getAxialColor((i==m_axisSelection)?3:i).data );
             renderAxis( i );
         }
-        glColor3f( 1, 1, 0 );
+        glColor3fv( getAxialColor(3).data );
         renderCenter();
         glPopAttrib();
         glPopAttrib();
@@ -204,6 +206,9 @@ ScaleTool::mouseMoved()
                                                 0.f, 0.f, 0.f, 1.f );
             }
         }
+        transform = glm::translate( glm::mat4(1.f), glm::vec3(m_center.x,m_center.y,m_center.z) ) *
+                    transform *
+                    glm::translate( glm::mat4(1.f), glm::vec3(-m_center.x,-m_center.y,-m_center.z) );
         for ( SceneNodeIterator it = m_panel->m_scene->begin(); it.isValid(); ++it ) {
             if ( (*it)->hasRenderable() && (*it)->getRenderable()->isSelected() &&
                  (*it)->getType() != SceneNode::SIMULATION_GRID ) {
@@ -211,6 +216,7 @@ ScaleTool::mouseMoved()
             }
         }
     }
+    update();
 }
 
 void

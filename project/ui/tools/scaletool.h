@@ -45,6 +45,7 @@ protected:
     bool m_active;
     bool m_scaling;
     vec3 m_center;
+    float m_scale;
 
     glm::ivec2 m_mouseDownPos;
     glm::mat4 m_transformInverse;

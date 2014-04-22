@@ -105,6 +105,7 @@ protected:
     void buildGridVBO();
     void deleteGridVBO();
 
+    friend class Tool;
     friend class SelectionTool;
     friend class MoveTool;
     friend class RotateTool;

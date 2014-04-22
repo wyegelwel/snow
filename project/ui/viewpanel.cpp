@@ -51,6 +51,8 @@ ViewPanel::ViewPanel( QWidget *parent )
     resetViewport();
 
     m_infoPanel = new InfoPanel(this);
+    m_infoPanel->setInfo( "Major Grid Unit", QString::number(MAJOR_GRID_TICK) + " m");
+    m_infoPanel->setInfo( "Minor Grid Unit", QString::number(100*MINOR_GRID_TICK) + " cm");
     m_infoPanel->setInfo( "FPS", "XXXXXX" );
     m_infoPanel->setInfo( "Sim Time", "XXXXXXX" );
     m_draw = true;
@@ -417,6 +419,7 @@ void ViewPanel::updateSceneGrid()
         SceneGrid *grid = dynamic_cast<SceneGrid*>( gridNode->getRenderable() );
         grid->setGrid( UiSettings::buildGrid(glm::mat4(1.f)) );
         gridNode->setBBoxDirty();
+        gridNode->setCentroidDirty();
     }
     if ( m_tool ) m_tool->update();
     update();
@@ -433,12 +436,16 @@ ViewPanel::paintGrid()
     glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
     glEnable( GL_LINE_SMOOTH );
     glHint( GL_LINE_SMOOTH_HINT, GL_NICEST );
-    glColor4f( 0.5f, 0.5f, 0.5f, 0.5f );
     glBindBuffer( GL_ARRAY_BUFFER, m_gridVBO );
     glEnableClientState( GL_VERTEX_ARRAY );
     glVertexPointer( 3, GL_FLOAT, sizeof(vec3), (void*)(0) );
-    glLineWidth( 2.f );
-    glDrawArrays( GL_LINES, 0, m_majorSize );
+    glColor4f( 0.5f, 0.5f, 0.5f, 0.8f );
+    glLineWidth( 2.5f );
+    glDrawArrays( GL_LINES, 0, 4 );
+    glColor4f( 0.5f, 0.5f, 0.5f, 0.65f );
+    glLineWidth( 1.5f );
+    glDrawArrays( GL_LINES, 4, m_majorSize-4 );
+    glColor4f( 0.5f, 0.5f, 0.5f, 0.5f );
     glLineWidth( 0.5f );
     glDrawArrays( GL_LINES, m_majorSize, m_minorSize );
     glBindBuffer( GL_ARRAY_BUFFER, 0 );
@@ -462,12 +469,18 @@ ViewPanel::buildGridVBO()
 
     static const int minorN = MAJOR_GRID_N * MAJOR_GRID_TICK / MINOR_GRID_TICK;
     static const float max = MAJOR_GRID_N * MAJOR_GRID_TICK;
-    for ( int i = -MAJOR_GRID_N; i <= MAJOR_GRID_N; ++i ) {
+    for ( int i = 0; i <= MAJOR_GRID_N; ++i ) {
         float x = MAJOR_GRID_TICK * i;
         data += vec3( x, 0.f, -max );
         data += vec3( x, 0.f, max );
         data += vec3( -max, 0.f, x );
         data += vec3( max, 0.f, x );
+        if ( i ) {
+            data += vec3( -x, 0.f, -max );
+            data += vec3( -x, 0.f, max );
+            data += vec3( -max, 0.f, -x );
+            data += vec3( max, 0.f, -x );
+        }
     }
     m_majorSize = data.size();
 

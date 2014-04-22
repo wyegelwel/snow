@@ -43,7 +43,8 @@ SOURCES += \
     sim/particlesystem.cpp \
     sim/particlegrid.cpp \
     ui/tools/rotatetool.cpp \
-    ui/tools/scaletool.cpp
+    ui/tools/scaletool.cpp \
+    ui/tools/tool.cpp
 
 
 

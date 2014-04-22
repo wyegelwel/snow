@@ -45,11 +45,13 @@ protected:
     bool m_active;
     bool m_moving;
     vec3 m_center;
+    float m_scale;
 
     GLuint m_vbo;
     int m_vboSize;
 
     void renderAxis( unsigned int i ) const;
+    void renderCenter() const;
     unsigned int getAxisPick() const;
     float intersectAxis( const glm::ivec2 &mouse ) const;
 

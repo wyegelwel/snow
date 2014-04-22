@@ -45,6 +45,7 @@ protected:
     bool m_active;
     bool m_rotating;
     vec3 m_center;
+    float m_scale;
 
     GLuint m_vbo;
     int m_vboSize;

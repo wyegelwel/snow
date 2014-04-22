@@ -58,6 +58,7 @@ private:
 
     ViewPanel *m_panel;
     QHash<QString, Entry> m_info;
+    QList<QString> m_order;
 
     QFont m_font;
     int m_spacing, m_margin;

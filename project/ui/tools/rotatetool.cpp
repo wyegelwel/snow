@@ -37,6 +37,7 @@ RotateTool::RotateTool( ViewPanel *panel )
       m_active(false),
       m_rotating(false),
       m_center(0,0,0),
+      m_scale(1.f),
       m_vbo(0)
 {
 }
@@ -49,7 +50,9 @@ RotateTool::~RotateTool()
 void
 RotateTool::update()
 {
-    m_active = SelectionTool::hasRotatableSelection( m_center );
+    if ( (m_active = SelectionTool::hasRotatableSelection(m_center)) ) {
+        m_scale = Tool::getHandleSize( m_center );
+    }
 }
 
 void
@@ -58,7 +61,8 @@ RotateTool::renderAxis( unsigned int i ) const
     glMatrixMode( GL_MODELVIEW );
     glPushMatrix();
     glm::mat4 translate = glm::translate( glm::mat4(1.f), glm::vec3(m_center.x, m_center.y, m_center.z) );
-    glMultMatrixf( glm::value_ptr(translate*Tool::axialBasis(i)) );
+    glm::mat4 basis = glm::scale( Tool::getAxialBasis(i), glm::vec3(m_scale) );
+    glMultMatrixf( glm::value_ptr(translate*basis) );
     glBindBuffer( GL_ARRAY_BUFFER, m_vbo );
     glEnableClientState( GL_VERTEX_ARRAY );
     glVertexPointer( 3, GL_FLOAT, sizeof(vec3), (void*)(0) );
@@ -86,10 +90,7 @@ RotateTool::render()
         glEnable( GL_LINE_SMOOTH );
         glHint( GL_LINE_SMOOTH_HINT, GL_NICEST );
         for ( unsigned int i = 0; i < 3; ++i ) {
-            vec3 color( 0, 0, 0 );
-            if ( m_axisSelection == i ) color = vec3( 1, 1, 0 );
-            else color[i] = 1;
-            glColor3fv( color.data );
+            glColor3fv( Tool::getAxialColor((i==m_axisSelection)?3:i).data );
             renderAxis( i );
         }
         glPopAttrib();
