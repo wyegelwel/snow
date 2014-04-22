@@ -3,5 +3,6 @@
         <file>move.png</file>
         <file>rotate.png</file>
         <file>cursor.png</file>
+        <file>scale.png</file>
     </qresource>
 </RCC>

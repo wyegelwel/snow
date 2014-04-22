@@ -36,8 +36,11 @@
 #include <QFileDialog>
 #include <QMessageBox>
 
-
 #define FPS 30
+
+#define MAJOR_GRID_N 10
+#define MAJOR_GRID_TICK 0.5
+#define MINOR_GRID_TICK 0.1
 
 ViewPanel::ViewPanel( QWidget *parent )
     : QGLWidget(QGLFormat(QGL::SampleBuffers), parent),
@@ -62,6 +65,8 @@ ViewPanel::ViewPanel( QWidget *parent )
 
 ViewPanel::~ViewPanel()
 {
+    makeCurrent();
+    deleteGridVBO();
     SAFE_DELETE( m_engine );
     SAFE_DELETE( m_viewport );
     SAFE_DELETE( m_tool );
@@ -72,9 +77,9 @@ ViewPanel::~ViewPanel()
 void
 ViewPanel::resetViewport()
 {
-    m_viewport->orient( glm::vec3( 0, 5, 12.5 ),
-                        glm::vec3( 0, 1,    0 ),
-                        glm::vec3( 0, 1,    0 ) );
+    m_viewport->orient( glm::vec3( 1, 1, 1 ),
+                        glm::vec3( 0, 0, 0 ),
+                        glm::vec3( 0, 1, 0 ) );
     m_viewport->setDimensions( width(), height() );
 }
 
@@ -136,14 +141,14 @@ ViewPanel::teapotDemo()
     UiSettings::gridResolution() = box.longestDimSize() / 128.f;
 }
 
-
-float t = 0.f;
-
 void
 ViewPanel::paintGL()
 {
     glClearColor( 0.20f, 0.225f, 0.25f, 1.f );
     glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
+
+    glPushAttrib( GL_TRANSFORM_BIT );
+    glEnable( GL_NORMALIZE );
 
     m_viewport->push(); {
         m_scene->render();
@@ -161,25 +166,7 @@ ViewPanel::paintGL()
     }
 
     m_infoPanel->render();
-}
 
-// Paint grid on XZ plane to orient viewport
-void
-ViewPanel::paintGrid()
-{
-    glLineWidth( 1.f );
-    glPushAttrib( GL_COLOR_BUFFER_BIT );
-    glEnable( GL_BLEND );
-    glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
-    glColor4f( 0.5f, 0.5f, 0.5f, 0.5f );
-    glBegin( GL_LINES );
-    for ( int i = -10; i <= 10; ++i ) {
-        glVertex3f( i, 0.f, -10.f );
-        glVertex3f( i, 0.f, 10.f );
-        glVertex3f( -10.f, 0.f, i );
-        glVertex3f( 10.f, 0.f, i );
-    }
-    glEnd();
     glPopAttrib();
 }
 
@@ -229,56 +216,45 @@ ViewPanel::keyPressEvent( QKeyEvent *event )
     update();
 }
 
-/// temporary hack: I'm calling the SceneParser from here for the file saving
-/// and offline rendering. Ideally this would be handled by the Engine class.
-/// do this after the MitsubaExporter is working
-void ViewPanel::saveToFile(QString fname)
-{
-    // write - not done, figure this out later
-    //SceneParser::write(fname, m_scene);
-}
-
-void ViewPanel::loadFromFile(QString fname)
-{
-    // read - not done, figure this out later
-    //SceneParser::read(fname, m_scene);
-}
-
-
-void ViewPanel::startSimulation()
+bool ViewPanel::startSimulation()
 {
     makeCurrent();
-
-    if ( !m_engine->isRunning() && UiSettings::exportSimulation() )
-    {
-        // ask the user where the data should be saved
-//        QDir sceneDir("~/offline_renders");
-//        sceneDir.makeAbsolute();
-        QString fprefix = QFileDialog::getSaveFileName(this, QString("Choose Export Name"), QString());
-        if ( fprefix.isEmpty() ) {
-            // cancel
-            QMessageBox msgBox;
-            msgBox.setText("Error : Invalid Volume Export Path");
-            msgBox.exec();
-            return;
+    if ( !m_engine->isRunning() ) {
+        if ( UiSettings::exportSimulation() ) {
+            // ask the user where the data should be saved
+            //        QDir sceneDir("~/offline_renders");
+            //        sceneDir.makeAbsolute();
+            QString fprefix = QFileDialog::getSaveFileName(this, QString("Choose Export Name"), QString());
+            if ( fprefix.isEmpty() ) {
+                // cancel
+                QMessageBox msgBox;
+                msgBox.setText("Error : Invalid Volume Export Path");
+                msgBox.exec();
+                return false;
+            }
+            m_engine->initExporter(fprefix);
         }
-        m_engine->initExporter(fprefix);
-    }
-
-    m_engine->clearColliders();
-    for ( SceneNodeIterator it = m_scene->begin(); it.isValid(); ++it ) {
-        if ( (*it)->hasRenderable() ) {
-            if ( (*it)->getType() == SceneNode::SIMULATION_GRID ) {
-                m_engine->setGrid( UiSettings::buildGrid((*it)->getCTM()) );
-            } else if ( (*it)->getType() == SceneNode::IMPLICIT_COLLIDER ) {
-                Collider *collider = dynamic_cast<Collider*>((*it)->getRenderable());
-                ImplicitCollider &c = *(collider->getImplicitCollider());
-                m_engine->addCollider(c);
+        m_engine->clearColliders();
+        for ( SceneNodeIterator it = m_scene->begin(); it.isValid(); ++it ) {
+            if ( (*it)->hasRenderable() ) {
+                if ( (*it)->getType() == SceneNode::SIMULATION_GRID ) {
+                    m_engine->setGrid( UiSettings::buildGrid((*it)->getCTM()) );
+                } else if ( (*it)->getType() == SceneNode::IMPLICIT_COLLIDER ) {
+                    Collider *collider = dynamic_cast<Collider*>((*it)->getRenderable());
+                    ImplicitCollider &c = *(collider->getImplicitCollider());
+                    m_engine->addCollider(c);
+                }
             }
         }
+        return m_engine->start( UiSettings::exportSimulation() );
     }
 
-    m_engine->start( UiSettings::exportSimulation() );
+    return false;
+}
+
+void ViewPanel::stopSimulation()
+{
+    m_engine->stop();
 }
 
 void ViewPanel::pauseSimulation( bool pause )
@@ -294,7 +270,7 @@ void ViewPanel::resumeSimulation()
 
 void ViewPanel::resetSimulation()
 {
-    LOG( "NOT YET IMPLEMENTED." );
+    m_engine->reset();
 }
 
 void ViewPanel::pauseDrawing()
@@ -363,6 +339,8 @@ void ViewPanel::fillSelectedMesh()
     }
 
     delete mesh;
+
+    m_scene->deleteSelectedNodes();
 }
 
 void ViewPanel::addCollider(ColliderType c,QString planeType)  {
@@ -414,7 +392,8 @@ void ViewPanel::setTool( int tool )
     case Tool::ROTATE:
         m_tool = new RotateTool(this);
         break;
-    default:
+    case Tool::SCALE:
+        m_tool = new ScaleTool(this);
         break;
     }
     if ( m_tool ) m_tool->update();
@@ -441,4 +420,77 @@ void ViewPanel::updateSceneGrid()
     }
     if ( m_tool ) m_tool->update();
     update();
+}
+
+// Paint grid on XZ plane to orient viewport
+void
+ViewPanel::paintGrid()
+{
+    if ( !hasGridVBO() ) buildGridVBO();
+
+    glPushAttrib( GL_COLOR_BUFFER_BIT );
+    glEnable( GL_BLEND );
+    glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
+    glEnable( GL_LINE_SMOOTH );
+    glHint( GL_LINE_SMOOTH_HINT, GL_NICEST );
+    glColor4f( 0.5f, 0.5f, 0.5f, 0.5f );
+    glBindBuffer( GL_ARRAY_BUFFER, m_gridVBO );
+    glEnableClientState( GL_VERTEX_ARRAY );
+    glVertexPointer( 3, GL_FLOAT, sizeof(vec3), (void*)(0) );
+    glLineWidth( 2.f );
+    glDrawArrays( GL_LINES, 0, m_majorSize );
+    glLineWidth( 0.5f );
+    glDrawArrays( GL_LINES, m_majorSize, m_minorSize );
+    glBindBuffer( GL_ARRAY_BUFFER, 0 );
+    glDisableClientState( GL_VERTEX_ARRAY );
+    glEnd();
+    glPopAttrib();
+}
+
+bool
+ViewPanel::hasGridVBO() const
+{
+    return m_gridVBO > 0 && glIsBuffer( m_gridVBO );
+}
+
+void
+ViewPanel::buildGridVBO()
+{
+    deleteGridVBO();
+
+    QVector<vec3> data;
+
+    static const int minorN = MAJOR_GRID_N * MAJOR_GRID_TICK / MINOR_GRID_TICK;
+    static const float max = MAJOR_GRID_N * MAJOR_GRID_TICK;
+    for ( int i = -MAJOR_GRID_N; i <= MAJOR_GRID_N; ++i ) {
+        float x = MAJOR_GRID_TICK * i;
+        data += vec3( x, 0.f, -max );
+        data += vec3( x, 0.f, max );
+        data += vec3( -max, 0.f, x );
+        data += vec3( max, 0.f, x );
+    }
+    m_majorSize = data.size();
+
+    for ( int i = -minorN; i <= minorN; ++i ) {
+        float x = MINOR_GRID_TICK * i;
+        data += vec3( x, 0.f, -max );
+        data += vec3( x, 0.f, max );
+        data += vec3( -max, 0.f, x );
+        data += vec3( max, 0.f, x );
+    }
+    m_minorSize = data.size() - m_majorSize;
+
+    glGenBuffers( 1, &m_gridVBO );
+    glBindBuffer( GL_ARRAY_BUFFER, m_gridVBO );
+    glBufferData( GL_ARRAY_BUFFER, data.size()*sizeof(vec3), data.data(), GL_STATIC_DRAW );
+    glBindBuffer( GL_ARRAY_BUFFER, 0 );
+}
+
+void
+ViewPanel::deleteGridVBO()
+{
+    if ( hasGridVBO() ) {
+        glDeleteBuffers( 1, &m_gridVBO );
+    }
+    m_gridVBO = 0;
 }

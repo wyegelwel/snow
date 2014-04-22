@@ -43,10 +43,12 @@ public:
     Engine();
     virtual ~Engine();
 
-    void start(bool exportScene);
+    // Returns whether it actually did start
+    bool start( bool exportScene );
     void pause();
     void resume();
     void stop();
+    void reset();
 
     float getSimulationTime() { return m_time; }
 

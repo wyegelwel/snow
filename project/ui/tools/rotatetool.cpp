@@ -49,9 +49,7 @@ RotateTool::~RotateTool()
 void
 RotateTool::update()
 {
-    if ( (m_active = SelectionTool::hasRotatableSelection()) ) {
-        m_center = SelectionTool::getRotatableSelectionCenter();
-    }
+    m_active = SelectionTool::hasRotatableSelection( m_center );
 }
 
 void

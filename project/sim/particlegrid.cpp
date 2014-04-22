@@ -37,9 +37,7 @@ void
 ParticleGrid::setGrid( const Grid &grid )
 {
     m_grid = grid;
-    LOG( "Grid dimensions: %d %d %d", grid.dim.x, grid.dim.y, grid.dim.z );
     m_size = m_grid.nodeCount();
-    LOG( "Node count: %d (should be %d)", m_size, (grid.dim.x+1)*(grid.dim.y+1)*(grid.dim.z+1) );
     deleteBuffers();
 }
 

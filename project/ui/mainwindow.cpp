@@ -47,36 +47,6 @@ MainWindow::~MainWindow()
     UiSettings::saveSettings();
 }
 
-void MainWindow::loadFromFile()
-{
-    ui->viewPanel->pauseSimulation();
-    ui->viewPanel->pauseDrawing();
-
-    QDir sceneDir("../project/data/scenes");
-    sceneDir.makeAbsolute();
-    QString fname = QFileDialog::getOpenFileName(this, QString("Open Scene"), sceneDir.absolutePath());
-    std::cout << fname.toStdString() << std::endl;
-    //ui->viewPanel->loadFromFile(fname);
-
-    ui->viewPanel->resumeSimulation();
-    ui->viewPanel->resumeDrawing();
-}
-
-void MainWindow::saveToFile()
-{
-    ui->viewPanel->pauseSimulation();
-    ui->viewPanel->pauseDrawing();
-
-    QDir sceneDir("../project/data/scenes");
-    sceneDir.makeAbsolute();
-    QString fname = QFileDialog::getSaveFileName(this, QString("Save Scene"), sceneDir.absolutePath());
-    //ui->viewPanel->saveToFile(fname);
-
-    ui->viewPanel->resumeSimulation();
-    ui->viewPanel->resumeDrawing();
-}
-
-
 void MainWindow::importMesh()
 {
     ui->viewPanel->pauseSimulation();
@@ -92,9 +62,8 @@ void MainWindow::importMesh()
     ui->viewPanel->resumeDrawing();
 }
 
-void MainWindow::addCollider()  {
-    ui->viewPanel->pauseSimulation();
-    ui->viewPanel->pauseDrawing();
+void MainWindow::addCollider()
+{
 
     QString colliderType = ui->chooseCollider->currentText();
     bool isType = true;
@@ -112,76 +81,34 @@ void MainWindow::addCollider()  {
     if(isType)  {
         ui->viewPanel->addCollider(c,colliderType);
     }
-    ui->viewPanel->resumeSimulation();
-    ui->viewPanel->resumeDrawing();
+
 }
 
-void MainWindow::setupUI()
+void MainWindow::startSimulation()
 {
-    // Mesh Filling
-    assert( connect(ui->importButton, SIGNAL(clicked()), this, SLOT(importMesh())) );
-    assert( connect(ui->fillButton, SIGNAL(clicked()), ui->viewPanel, SLOT(fillSelectedMesh())) );
-    FloatBinding::bindSpinBox( ui->fillResolutionSpinbox, UiSettings::fillResolution(), this );
-    IntBinding::bindSpinBox( ui->fillNumParticlesSpinbox, UiSettings::fillNumParticles(), this );
-
-    // Simulation
-    assert( connect(ui->startButton, SIGNAL(clicked()), ui->viewPanel, SLOT(startSimulation())) );
-    assert( connect(ui->pauseButton, SIGNAL(toggled(bool)), ui->viewPanel, SLOT(pauseSimulation(bool))) );
-    IntBinding::bindSpinBox( ui->gridXSpinbox, UiSettings::gridDimensions().x, this );
-    IntBinding::bindSpinBox( ui->gridYSpinbox, UiSettings::gridDimensions().y, this );
-    IntBinding::bindSpinBox( ui->gridZSpinbox, UiSettings::gridDimensions().z, this );
-    FloatBinding::bindSpinBox( ui->gridResolutionSpinbox, UiSettings::gridResolution(), this );
-    assert( connect(ui->gridXSpinbox, SIGNAL(valueChanged(int)), ui->viewPanel, SLOT(updateSceneGrid())) );
-    assert( connect(ui->gridYSpinbox, SIGNAL(valueChanged(int)), ui->viewPanel, SLOT(updateSceneGrid())) );
-    assert( connect(ui->gridZSpinbox, SIGNAL(valueChanged(int)), ui->viewPanel, SLOT(updateSceneGrid())) );
-    assert( connect(ui->gridResolutionSpinbox, SIGNAL(valueChanged(double)), ui->viewPanel, SLOT(updateSceneGrid())) );
-
-    BoolBinding::bindCheckBox( ui->exportCheckbox, UiSettings::exportSimulation(), this );
-
-    // Collider
-
-    // Connect buttons to slots
-    assert( connect(ui->colliderAddButton, SIGNAL(clicked()), this, SLOT(addCollider())));
-
-    // Connect values to settings - not sure how to do this with combo box.
-
-    // Scene
-
-    // Connect buttons to slots
-    assert( connect(ui->saveSceneButton, SIGNAL(clicked()), this, SLOT(saveToFile())));
-    assert( connect(ui->loadSceneButton, SIGNAL(clicked()), this, SLOT(loadFromFile())));
-    assert( connect(ui->editSimConstantsButton, SIGNAL(clicked()), ui->viewPanel, SLOT(editSnowConstants())));
-
-    // View Panel
-    assert( connect(ui->showGridCheckbox, SIGNAL(toggled(bool)), ui->showGridCombo, SLOT(setEnabled(bool))) );
-    assert( connect(ui->showMeshCheckbox, SIGNAL(toggled(bool)), ui->showMeshCombo, SLOT(setEnabled(bool))) );
-    assert( connect(ui->showGridDataCheckbox, SIGNAL(toggled(bool)), ui->showGridDataCombo, SLOT(setEnabled(bool))) );
-    assert( connect(ui->showParticlesCheckbox, SIGNAL(toggled(bool)), ui->showParticlesCombo, SLOT(setEnabled(bool))) );
-    CheckboxBoolAttribute::bindBool( ui->showMeshCheckbox, &UiSettings::showMesh(), this );
-    ComboIntAttribute::bindInt( ui->showMeshCombo, &UiSettings::showMeshMode(), this );
-    CheckboxBoolAttribute::bindBool( ui->showGridCheckbox, &UiSettings::showGrid(), this );
-    ComboIntAttribute::bindInt( ui->showGridCombo, &UiSettings::showGridMode(), this );
-    CheckboxBoolAttribute::bindBool( ui->showGridDataCheckbox, &UiSettings::showGridData(), this );
-    ComboIntAttribute::bindInt( ui->showGridDataCombo, &UiSettings::showGridDataMode(), this );
-    CheckboxBoolAttribute::bindBool( ui->showParticlesCheckbox, &UiSettings::showParticles(), this );
-    ComboIntAttribute::bindInt( ui->showParticlesCombo, &UiSettings::showParticlesMode(), this );
-
-    // Tools
-    ui->toolButtonGroup->setId( ui->selectionToolButton, Tool::SELECTION );
-    ui->toolButtonGroup->setId( ui->moveToolButton, Tool::MOVE );
-    ui->toolButtonGroup->setId( ui->rotateToolButton, Tool::ROTATE );
-    assert( connect(ui->toolButtonGroup, SIGNAL(buttonClicked(int)), ui->viewPanel, SLOT(setTool(int))) );
-    ui->selectionToolButton->click();
+    if ( ui->viewPanel->startSimulation() ) {
+        ui->viewPanel->clearSelection();
+        ui->selectionToolButton->click();
+        ui->startButton->setEnabled( false );
+        ui->snowContainerGroup->setEnabled( false );
+        ui->colliderGroup->setEnabled( false );
+        ui->toolGroup->setEnabled( false );
+        ui->stopButton->setEnabled( true );
+        ui->pauseButton->setEnabled( true );
+        ui->resetButton->setEnabled( false );
+    }
 }
 
-void MainWindow::resizeEvent( QResizeEvent* )
+void MainWindow::stopSimulation()
 {
-    UiSettings::windowSize() = size();
-}
-
-void MainWindow::moveEvent( QMoveEvent* )
-{
-    UiSettings::windowPosition() = pos();
+    ui->viewPanel->stopSimulation();
+    ui->startButton->setEnabled( true );
+    ui->snowContainerGroup->setEnabled( true );
+    ui->colliderGroup->setEnabled( true );
+    ui->toolGroup->setEnabled( true );
+    ui->stopButton->setEnabled( false );
+    ui->pauseButton->setEnabled( false );
+    ui->resetButton->setEnabled( true );
 }
 
 void MainWindow::takeScreenshot()
@@ -202,4 +129,67 @@ void MainWindow::takeScreenshot()
     }
     ui->viewPanel->resumeDrawing();
     ui->viewPanel->resumeSimulation();
+}
+
+void MainWindow::setupUI()
+{
+    // Mesh Filling
+    assert( connect(ui->importButton, SIGNAL(clicked()), this, SLOT(importMesh())) );
+    assert( connect(ui->fillButton, SIGNAL(clicked()), ui->viewPanel, SLOT(fillSelectedMesh())) );
+    FloatBinding::bindSpinBox( ui->fillResolutionSpinbox, UiSettings::fillResolution(), this );
+    IntBinding::bindSpinBox( ui->fillNumParticlesSpinbox, UiSettings::fillNumParticles(), this );
+
+    // Simulation
+    assert( connect(ui->startButton, SIGNAL(clicked()), this, SLOT(startSimulation())) );
+    assert( connect(ui->stopButton, SIGNAL(clicked()), this, SLOT(stopSimulation())) );
+    assert( connect(ui->pauseButton, SIGNAL(toggled(bool)), ui->viewPanel, SLOT(pauseSimulation(bool))) );
+    assert( connect(ui->resetButton, SIGNAL(clicked()), ui->viewPanel, SLOT(resetSimulation())) );
+    IntBinding::bindSpinBox( ui->gridXSpinbox, UiSettings::gridDimensions().x, this );
+    IntBinding::bindSpinBox( ui->gridYSpinbox, UiSettings::gridDimensions().y, this );
+    IntBinding::bindSpinBox( ui->gridZSpinbox, UiSettings::gridDimensions().z, this );
+    FloatBinding::bindSpinBox( ui->gridResolutionSpinbox, UiSettings::gridResolution(), this );
+    assert( connect(ui->gridXSpinbox, SIGNAL(valueChanged(int)), ui->viewPanel, SLOT(updateSceneGrid())) );
+    assert( connect(ui->gridYSpinbox, SIGNAL(valueChanged(int)), ui->viewPanel, SLOT(updateSceneGrid())) );
+    assert( connect(ui->gridZSpinbox, SIGNAL(valueChanged(int)), ui->viewPanel, SLOT(updateSceneGrid())) );
+    assert( connect(ui->gridResolutionSpinbox, SIGNAL(valueChanged(double)), ui->viewPanel, SLOT(updateSceneGrid())) );
+
+    BoolBinding::bindCheckBox( ui->exportCheckbox, UiSettings::exportSimulation(), this );
+
+    // Collider
+    assert( connect(ui->colliderAddButton, SIGNAL(clicked()), this, SLOT(addCollider())));
+    // Connect values to settings - not sure how to do this with combo box.
+
+    assert( connect(ui->editSimConstantsButton, SIGNAL(clicked()), ui->viewPanel, SLOT(editSnowConstants())));
+
+    // View Panel
+    assert( connect(ui->showGridCheckbox, SIGNAL(toggled(bool)), ui->showGridCombo, SLOT(setEnabled(bool))) );
+    assert( connect(ui->showMeshCheckbox, SIGNAL(toggled(bool)), ui->showMeshCombo, SLOT(setEnabled(bool))) );
+    assert( connect(ui->showGridDataCheckbox, SIGNAL(toggled(bool)), ui->showGridDataCombo, SLOT(setEnabled(bool))) );
+    assert( connect(ui->showParticlesCheckbox, SIGNAL(toggled(bool)), ui->showParticlesCombo, SLOT(setEnabled(bool))) );
+    CheckboxBoolAttribute::bindBool( ui->showMeshCheckbox, &UiSettings::showMesh(), this );
+    ComboIntAttribute::bindInt( ui->showMeshCombo, &UiSettings::showMeshMode(), this );
+    CheckboxBoolAttribute::bindBool( ui->showGridCheckbox, &UiSettings::showGrid(), this );
+    ComboIntAttribute::bindInt( ui->showGridCombo, &UiSettings::showGridMode(), this );
+    CheckboxBoolAttribute::bindBool( ui->showGridDataCheckbox, &UiSettings::showGridData(), this );
+    ComboIntAttribute::bindInt( ui->showGridDataCombo, &UiSettings::showGridDataMode(), this );
+    CheckboxBoolAttribute::bindBool( ui->showParticlesCheckbox, &UiSettings::showParticles(), this );
+    ComboIntAttribute::bindInt( ui->showParticlesCombo, &UiSettings::showParticlesMode(), this );
+
+    // Tools
+    ui->toolButtonGroup->setId( ui->selectionToolButton, Tool::SELECTION );
+    ui->toolButtonGroup->setId( ui->moveToolButton, Tool::MOVE );
+    ui->toolButtonGroup->setId( ui->rotateToolButton, Tool::ROTATE );
+    ui->toolButtonGroup->setId( ui->scaleToolButton, Tool::SCALE );
+    assert( connect(ui->toolButtonGroup, SIGNAL(buttonClicked(int)), ui->viewPanel, SLOT(setTool(int))) );
+    ui->selectionToolButton->click();
+}
+
+void MainWindow::resizeEvent( QResizeEvent* )
+{
+    UiSettings::windowSize() = size();
+}
+
+void MainWindow::moveEvent( QMoveEvent* )
+{
+    UiSettings::windowPosition() = pos();
 }

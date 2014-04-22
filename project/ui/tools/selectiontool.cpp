@@ -103,53 +103,36 @@ SelectionTool::getSelectedSceneNode()
 }
 
 bool
-SelectionTool::hasSelection() const
+SelectionTool::hasSelection( vec3 &center ) const
 {
+    center = vec3( 0, 0, 0 );
+    int count = 0;
     for ( SceneNodeIterator it = m_panel->m_scene->begin(); it.isValid(); ++it ) {
         if ( (*it)->hasRenderable() && (*it)->getRenderable()->isSelected() ) {
-            return true;
+            center += (*it)->getCentroid();
+            count++;
         }
     }
-    return false;
+    return ( count > 0 );
 }
 
 bool
-SelectionTool::hasRotatableSelection() const
+SelectionTool::hasRotatableSelection( vec3 &center ) const
 {
-    for ( SceneNodeIterator it = m_panel->m_scene->begin(); it.isValid(); ++it ) {
-        if ( (*it)->hasRenderable() && (*it)->getRenderable()->isSelected() &&
-             (*it)->getType() != SceneNode::SIMULATION_GRID ) {
-            return true;
-        }
-    }
-    return false;
-}
-
-vec3
-SelectionTool::getSelectionCenter() const
-{
-    vec3 center;
-    float count = 0.f;
-    for ( SceneNodeIterator it = m_panel->m_scene->begin(); it.isValid(); ++it ) {
-        if ( (*it)->hasRenderable() && (*it)->getRenderable()->isSelected() ) {
-            center += (*it)->getCentroid();
-            count += 1.f;
-        }
-    }
-    return ( count == 0.f ) ? center : center / count;
-}
-
-vec3
-SelectionTool::getRotatableSelectionCenter() const
-{
-    vec3 center;
-    float count = 0.f;
+    center = vec3( 0, 0, 0 );
+    int count = 0;
     for ( SceneNodeIterator it = m_panel->m_scene->begin(); it.isValid(); ++it ) {
         if ( (*it)->hasRenderable() && (*it)->getRenderable()->isSelected() &&
              (*it)->getType() != SceneNode::SIMULATION_GRID ) {
             center += (*it)->getCentroid();
-            count += 1.f;
+            count++;
         }
     }
-    return ( count == 0.f ) ? center : center / count;
+    return ( count > 0 );
+}
+
+bool
+SelectionTool::hasScalableSelection( vec3 &center ) const
+{
+    return hasRotatableSelection( center );
 }

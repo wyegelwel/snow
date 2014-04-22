@@ -77,7 +77,7 @@ void Engine::initExporter( QString fprefix )
     m_exporter = new MitsubaExporter( fprefix, 24.f );
 }
 
-void Engine::start( bool exportScene )
+bool Engine::start( bool exportScene )
 {
     if ( m_particleSystem->size() > 0 && !m_grid.empty() && !m_running ) {
 
@@ -90,6 +90,8 @@ void Engine::start( bool exportScene )
         m_running = true;
         m_ticker.start(TICKS);
 
+        return true;
+
     } else {
 
         if ( m_particleSystem->size() == 0 ) {
@@ -101,6 +103,7 @@ void Engine::start( bool exportScene )
         if ( m_running ) {
             LOG( "Simulation already running." );
         }
+        return false;
 
     }
 }
@@ -123,6 +126,15 @@ void Engine::resume()
     if ( m_paused ) {
         m_paused = false;
         if ( m_running ) m_ticker.start(TICKS);
+    }
+}
+
+void Engine::reset()
+{
+    if ( !m_running ) {
+        clearColliders();
+        clearParticleSystem();
+        m_time = 0.f;
     }
 }
 

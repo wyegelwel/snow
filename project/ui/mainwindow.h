@@ -23,18 +23,14 @@ class MainWindow : public QMainWindow
 
 public slots:
 
-    /// saves snow simulation parameters / colliders etc. to file
-    void saveToFile();
-
-    /// loads snow simulation parameters from file
-    void loadFromFile();
-
     /// saves out screenshot of MainWindow
     void takeScreenshot();
 
     void importMesh();
-
     void addCollider();
+
+    void startSimulation();
+    void stopSimulation();
 
     virtual void resizeEvent( QResizeEvent* );
     virtual void moveEvent( QMoveEvent* );

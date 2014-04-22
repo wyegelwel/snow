@@ -40,6 +40,10 @@ public:
     void saveToFile(QString fname);
     void loadFromFile(QString fname);
 
+    // Returns whether or not it started
+    bool startSimulation();
+    void stopSimulation();
+
 public slots:
 
     void resetViewport();
@@ -54,11 +58,9 @@ public slots:
     virtual void mouseReleaseEvent( QMouseEvent *event );
     virtual void keyPressEvent( QKeyEvent *event );
 
-    void startSimulation();
+    void resetSimulation();
     void pauseSimulation( bool pause = true );
     void resumeSimulation();
-    void resetSimulation();
-
     void pauseDrawing();
     void resumeDrawing();
 
@@ -91,11 +93,17 @@ protected:
     Engine *m_engine;
     Scene *m_scene;
 
+    GLuint m_gridVBO;
+    int m_majorSize;
+    int m_minorSize;
     bool m_draw;
-
     float m_fps;
 
     void paintGrid();
+
+    bool hasGridVBO() const;
+    void buildGridVBO();
+    void deleteGridVBO();
 
     friend class SelectionTool;
     friend class MoveTool;

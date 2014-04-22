@@ -2,14 +2,14 @@
 **
 **   SNOW - CS224 BROWN UNIVERSITY
 **
-**   movetool.h
+**   scaletool.h
 **   Authors: evjang, mliberma, taparson, wyegelwe
-**   Created: 20 Apr 2014
+**   Created: 22 Apr 2014
 **
 **************************************************************************/
 
-#ifndef MOVETOOL_H
-#define MOVETOOL_H
+#ifndef SCALETOOL_H
+#define SCALETOOL_H
 
 #ifndef GLM_FORCE_RADIANS
     #define GLM_FORCE_RADIANS
@@ -22,13 +22,13 @@
 
 typedef unsigned int GLuint;
 
-class MoveTool : public SelectionTool
+class ScaleTool : public SelectionTool
 {
 
 public:
 
-    MoveTool( ViewPanel *panel );
-    virtual ~MoveTool();
+    ScaleTool( ViewPanel *panel );
+    virtual ~ScaleTool();
 
     virtual void mousePressed();
     virtual void mouseMoved();
@@ -43,13 +43,20 @@ protected:
     unsigned int m_axisSelection;
 
     bool m_active;
-    bool m_moving;
+    bool m_scaling;
     vec3 m_center;
 
-    GLuint m_vbo;
+    glm::ivec2 m_mouseDownPos;
+    glm::mat4 m_transformInverse;
+    glm::mat4 m_transform;
+
+    GLuint  m_vbo;
     int m_vboSize;
+    float m_radius;
 
     void renderAxis( unsigned int i ) const;
+    void renderCenter() const;
+
     unsigned int getAxisPick() const;
     float intersectAxis( const glm::ivec2 &mouse ) const;
 
@@ -59,4 +66,4 @@ protected:
 
 };
 
-#endif // MOVETOOL_H
+#endif // SCALETOOL_H
