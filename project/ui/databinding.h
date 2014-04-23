@@ -338,7 +338,8 @@ public:
           m_value(value)
     {
         if ( value ) {
-            m_checkbox->setChecked( *m_value );
+            m_checkbox->setChecked( !(*m_value) );
+            m_checkbox->click();
         }
         assert( connect(checkbox, SIGNAL(clicked(bool)), this, SLOT(valueChanged(bool))) );
     }

@@ -68,7 +68,7 @@ Scene::render()
 void
 Scene::setupLights()
 {
-    glm::vec4 diffuse = glm::vec4( 0.125f, 0.125f, 0.125f, 1.f );
+    glm::vec4 diffuse = glm::vec4( 0.5f, 0.5f, 0.5f, 1.f );
     for ( int i = 0; i < 5; ++i ) {
         glEnable( GL_LIGHT0 + i );
         glLightfv( GL_LIGHT0 + i, GL_DIFFUSE, glm::value_ptr(diffuse) );

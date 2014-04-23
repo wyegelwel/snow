@@ -38,7 +38,9 @@ UiSettings::loadSettings()
     fillNumParticles() = s.value( "fillNumParticles", 512*128 ).toInt();
     fillResolution() = s.value( "fillResolution", 0.05f ).toFloat();
 
-    exportSimulation() = s.value( "exportSimulation", false ).toBool();
+    exportVolume() = s.value( "exportVolume", false ).toBool();
+    exportColliders() = s.value("exportColliders", false).toBool();
+    exportFPS() = s.value("exportFPS", 24).toInt();
 
     gridPosition() = vec3( s.value("gridPositionX", 0.f).toFloat(),
                            s.value("gridPositionY", 0.f).toFloat(),
@@ -74,7 +76,9 @@ UiSettings::saveSettings()
     s.setValue( "fillNumParticles", fillNumParticles() );
     s.setValue( "fillResolution", fillResolution() );
 
-    s.setValue( "exportSimulation", exportSimulation() );
+    s.setValue( "exportVolume", exportVolume() );
+    s.setValue( "exportColliders", exportColliders());
+    s.setValue("exportFPS",exportFPS());
 
     s.setValue( "gridPositionX", gridPosition().x );
     s.setValue( "gridPositionY", gridPosition().y );

@@ -18,15 +18,15 @@ const int FORCE = 3;
 
 void main( void )
 {
-    float alpha = 0.0; if ( nodeMass > 0.0 ) alpha = 1.0;
+    float alpha = smoothstep( 0.0, 1e-6, nodeMass );
     nodeColor = vec4( 0.8, 0.8, 0.9, alpha );
     if ( mode == VELOCITY ) {
         nodeColor.rgb = abs(nodeVelocity);
     } else if ( mode == SPEED ) {
         float speed = smoothstep( 0.0, 5.0, length(nodeVelocity) );
-        nodeColor.rgb = mix( vec3(0.4, 0.4, 0.85), nodeColor.rgb, speed );
+        nodeColor.rgb = mix( vec3(0.15, 0.15, 0.9), nodeColor.rgb, speed );
     } else if ( mode == FORCE ) {
-        nodeColor.rgb = abs(nodeForce);
+        nodeColor.rgb = 1000.0*abs(nodeForce);
     }
     float i = gl_VertexID;
     float x = floor(i/((dim.y+1)*(dim.z+1)));
@@ -36,5 +36,5 @@ void main( void )
     float z = i;
     vec4 position = vec4( pos + h * vec3( x, y, z ), 1.0 );
     gl_Position = gl_ModelViewProjectionMatrix * position;
-    gl_PointSize = 2.0;
+    gl_PointSize = 3.0;
 }

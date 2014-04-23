@@ -31,7 +31,7 @@ MitsubaExporter::MitsubaExporter()
     init();
 }
 
-MitsubaExporter::MitsubaExporter(QString fprefix, float fps)
+MitsubaExporter::MitsubaExporter(QString fprefix, int fps)
     : m_fileprefix(fprefix), m_fps(fps)
 {
     init();
@@ -41,7 +41,7 @@ void MitsubaExporter::init()
 {
     m_busy = false;
     m_nodes = NULL;
-    m_spf = 1.f/m_fps;
+    m_spf = 1.f/float(m_fps);
     m_lastUpdateTime = 0.f;
     m_frame = 0;
 }

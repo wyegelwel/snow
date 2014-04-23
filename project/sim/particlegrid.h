@@ -29,6 +29,8 @@ public:
 
     virtual void render();
 
+    void clear() { deleteBuffers(); }
+
     void setGrid( const Grid &grid );
     Grid getGrid() const { return m_grid; }
 
@@ -38,6 +40,7 @@ public:
     inline int nodeCount() const { return m_size; }
 
     virtual BBox getBBox( const glm::mat4 &ctm );
+    virtual vec3 getCentroid( const glm::mat4 &ctm );
 
     bool hasBuffers() const;
     void buildBuffers();

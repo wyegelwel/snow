@@ -103,24 +103,38 @@ SelectionTool::getSelectedSceneNode()
 }
 
 bool
-SelectionTool::hasSelection() const
+SelectionTool::hasSelection( vec3 &center ) const
 {
+    center = vec3( 0, 0, 0 );
+    int count = 0;
     for ( SceneNodeIterator it = m_panel->m_scene->begin(); it.isValid(); ++it ) {
         if ( (*it)->hasRenderable() && (*it)->getRenderable()->isSelected() ) {
-            return true;
+            center += (*it)->getCentroid();
+            count++;
         }
     }
-    return false;
+    center /= (float)count;
+    return ( count > 0 );
 }
 
-vec3
-SelectionTool::getSelectionCenter() const
+bool
+SelectionTool::hasRotatableSelection( vec3 &center ) const
 {
-    BBox box;
+    center = vec3( 0, 0, 0 );
+    int count = 0;
     for ( SceneNodeIterator it = m_panel->m_scene->begin(); it.isValid(); ++it ) {
-        if ( (*it)->hasRenderable() && (*it)->getRenderable()->isSelected() ) {
-            box += (*it)->getBBox();
+        if ( (*it)->hasRenderable() && (*it)->getRenderable()->isSelected() &&
+             (*it)->getType() != SceneNode::SIMULATION_GRID ) {
+            center += (*it)->getCentroid();
+            count++;
         }
     }
-    return box.center();
+    center /= (float)count;
+    return ( count > 0 );
+}
+
+bool
+SelectionTool::hasScalableSelection( vec3 &center ) const
+{
+    return hasRotatableSelection( center );
 }

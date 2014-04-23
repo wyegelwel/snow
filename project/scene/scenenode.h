@@ -41,6 +41,10 @@ public:
 
     void clearChildren();
     void addChild( SceneNode *child );
+
+    // A scene node should be deleted through its parent using this
+    // function (unless it's the root node) so that the parent
+    // doesn't have a dangling NULL pointer
     void deleteChild( SceneNode *child );
 
     SceneNode* parent() { return m_parent; }
@@ -51,16 +55,26 @@ public:
     void setRenderable( Renderable *renderable );
     Renderable* getRenderable() { return m_renderable; }
 
+    // Render the node's renderable if it is opaque
     virtual void renderOpaque();
+    // Render the node's renderable if it is transparent
     virtual void renderTransparent();
 
     glm::mat4 getCTM();
+    // Indicate that the CTM needs recomputing
     void setCTMDirty();
 
     void applyTransformation( const glm::mat4 &transform );
 
+    // World space bounding box
     BBox getBBox();
+    // Indicate that the world space bounding box needs recomputing
     void setBBoxDirty() { m_bboxDirty = true; }
+
+    // World space centroid
+    vec3 getCentroid();
+    // Indicate that the world space centroid needs recomputing
+    void setCentroidDirty() { m_centroidDirty = true; }
 
     Type getType() { return m_type; }
 
@@ -71,11 +85,15 @@ private:
 
     SceneNode* m_parent;
 
+    // The following member variables depend on the scene node's
+    // cumulative transformation, so they are cached and only
+    // recomputed when necessary, if they are labeled "dirty".
     glm::mat4 m_ctm;
     bool m_ctmDirty;
-
     BBox m_bbox;
     bool m_bboxDirty;
+    vec3 m_centroid;
+    bool m_centroidDirty;
 
     glm::mat4 m_transform;
 

@@ -14,12 +14,15 @@
 
 #include "common/common.h"
 #include "ui/userinput.h"
+#include "ui/tools/tool.h"
 #include "viewport/camera.h"
 
 #ifndef GLM_FORCE_RADIANS
     #define GLM_FORCE_RADIANS
 #endif
 #include "glm/gtc/type_ptr.hpp"
+
+#include "cuda/vector.cu"
 
 #define ZOOM_SCALE 1.f
 
@@ -176,17 +179,25 @@ Viewport::drawAxis()
     glm::vec3 y = c + length*glm::vec3(0,1,0);
     glm::vec3 z = c + length*glm::vec3(0,0,1);
 
+    glPushAttrib( GL_DEPTH_BUFFER_BIT );
+    glDisable( GL_DEPTH_TEST );
+    glPushAttrib( GL_COLOR_BUFFER_BIT );
+    glEnable( GL_BLEND );
+    glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
     glEnable( GL_LINE_SMOOTH );
     glHint( GL_LINE_SMOOTH, GL_NICEST );
+    glLineWidth( 1.5f );
     glBegin( GL_LINES ); {
-        glColor3f( 1.f, 0.f, 0.f );
+        glColor3fv( Tool::getAxialColor(0).data );
         glVertex3f( c.x, c.y, c.z );
         glVertex3f( x.x, x.y, x.z );
-        glColor3f( 0.f, 1.f, 0.f );
+        glColor3fv( Tool::getAxialColor(1).data );
         glVertex3f( c.x, c.y, c.z );
         glVertex3f( y.x, y.y, y.z );
-        glColor3f( 0.f, 0.f, 1.f );
+        glColor3fv( Tool::getAxialColor(2).data );
         glVertex3f( c.x, c.y, c.z );
         glVertex3f( z.x, z.y, z.z );
     } glEnd();
+    glPopAttrib();
+    glPopAttrib();
 }

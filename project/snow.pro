@@ -10,8 +10,6 @@ QT       += core gui opengl xml
 LIBS += -L/contrib/projects/glew/lib -lGLEW -lGLEWmx
 DEFINES += GL_GLEXT_PROTOTYPES
 
-
-
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 TEMPLATE = app
@@ -43,7 +41,10 @@ SOURCES += \
     ui/tools/movetool.cpp \
     scene/scenegrid.cpp \
     sim/particlesystem.cpp \
-    sim/particlegrid.cpp
+    sim/particlegrid.cpp \
+    ui/tools/rotatetool.cpp \
+    ui/tools/scaletool.cpp \
+    ui/tools/tool.cpp
 
 
 
@@ -85,7 +86,9 @@ HEADERS  += \
     ui/tools/movetool.h \
     scene/scenegrid.h \
     sim/particlesystem.h \
-    sim/particlegrid.h
+    sim/particlegrid.h \
+    ui/tools/rotatetool.h \
+    ui/tools/scaletool.h
 
 FORMS    += ui/mainwindow.ui
 

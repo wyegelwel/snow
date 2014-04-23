@@ -30,7 +30,7 @@ class MitsubaExporter
 {
 public:
     MitsubaExporter();
-    MitsubaExporter(QString fprefix, float fps);
+    MitsubaExporter(QString fprefix, int fps);
     ~MitsubaExporter();
 
     /**
@@ -85,7 +85,7 @@ private:
     QString      m_fileprefix;
 
     float m_lastUpdateTime;
-    float m_fps; // number of frames to export every second of simulation
+    int m_fps; // number of frames to export every second of simulation
     float m_spf; // seconds per frame
 
     ParticleGridNode * m_nodes;

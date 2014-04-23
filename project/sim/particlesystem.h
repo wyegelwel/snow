@@ -39,6 +39,7 @@ public:
     virtual void render();
 
     virtual BBox getBBox( const glm::mat4 &ctm );
+    virtual vec3 getCentroid( const glm::mat4 &ctm );
 
     GLuint vbo() { if ( !hasBuffers() ) buildBuffers(); return m_glVBO; }
 

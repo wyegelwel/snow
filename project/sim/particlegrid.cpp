@@ -37,9 +37,7 @@ void
 ParticleGrid::setGrid( const Grid &grid )
 {
     m_grid = grid;
-    LOG( "Grid dimensions: %d %d %d", grid.dim.x, grid.dim.y, grid.dim.z );
     m_size = m_grid.nodeCount();
-    LOG( "Node count: %d (should be %d)", m_size, (grid.dim.x+1)*(grid.dim.y+1)*(grid.dim.z+1) );
     deleteBuffers();
 }
 
@@ -69,9 +67,9 @@ ParticleGrid::render()
         glPushAttrib( GL_COLOR_BUFFER_BIT );
         glEnable( GL_BLEND );
         glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
+        glEnable( GL_POINT_SMOOTH );
+        glHint( GL_POINT_SMOOTH_HINT, GL_NICEST );
 
-        glPushAttrib( GL_DEPTH_BUFFER_BIT );
-        glDepthMask( false );
         glEnable( GL_ALPHA_TEST );
         glAlphaFunc( GL_GREATER, 0.05f );
 
@@ -81,7 +79,6 @@ ParticleGrid::render()
         glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, 0 );
         glBindVertexArray( 0 );
 
-        glPopAttrib();
         glPopAttrib();
 
         if ( shader ) {
@@ -166,7 +163,13 @@ ParticleGrid::deleteBuffers()
 BBox
 ParticleGrid::getBBox( const glm::mat4 &ctm )
 {
-    return BBox(m_grid.pos+m_grid.h*vec3(m_grid.dim.x,m_grid.dim.y,m_grid.dim.z)).getBBox(ctm);
+    return BBox(m_grid).getBBox(ctm);
+}
+
+vec3
+ParticleGrid::getCentroid( const glm::mat4 &ctm )
+{
+    return BBox(m_grid).getCentroid(ctm);
 }
 
 QGLShaderProgram* ParticleGrid::SHADER = NULL;

@@ -44,10 +44,12 @@ public:
     Engine();
     virtual ~Engine();
 
-    void start(bool exportScene);
+    // Returns whether it actually did start
+    bool start( bool exportScene );
     void pause();
     void resume();
     void stop();
+    void reset();
 
     float getSimulationTime() { return m_time; }
 
@@ -58,6 +60,8 @@ public:
     ParticleSystem* particleSystem() { return m_particleSystem; }
 
     void setGrid( const Grid &grid );
+    void clearParticleGrid();
+
     MaterialConstants& materialConstants() { return m_materialConstants; }
 
     void addCollider( const ImplicitCollider &collider ) { m_colliders += collider; }
@@ -71,6 +75,7 @@ public:
     virtual void render();
 
     virtual BBox getBBox( const glm::mat4 &ctm );
+    virtual vec3 getCentroid( const glm::mat4 &ctm );
 
 public slots:
 

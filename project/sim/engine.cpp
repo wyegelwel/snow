@@ -41,16 +41,10 @@ Engine::Engine()
 
     m_exporter = NULL;
 
-    m_params.timeStep = 0.001f;
+    m_params.timeStep = 1e-5;
     m_params.startTime = 0.f;
     m_params.endTime = 60.f;
     m_params.gravity = vec3( 0.f, -9.8f, 0.f );
-
-//    ImplicitCollider collider;
-//    collider.center = vec3( 0.f, 0.5f, 0.f );
-//    collider.param = vec3( 0.f, 1.f, 0.f );
-//    collider.type = HALF_PLANE;
-//    m_colliders += collider;
 
     assert( connect(&m_ticker, SIGNAL(timeout()), this, SLOT(update())) );
 }
@@ -80,12 +74,17 @@ void Engine::clearParticleSystem()
     m_particleSystem->clear();
 }
 
-void Engine::initExporter( QString fprefix )
+void Engine::clearParticleGrid()
 {
-    m_exporter = new MitsubaExporter( fprefix, 24.f );
+    m_particleGrid->clear();
 }
 
-void Engine::start( bool exportScene )
+void Engine::initExporter( QString fprefix )
+{
+    m_exporter = new MitsubaExporter( fprefix, UiSettings::exportFPS() );
+}
+
+bool Engine::start( bool exportScene )
 {
     if ( m_particleSystem->size() > 0 && !m_grid.empty() && !m_running ) {
 
@@ -98,6 +97,8 @@ void Engine::start( bool exportScene )
         m_running = true;
         m_ticker.start(TICKS);
 
+        return true;
+
     } else {
 
         if ( m_particleSystem->size() == 0 ) {
@@ -109,6 +110,7 @@ void Engine::start( bool exportScene )
         if ( m_running ) {
             LOG( "Simulation already running." );
         }
+        return false;
 
     }
 }
@@ -134,6 +136,16 @@ void Engine::resume()
     }
 }
 
+void Engine::reset()
+{
+    if ( !m_running ) {
+        clearColliders();
+        clearParticleSystem();
+        clearParticleGrid();
+        m_time = 0.f;
+    }
+}
+
 bool Engine::isRunning()
 {
     return m_running;
@@ -149,6 +161,7 @@ void Engine::update()
         Particle *devParticles;
         size_t size;
         checkCudaErrors( cudaGraphicsResourceGetMappedPointer( (void**)&devParticles, &size, m_particlesResource ) );
+        checkCudaErrors( cudaDeviceSynchronize() );
 
         if ( (int)(size/sizeof(Particle)) != m_particleSystem->size() ) {
             LOG( "Particle resource error : %lu bytes (%lu expected)", size, m_particleSystem->size()*sizeof(Particle) );
@@ -157,6 +170,7 @@ void Engine::update()
         cudaGraphicsMapResources( 1, &m_nodesResource, 0 );
         ParticleGridNode *devNodes;
         checkCudaErrors( cudaGraphicsResourceGetMappedPointer( (void**)&devNodes, &size, m_nodesResource ) );
+        checkCudaErrors( cudaDeviceSynchronize() );
 
         if ( (int)(size/sizeof(ParticleGridNode)) != m_particleGrid->size() ) {
             LOG( "Grid nodes resource error : %lu bytes (%lu expected)", size, m_particleGrid->size()*sizeof(ParticleGridNode) );
@@ -173,6 +187,7 @@ void Engine::update()
 
         checkCudaErrors( cudaGraphicsUnmapResources( 1, &m_particlesResource, 0 ) );
         checkCudaErrors( cudaGraphicsUnmapResources( 1, &m_nodesResource, 0 ) );
+        checkCudaErrors( cudaDeviceSynchronize() );
 
         m_time += m_params.timeStep;
         m_busy = false;
@@ -221,6 +236,27 @@ void Engine::initializeCudaResources()
     checkCudaErrors(cudaMemcpy( m_devMaterial, &m_materialConstants, sizeof(MaterialConstants), cudaMemcpyHostToDevice ));
 
     LOG("Allocated %.2f MB in total", particlesSize + nodesSize + tempSize );
+
+    LOG("Computing particle volumes:");
+
+    cudaGraphicsMapResources( 1, &m_particlesResource, 0 );
+    Particle *devParticles;
+    size_t size;
+    checkCudaErrors( cudaGraphicsResourceGetMappedPointer( (void**)&devParticles, &size, m_particlesResource ) );
+
+    if ( (int)(size/sizeof(Particle)) != m_particleSystem->size() ) {
+        LOG( "Particle resource error : %lu bytes (%lu expected)", size, m_particleSystem->size()*sizeof(Particle) );
+    }
+
+//    fillParticleVolume(devParticles, m_particleSystem->size(), m_devGrid, m_grid.nodeCount());
+
+    checkCudaErrors(cudaMemcpy( m_particleSystem->particles().data(), devParticles, m_particleSystem->size()*sizeof(Particle), cudaMemcpyDeviceToHost ));
+
+    for (int i = 0; i < 30; i++){
+        LOG("Volume: %f\n", m_particleSystem->particles().at(i).volume);
+    }
+
+    checkCudaErrors( cudaGraphicsUnmapResources( 1, &m_particlesResource, 0 ) );
 }
 
 void Engine::freeCudaResources()
@@ -243,4 +279,9 @@ void Engine::render()
 BBox Engine::getBBox( const glm::mat4 &ctm )
 {
     return m_particleGrid->getBBox( ctm );
+}
+
+vec3 Engine::getCentroid( const glm::mat4 &ctm )
+{
+    return m_particleGrid->getCentroid( ctm );
 }

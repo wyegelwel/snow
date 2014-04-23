@@ -40,6 +40,9 @@ void updateParticles( const SimulationParameters &parameters,
 // Mesh filling
 void fillMesh( cudaGraphicsResource **resource, int triCount, const Grid &grid, Particle *particles, int particleCount );
 
+// One time computation to get particle volumes
+void fillParticleVolume(Particle *particles, int numParticles, Grid *grid, int numNodes);
+
 }
 
 #endif // FUNCTIONS_H

@@ -54,6 +54,9 @@ ParticleSystem::render()
         glPointSize( 1.f );
     }
 
+    glEnable( GL_POINT_SMOOTH );
+    glHint( GL_POINT_SMOOTH_HINT, GL_NICEST );
+
     glBindVertexArray( m_glVAO );
     glDrawArrays( GL_POINTS, 0, m_particles.size() );
     glBindVertexArray( 0 );
@@ -130,6 +133,18 @@ ParticleSystem::getBBox( const glm::mat4 &ctm )
         box += vec3( point.x, point.y, point.z );
     }
     return box;
+}
+
+vec3
+ParticleSystem::getCentroid( const glm::mat4 &ctm )
+{
+    vec3 c(0,0,0);
+    for ( int i = 0; i < m_particles.size(); ++i ) {
+        const vec3 p = m_particles[i].position;
+        glm::vec4 point = ctm * glm::vec4( p.x, p.y, p.z, 1.f );
+        c += vec3( point.x, point.y, point.z );
+    }
+    return c / (float)m_particles.size();
 }
 
 QGLShaderProgram* ParticleSystem::SHADER = NULL;

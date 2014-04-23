@@ -23,6 +23,8 @@ SceneNode::SceneNode( Type type )
     : m_parent(NULL),
       m_ctm(1.f),
       m_ctmDirty(true),
+      m_bboxDirty(true),
+      m_centroidDirty(true),
       m_transform(1.f),
       m_renderable(NULL),
       m_type(type)
@@ -119,12 +121,13 @@ SceneNode::setCTMDirty()
     }
     m_ctmDirty = true;
     m_bboxDirty = true;
+    m_centroidDirty = true;
 }
 
 BBox
 SceneNode::getBBox()
 {
-    if ( m_bboxDirty || getType() == IMPLICIT_COLLIDER) {
+    if ( m_bboxDirty || getType() == IMPLICIT_COLLIDER ) {
         if ( hasRenderable() ) {
             m_bbox = m_renderable->getBBox( getCTM() );
         } else {
@@ -133,4 +136,19 @@ SceneNode::getBBox()
         m_bboxDirty = false;
     }
     return m_bbox;
+}
+
+vec3
+SceneNode::getCentroid()
+{
+    if ( m_centroidDirty ) {
+        if ( hasRenderable() ) {
+            m_centroid = m_renderable->getCentroid( getCTM() );
+        } else {
+            glm::vec4 p = getCTM() * glm::vec4(0,0,0,1);
+            m_centroid = vec3( p.x, p.y, p.z );
+        }
+        m_centroidDirty = false;
+    }
+    return m_centroid;
 }

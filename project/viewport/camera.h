@@ -14,6 +14,7 @@
 #ifndef GLM_FORCE_RADIANS
     #define GLM_FORCE_RADIANS
 #endif
+#include "glm/vec2.hpp"
 #include "glm/vec3.hpp"
 #include "glm/mat4x4.hpp"
 #include "glm/gtc/matrix_transform.hpp"
@@ -68,11 +69,20 @@ public:
 
     float getFocusDistance() const { return glm::length(m_lookAt-m_eye); }
 
+    // Returns world space camera ray through [u,v] in [0,1] x [0,1]
     glm::vec3 getCameraRay( const glm::vec2 &uv ) const
     {
         glm::vec3 camDir = glm::vec3(2.f*uv.x-1.f,1.f-2.f*uv.y,-1.f/tanf(m_heightAngle/2.f));
         glm::vec3 worldDir = m_aspect*camDir.x*m_u + camDir.y*m_v + camDir.z*m_w;
         return glm::normalize(worldDir);
+    }
+
+    // Returns [u,v] in [0,1] x [0,1] on image plane
+    glm::vec2 getProjection( const glm::vec3 &point ) const
+    {
+        glm::vec4 film = m_projection * m_modelview * glm::vec4( point, 1.f );
+        film /= film.w;
+        return glm::vec2( (film.x+1.f)/2.f, (1.f-film.y)/2.f );
     }
 
 private:

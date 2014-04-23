@@ -35,6 +35,12 @@ public:
     inline BBox() { reset(); }
     inline BBox( const BBox &other ) : m_min(other.m_min), m_max(other.m_max) {}
 
+    inline BBox( const Grid &grid )
+    {
+        m_min = grid.pos;
+        m_max = grid.pos + grid.h * vec3( grid.dim.x, grid.dim.y, grid.dim.z );
+    }
+
     inline BBox( const vec3 &p ) { m_min = m_max = p; }
 
     inline BBox( const vec3 &p0, const vec3 &p1 )
@@ -156,6 +162,13 @@ public:
             }
         }
         return box;
+    }
+
+    virtual vec3 getCentroid( const glm::mat4 &ctm )
+    {
+        vec3 c = center();
+        glm::vec4 p = ctm * glm::vec4( c.x, c.y, c.z, 1.f );
+        return vec3( p.x, p.y, p.z );
     }
 
 };

@@ -91,7 +91,9 @@ private:
     DEFINE_SETTING( int, fillNumParticles )
     DEFINE_SETTING( float, fillResolution )
 
-    DEFINE_SETTING( bool, exportSimulation )
+    DEFINE_SETTING( bool, exportVolume )
+    DEFINE_SETTING( bool, exportColliders)
+    DEFINE_SETTING( int, exportFPS)
 
     DEFINE_SETTING( vec3, gridPosition )
     DEFINE_SETTING( glm::ivec3, gridDimensions )

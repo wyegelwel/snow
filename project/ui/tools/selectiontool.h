@@ -31,10 +31,9 @@ public:
 
     virtual void render() {}
 
-    bool hasSelection() const;
-    vec3 getSelectionCenter() const;
-
-protected:
+    bool hasSelection( vec3 &center ) const;
+    bool hasRotatableSelection( vec3 &center ) const;
+    bool hasScalableSelection( vec3 &center ) const;
 
     void clearSelection();
     SceneNode* getSelectedSceneNode();
