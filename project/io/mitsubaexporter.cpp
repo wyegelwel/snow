@@ -26,15 +26,20 @@
 
 MitsubaExporter::MitsubaExporter()
 {
-    m_nodes = NULL;
-    m_spf = 1.f/24.f;
-    m_lastUpdateTime = 0.f;
-    m_frame = 0;
+    m_fps = 24.f;
+    m_fileprefix = "./mts";
+    init();
 }
 
 MitsubaExporter::MitsubaExporter(QString fprefix, float fps)
     : m_fileprefix(fprefix), m_fps(fps)
 {
+    init();
+}
+
+void MitsubaExporter::init()
+{
+    m_busy = false;
     m_nodes = NULL;
     m_spf = 1.f/m_fps;
     m_lastUpdateTime = 0.f;
@@ -52,117 +57,49 @@ float MitsubaExporter::getLastUpdateTime() {return m_lastUpdateTime;}
 void MitsubaExporter::reset(Grid grid)
 {
     SAFE_DELETE_ARRAY(m_nodes);
-    SAFE_DELETE_ARRAY(m_densities); // temporary
-//    SAFE_DELETE_ARRAY(m_densities);
 //    SAFE_DELETE_ARRAY(m_albedo);
     m_grid = grid;
-    m_bbox = BBox(grid.pos, grid.h * vec3(grid.dim.x,grid.dim.y,grid.dim.z));
     m_nodes = new ParticleGridNode[m_grid.nodeCount()];
 
-    m_densities = new float[m_grid.nodeCount()]; // indexed into our scheme
     //m_albedo = new float[m_grid.nodeCount()];
 }
 
-void MitsubaExporter::test(float t)
+void MitsubaExporter::runExportThread(float t)
 {
-  // simple test to draw a sphere in the center of the scene bobbing up and down  
-
-#ifdef SPHERETEST
-  float h=m_grid.h;
-  float v=h*h*h;
-  int xres = m_grid.dim.x;
-  int yres = m_grid.dim.y;
-  int zres = m_grid.dim.z;
-
-  // center of sphere
-  float sx = m_grid.pos.x + xres * h/4;
-  float sy = m_grid.pos.y + yres * 3*h/4;
-  float sz = m_grid.pos.z + zres * h/2;
-
-
-
-  float r2 = .25; // radius^2 in simulation space
-  float x,y,z;
-  float dx,dy,dz;
-
-  for (size_t i=0; i<m_grid.nodeCount(); ++i)
-  {
-    // for each grid node, compute its xyz pos in our indexing system and set it's mass appropriately
-    int j=i;
-    int zpos = j%zres;
-    j = (j-zpos)/zres;
-    int ypos = j%yres;
-    j = (j-ypos)/yres;
-    int xpos = j;
-    
-    x = m_grid.pos.x + xpos*h;
-    y = m_grid.pos.y + ypos*h;
-    z = m_grid.pos.z + zpos*h;
-
-    dx = x-sx;
-    dy = y-sy;
-    dz = z-sz;
-
-    float mass = 0;
-    if (dx*dx + dy*dy + dz*dz < r2)
-    {
-        mass= v * sin(t*y*10);
-    }
-
-
-
-
-    m_nodes[i].mass = mass;
-  }
-#endif
-
+    if (m_busy)
+        m_future.waitForFinished();
+    m_future = QtConcurrent::run(this, &MitsubaExporter::exportScene, t);
 }
 
-void MitsubaExporter::applyDensity()
+void MitsubaExporter::exportScene(float t)
 {
-    /// TODO - the m_densities structure is totally unnecessary
-    /// this is such a shitty fix. you should be ashamed of yourself.
-
-
-  float h=m_grid.h;
-  float v=h*h*h;
-  for ( int i = 0, index = 0; i <= m_grid.dim.x; ++i ) {
-      //float x = m_grid.pos.x + i*m_grid.h;
-      for ( int j = 0; j <= m_grid.dim.y; ++j ) {
-          //float y = m_grid.pos.y + j*m_grid.h;
-          for ( int k = 0; k <= m_grid.dim.z; ++k, ++index ) {
-              //float z = m_grid.pos.z + k*m_grid.h;
-              const ParticleGridNode &node = m_nodes[index];
-              int mitsubaindex = ((k*m_grid.dim.y + j)*m_grid.dim.x + i);
-              m_densities[mitsubaindex] = node.mass;
-              //m_densities[mitsubaindex] = v*sin(m_grid.pos.y + j*h);
-          }
-      }
-  }
+    m_busy = true;
+    // do work here
+    exportVolumeData(t);
+//  exportColliders(m_colliders);
+    m_lastUpdateTime = t;
+    m_frame += 1;
+    m_busy = false;
 }
 
 void MitsubaExporter::exportVolumeData(float t)
 {
-/// the engine has to decide to copy over ParticleGrid data
-/// at some point to the CPU. right now this graph traversal wont do.
-/// since sceneNodes dont have pointers to the particleGrids.
-    m_busy = true;
-//    for (int i=0; i<m_grid.nodeCount();i++)
-//    {
-//        m_densities[i]=std::sin(float(m_frame * i)/50);
-//    }
-
     QString fname = QString("%1_%2.vol").arg(m_fileprefix, QString("%1").arg(m_frame,4,'d',0,'0'));
     std::ofstream os(fname.toStdString().c_str());
+
+    int xres,yres,zres;
+    xres = m_grid.nodeDim().x;
+    yres = m_grid.nodeDim().y;
+    zres = m_grid.nodeDim().z;
 
     os.write("VOL", 3);
     char version = 3;
     os.write((char *) &version, sizeof(char));
     int value = 1;
     os.write((char *) &value, sizeof(int)); //Dense float32-based representation
-    os.write((char *) &m_grid.dim.x, sizeof(int));
-    os.write((char *) &m_grid.dim.y, sizeof(int));
-    os.write((char *) &m_grid.dim.z, sizeof(int));
+    os.write((char *) &xres, sizeof(int));
+    os.write((char *) &yres, sizeof(int));
+    os.write((char *) &zres, sizeof(int));
     int channels = 1;      // number of channels
     os.write((char *) &channels, sizeof(int));
 
@@ -195,57 +132,18 @@ void MitsubaExporter::exportVolumeData(float t)
     float h = m_grid.h;
     float v = h*h*h;
 
-    int xres,yres,zres;
-    xres = m_grid.dim.x;
-    yres = m_grid.dim.y;
-    zres = m_grid.dim.z;
-
-   for (size_t i=0; i<m_grid.nodeCount(); ++i) {
-        // for each mitsuba-ordered index (z-major,x-minor), find the index of OUR grid
-        // that it corresponds to, then write it.
-        // mitsuba's grid indexing scheme = data[((zpos*yres + ypos)*xres + xpos)*channels + chan]
-#ifdef BUGGY
-       int j=i;
-        int xpos = j%xres;
-        j /= xres;
-        int ypos = j%yres;
-        j /= yres;
-        int zpos = j;
-
-        // index into our grid data
-        int index = (xpos*yres + ypos)*zres + zpos;
-        float density = m_nodes[index].mass/v;
-//        if (density > .00001)
-//        {
-//            int foo = 1;
-//        }
-        density *= 10000;
-#endif
-
-
-        // Find our format's index of the Mitsuba format's i-th grid node
-//        int j = i;
-//        int z = j / ((m_grid.dim.x+1)*(m_grid.dim.y+1));
-//        j -= z*((m_grid.dim.x+1)*(m_grid.dim.y+1));
-//        int y = j / (m_grid.dim.x+1);
-//        j -= y * (m_grid.dim.x+1);
-//        int x = j;
-//        int ourIndex = ((x*(m_grid.dim.y+1)+y)*(m_grid.dim.z+1)) + z;
-//        float density = m_nodes[ourIndex].mass / v;
-
-
-      //  float density = m_densities[i];
-        //density /=v;
-        density *= 1000;
-        density = std::min(1.f,density);
-        os.write((char *) &density, sizeof(float));
+    for ( int k = 0, mIndex = 0; k < zres; ++k ) {
+        for ( int j = 0; j < yres; ++j ) {
+            for ( int i = 0; i < xres; ++i, ++mIndex ) {
+                int gIndex = (i*yres + j)*zres + k;
+                float density = m_nodes[gIndex].mass / v;
+                density *= 10000;
+                density = std::min(1.f,density);
+                os.write((char *) &density, sizeof(float));
+            }
+        }
     }
     os.close();
-
-    m_lastUpdateTime = t;
-    m_frame += 1;
-    m_busy=false;
-
 }
 
 

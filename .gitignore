@@ -1,6 +1,7 @@
 build-*/*
 *.o
-*.pro.user # is this a good idea?
+*.pro.user 
 *.pro.user*
 *~
 .DS_Store
+*.log

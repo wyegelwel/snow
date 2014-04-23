@@ -25,6 +25,8 @@
 #include <helper_functions.h>
 #include <helper_cuda.h>
 
+#include <QtConcurrentRun>
+
 #define TICKS 50
 
 Engine::Engine()
@@ -58,7 +60,7 @@ Engine::~Engine()
     if ( m_running ) stop();
     SAFE_DELETE( m_particleSystem );
     SAFE_DELETE( m_particleGrid );
-    if ( m_export )
+    if ( m_export )    
         SAFE_DELETE( m_exporter );
 }
 
@@ -165,17 +167,14 @@ void Engine::update()
 
         if (m_export && (m_time - m_exporter->getLastUpdateTime() >= m_exporter->getspf()))
         {
-            // TODO - multithread this
-            cudaMemcpy(m_exporter->getNodesPtr(), m_devNodes, m_grid.nodeCount() * sizeof(ParticleGridNode), cudaMemcpyDeviceToHost);
-            m_exporter->applyDensity();
-            m_exporter->exportVolumeData(m_time);
+            cudaMemcpy(m_exporter->getNodesPtr(), devNodes, m_grid.nodeCount() * sizeof(ParticleGridNode), cudaMemcpyDeviceToHost);
+            m_exporter->runExportThread(m_time);
         }
 
         checkCudaErrors( cudaGraphicsUnmapResources( 1, &m_particlesResource, 0 ) );
         checkCudaErrors( cudaGraphicsUnmapResources( 1, &m_nodesResource, 0 ) );
 
         m_time += m_params.timeStep;
-
         m_busy = false;
 
     } else {

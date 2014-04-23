@@ -27,6 +27,7 @@
 #include "geometry/grid.h"
 #include "io/mitsubaexporter.h"
 
+
 struct cudaGraphicsResource;
 struct Particle;
 struct ParticleGrid;

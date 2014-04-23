@@ -17,19 +17,14 @@
 
 #include <QString>
 #include <QtXml>
+#include <QtConcurrentRun>
 #include <glm/geometric.hpp>
 #include "geometry/grid.h"
 #include "geometry/bbox.h"
 #include "sim/particlegridnode.h"
 
+class ImplicitCollider;
 class SceneNode;
-
-
-//class MitsubaRenderSettings
-//{
-//    // TODO - populate with general render settings
-//};
-
 
 class MitsubaExporter
 {
@@ -44,16 +39,19 @@ public:
      * it also needs access to the camera, so we also need to pass in the cam
      */
 
-
     float getspf();
     float getLastUpdateTime();
     void reset(Grid grid);
-    void exportVolumeData(float t);
     ParticleGridNode * getNodesPtr();
-    void test(float t);
-    void applyDensity();
+    void runExportThread(float t);
+    void exportScene(float t);
 
 private:
+    void exportVolumeData(float t);
+    void exportColliders(const QVector<ImplicitCollider> colliders);
+    void init();
+
+
     /**
      * @brief exports particle system at a single time frame to a .vol file
      * to be rendered as a heterogenous medium in the Mitsuba renderer.
@@ -69,26 +67,18 @@ private:
      * calls exportVolumeData, then if successful, links to the .vol file
 //     */
 //    QDomElement appendMedium(QDomElement node);
-
 //    /// export rendering presets
 //    QDomElement appendRenderer(QDomElement node);
-
 //    /// converts camera into XML node
 //    //QDomElement appendCamera(QDomElement node, Camera * camera);
-
 //    /// append transform matrix
 //    QDomElement appendXform(QDomElement node, glm::mat4 xform);
-
 //    /// appends sceneNodes
 //    QDomElement appendShape(QDomElement node, SceneNode * sceneNode);
-
 //    /// add obj shape node
 //    QDomElement appendOBJ(QDomElement node, QString objfile);
-
 //    /// add default material
 //    QDomElement appendBSDF(QDomElement node);
-
-    /// adds a light sphere to the scene
     //QDomElement appendLight(QDomElement node);
 
     QDomDocument m_document;
@@ -97,9 +87,6 @@ private:
     float m_lastUpdateTime;
     float m_fps; // number of frames to export every second of simulation
     float m_spf; // seconds per frame
-
-    // densities of each grid node
-    float * m_densities = NULL;
 
     ParticleGridNode * m_nodes;
 
@@ -112,6 +99,8 @@ private:
 
     int m_frame;
     bool m_busy;
+
+    QFuture<void> m_future; // promise object used with QtConcurrentRun
 };
 
 #endif // MITSUBAEXPORTER_H
