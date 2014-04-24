@@ -7,7 +7,7 @@
 QT       += core gui opengl xml
 
 # OpenGL stuff
-LIBS += -L/contrib/projects/glew/lib -lGLEW -lGLEWmx
+LIBS += -lGLEW -lGLEWmx
 DEFINES += GL_GLEXT_PROTOTYPES
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
@@ -44,7 +44,8 @@ SOURCES += \
     sim/particlegrid.cpp \
     ui/tools/rotatetool.cpp \
     ui/tools/scaletool.cpp \
-    ui/tools/tool.cpp
+    ui/tools/tool.cpp \
+    ui/collapsiblebox.cpp
 
 
 
@@ -88,7 +89,8 @@ HEADERS  += \
     sim/particlesystem.h \
     sim/particlegrid.h \
     ui/tools/rotatetool.h \
-    ui/tools/scaletool.h
+    ui/tools/scaletool.h \
+    ui/collapsiblebox.h
 
 FORMS    += ui/mainwindow.ui
 
