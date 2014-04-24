@@ -53,10 +53,12 @@ UiSettings::loadSettings()
 
     gridResolution() = s.value( "gridResolution", 0.05f ).toFloat();
 
+    timeStep() = s.value( "timeStep", 1e-5 ).toFloat();
+
     showMesh() = s.value( "showMesh", true ).toBool();
     showMeshMode() = s.value( "showMeshMode", WIREFRAME ).toInt();
     showGrid() = s.value( "showGrid", false ).toBool();
-    showGridMode() = s.value( "showGridMode", HALF_CELLS ).toInt();
+    showGridMode() = s.value( "showGridMode", MIN_FACE_CELLS ).toInt();
     showGridData() = s.value( "showGridData", false ).toBool();
     showGridDataMode() = s.value( "showGridDataMode", NODE_MASS ).toInt();
     showParticles() = s.value( "showParticles", true ).toBool();
@@ -89,6 +91,8 @@ UiSettings::saveSettings()
     s.setValue( "gridDimensionZ", gridDimensions().z );
 
     s.setValue( "gridResolution", gridResolution() );
+
+    s.setValue( "timeStep", timeStep() );
 
     s.setValue( "showMesh", showMesh() );
     s.setValue( "showMeshMode", showMeshMode() );

@@ -14,6 +14,7 @@
 #include <QFile>
 #include <QString>
 #include <QQueue>
+#include <QList>
 #include <QVector>
 
 #include "common/types.h"
@@ -25,6 +26,7 @@ class OBJParser
 public:
 
     static void load( const QString &filename, QList<Mesh*> &meshes );
+    static bool save( const QString &filename, QList<Mesh*> &meshes );
 
     OBJParser( const QString &filename = QString() ) : m_mode(VERTEX), m_file(filename), m_currentName("default") {}
     virtual ~OBJParser() { clear(); }
@@ -34,8 +36,10 @@ public:
 
     inline Mesh* popMesh() { return m_meshes.dequeue(); }
     inline bool hasMeshes() const { return !m_meshes.empty(); }
+    inline void setMeshes( const QList<Mesh*> &meshes ) { m_meshes.clear(); m_meshes += meshes; }
 
     bool load();
+    bool save();
     void clear();
 
 private:
@@ -59,9 +63,11 @@ private:
     void setMode( Mode mode );
 
     bool parse( const QStringList &lines, int &lineIndex );
-    bool parseGroup( const QString &line );
+    bool parseName( const QString &line );
     bool parseVertex( const QString &line );
     bool parseFace( const QString &line );
+
+    QString write( Mesh *mesh ) const;
 
 };
 

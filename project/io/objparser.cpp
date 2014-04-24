@@ -27,6 +27,14 @@ OBJParser::load( const QString &filename, QList<Mesh *> &meshes )
     }
 }
 
+bool
+OBJParser::save( const QString &filename, QList<Mesh *> &meshes )
+{
+    OBJParser parser( filename );
+    parser.setMeshes( meshes );
+    return parser.save();
+}
+
 void
 OBJParser::clear()
 {
@@ -85,9 +93,9 @@ OBJParser::parse( const QStringList &lines,
     switch ( line[0].toLatin1() ) {
     case '#':
         break;
-    case 'g':
-        if ( !parseGroup(line) ) {
-            LOG( "Error parsing group: %s", STR(line) );
+    case 'g': case 'o':
+        if ( !parseName(line) ) {
+            LOG( "Error parsing name: %s", STR(line) );
             return false;
         }
         break;
@@ -117,7 +125,7 @@ OBJParser::parse( const QStringList &lines,
 }
 
 bool
-OBJParser::parseGroup( const QString &line )
+OBJParser::parseName( const QString &line )
 {
     setMode( GROUP );
     const static QRegExp regExp( "[\\s+\n\r]" );
@@ -190,4 +198,54 @@ OBJParser::addMesh()
         m_triPool.clear();
         m_normalPool.clear();
     }
+}
+
+bool
+OBJParser::save()
+{
+    if ( m_file.fileName().isEmpty() ) {
+        LOG( "OBJParser: No file name!" );
+        return false;
+    }
+
+    if ( !m_file.open(QFile::WriteOnly) ) {
+        LOG( "OBJParser: Unable to open file %s.", STR(m_file.fileName()) );
+        return false;
+    }
+
+    QString string = "";
+    while ( hasMeshes() ) {
+        string += write( popMesh() );
+    }
+
+    m_file.write( string.toLatin1() );
+    m_file.close();
+
+    return true;
+}
+
+QString
+OBJParser::write( Mesh *mesh ) const
+{
+    char s[1024];
+    QString string = "";
+
+    for ( int i = 0; i < mesh->getNumVertices(); ++i ) {
+        const Vertex &v = mesh->getVertex( i );
+        sprintf( s, "v %f %f %f\n", v.x, v.y, v.z );
+        string += s;
+    }
+
+    string += "g " + mesh->getName() + "\n";
+
+    for ( int i = 0; i < mesh->getNumTris(); ++i ) {
+        Mesh::Tri t = mesh->getTri(i);
+        t.offset( 1 ); // OBJ indices start from 1
+        sprintf( s, "f %d %d %d\n", t[0], t[1], t[2] );
+        string += s;
+    }
+
+    string += "\n";
+
+    return string;
 }

@@ -319,7 +319,7 @@ __device__ void processGridVelocities( Particle &particle, Grid *grid, const Par
                 const ParticleGridNode &node = nodes[rowOffset+k];
                 float w;
                 vec3 wg;
-                weightAndGradient( s, d, w, wg );
+                weightAndGradient( -s, d, w, wg );
                 velocityGradient += mat3::outerProduct( node.velocity, wg );
                 // Particle velocities
                 v_PIC += node.velocity * w;
@@ -379,6 +379,7 @@ void updateParticles( const SimulationParameters &parameters,
                       ImplicitCollider *colliders, int numColliders,
                       MaterialConstants *mat )
 {
+    cudaDeviceSetCacheConfig( cudaFuncCachePreferL1 );
 
     static const int threadCount = 128;
 
@@ -398,109 +399,4 @@ void updateParticles( const SimulationParameters &parameters,
 
     updateParticlesFromGrid<<< numParticles / threadCount, threadCount >>>( particles, grid, nodes, parameters.timeStep, colliders, numColliders, mat );
     checkCudaErrors( cudaDeviceSynchronize() );
-
-}
-
-// IT IS SLOW!
-void testFillParticleVolume(){
-    int numParticles = 512*300;
-    Particle *particles = new Particle[numParticles];
-
-    for (int i = 0; i < numParticles; i++){
-        particles[i].mass = 1;
-        particles[i].position = vec3(urand(), urand(), urand());
-        particles[i].volume = 0;
-    }
-
-    Grid grid;
-    int dim = 128;
-    grid.dim = glm::ivec3(dim,dim,dim);
-    grid.h = 1.0f/dim;
-
-//    float *cellMasses = new float[grid.nodeCount()];
-//    memset(cellMasses, 0, sizeof(float)*grid.nodeCount());
-
-//    printf("Computing cell masses...\n"); fflush(stdout);
-
-//    //Compute cell masses
-//    for (int nIdx = 0; nIdx < grid.nodeCount(); nIdx++){
-//        for (int pIdx = 0; pIdx < numParticles; pIdx++){
-//            Particle &particle = particles[pIdx];
-
-//            glm::ivec3 IJK;
-//            gridIndexToIJK(nIdx, grid.nodeDim(), IJK);
-
-
-//            vec3 nodePosition(IJK.x, IJK.y, IJK.z);
-//            vec3 particleGridPos = (particle.position - grid.pos)/grid.h;
-//            vec3 dx = vec3::abs(particleGridPos-nodePosition);
-//            float w = weight(dx);
-//            if (particle.mass > 1 || w > 10){
-//                printf("mass: %f, w: %f", particle.mass, w);
-//            }
-//            cellMasses[nIdx] += w*particle.mass;
-//        }
-//    }
-
-//    for (int i =0 ; i < grid.nodeCount(); i++){
-//        printf("cellMasses[i]: %f\n", cellMasses[i]);
-//    }
-
-//    printf("Computing particle volumes... \n"); fflush(stdout);
-
-//    //Compute volumes
-//    float *volumes = new float[numParticles];
-//    memset(volumes, 0, sizeof(float)*numParticles);
-
-//    for (int pIdx = 0; pIdx < numParticles; pIdx++){
-//        Particle &particle = particles[pIdx];
-//        for (int nIdx = 0; nIdx < grid.nodeCount(); nIdx++){
-//            glm::ivec3 IJK;
-//            gridIndexToIJK(nIdx, grid.nodeDim(), IJK);
-
-
-//            vec3 nodePosition(IJK.x, IJK.y, IJK.z);
-//            vec3 particleGridPos = (particle.position - grid.pos)/grid.h;
-//            vec3 dx = vec3::abs(particleGridPos-nodePosition);
-//            float w = weight(dx);
-//            volumes[pIdx] += cellMasses[nIdx]*w;
-//        }
-//        float gridVolume = grid.h*grid.h*grid.h;
-//        volumes[pIdx] = particle.mass / (volumes[pIdx] / gridVolume);
-//    }
-
-     Particle *devParticles;
-     Grid *devGrid;
-     checkCudaErrors(cudaMalloc( &devParticles, numParticles*sizeof(Particle) ));
-     checkCudaErrors(cudaMemcpy( devParticles, particles, numParticles*sizeof(Particle), cudaMemcpyHostToDevice ));
-     checkCudaErrors(cudaMalloc( &devGrid, sizeof(Grid) ));
-     checkCudaErrors(cudaMemcpy( devGrid, &grid, sizeof(Grid), cudaMemcpyHostToDevice ));
-
-     printf("Calling fillParticleVolume kernel\n"); fflush(stdout);
-
-     fillParticleVolume(devParticles, numParticles, devGrid, grid.nodeCount());
-
-     printf("Comparing values\n"); fflush(stdout);
-
-     checkCudaErrors(cudaMemcpy( particles, devParticles, numParticles*sizeof(Particle), cudaMemcpyDeviceToHost ));
-
-     bool failed = false;
-     for (int i = 0; i < numParticles; i++){
-//         if (std::fabs(volumes[i] - particles[i].volume) > 1e-8 || std::isnan(particles[i].volume)){
-//             failed = true;
-//             printf("Expected: %f, Actual: %f\n", volumes[i], particles[i].volume); fflush(stdout);
-//         }
-         printf("volume: %g\n", particles[i].volume);
-     }
-
-     if (failed){
-         printf("[FAILED]: test fillParticleVolume Test\n");
-     } else{
-         printf("[PASSED]: test fillParticleVolume Test\n");
-     }
-
-     checkCudaErrors(cudaFree( devParticles ));
-     checkCudaErrors(cudaFree( devGrid ));
-//     delete[] cellMasses;
-//     delete[] volumes;
 }

@@ -41,7 +41,7 @@ Engine::Engine()
 
     m_exporter = NULL;
 
-    m_params.timeStep = 1e-5;
+    m_params.timeStep = 5e-5;
     m_params.startTime = 0.f;
     m_params.endTime = 60.f;
     m_params.gravity = vec3( 0.f, -9.8f, 0.f );
@@ -93,6 +93,7 @@ bool Engine::start( bool exportScene )
         LOG( "STARTING SIMULATION" );
 
         m_time = 0.f;
+        m_params.timeStep = UiSettings::timeStep();
         initializeCudaResources();
         m_running = true;
         m_ticker.start(TICKS);
@@ -253,7 +254,7 @@ void Engine::initializeCudaResources()
     checkCudaErrors(cudaMemcpy( m_particleSystem->particles().data(), devParticles, m_particleSystem->size()*sizeof(Particle), cudaMemcpyDeviceToHost ));
 
     for (int i = 0; i < 30; i++){
-        LOG("Volume: %f\n", m_particleSystem->particles().at(i).volume);
+        LOG("Volume: %g\n", m_particleSystem->particles().at(i).volume);
     }
 
     checkCudaErrors( cudaGraphicsUnmapResources( 1, &m_particlesResource, 0 ) );

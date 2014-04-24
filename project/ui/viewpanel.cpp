@@ -308,43 +308,6 @@ void ViewPanel::loadMesh( const QString &filename )
 
 }
 
-void ViewPanel::fillSelectedMesh()
-{
-    Mesh *mesh = new Mesh;
-
-    for ( SceneNodeIterator it = m_scene->begin(); it.isValid(); ++it ) {
-        if ( (*it)->hasRenderable() &&
-             (*it)->getType() == SceneNode::SNOW_CONTAINER &&
-             (*it)->getRenderable()->isSelected() ) {
-            Mesh *copy = new Mesh( *dynamic_cast<Mesh*>((*it)->getRenderable()) );
-            const glm::mat4 transformation = (*it)->getCTM();
-            copy->applyTransformation( transformation );
-            mesh->append( *copy );
-            delete copy;
-        }
-    }
-
-    // If there's a selection, do mesh->fill...
-    if ( !mesh->isEmpty() )  {
-
-        int nParticles = UiSettings::fillNumParticles();
-        float resolution = UiSettings::fillResolution();
-
-        makeCurrent();
-
-        ParticleSystem *particles = new ParticleSystem;
-        mesh->fill( *particles, nParticles, resolution );
-        m_engine->addParticleSystem( *particles );
-        delete particles;
-
-        m_infoPanel->setInfo( "Particles", QString::number(m_engine->particleSystem()->size()) );
-    }
-
-    delete mesh;
-
-    m_scene->deleteSelectedNodes();
-}
-
 void ViewPanel::addCollider(ColliderType c,QString planeType)  {
     //TODO add a collider to the scene and set it as selected renderable.
     ImplicitCollider *collider = new ImplicitCollider;
@@ -374,11 +337,6 @@ void ViewPanel::addCollider(ColliderType c,QString planeType)  {
     col->setSelected(true);
 
     m_tool->update();
-}
-
-void ViewPanel::editSnowConstants()  {
-    //TODO create popout to edit snow constants? Other (possibly better) option is to have all
-    // constants listed in UI in LineEdits and have them editable, then we could bind it to UISettings.
 }
 
 void ViewPanel::setTool( int tool )
@@ -506,4 +464,72 @@ ViewPanel::deleteGridVBO()
         glDeleteBuffers( 1, &m_gridVBO );
     }
     m_gridVBO = 0;
+}
+
+void ViewPanel::fillSelectedMesh()
+{
+    Mesh *mesh = new Mesh;
+
+    for ( SceneNodeIterator it = m_scene->begin(); it.isValid(); ++it ) {
+        if ( (*it)->hasRenderable() &&
+             (*it)->getType() == SceneNode::SNOW_CONTAINER &&
+             (*it)->getRenderable()->isSelected() ) {
+            Mesh *copy = new Mesh( *dynamic_cast<Mesh*>((*it)->getRenderable()) );
+            const glm::mat4 transformation = (*it)->getCTM();
+            copy->applyTransformation( transformation );
+            mesh->append( *copy );
+            delete copy;
+        }
+    }
+
+    // If there's a selection, do mesh->fill...
+    if ( !mesh->isEmpty() )  {
+
+        int nParticles = UiSettings::fillNumParticles();
+        float resolution = UiSettings::fillResolution();
+
+        makeCurrent();
+
+        ParticleSystem *particles = new ParticleSystem;
+        mesh->fill( *particles, nParticles, resolution );
+        m_engine->addParticleSystem( *particles );
+        delete particles;
+
+        m_infoPanel->setInfo( "Particles", QString::number(m_engine->particleSystem()->size()) );
+    }
+
+    delete mesh;
+
+    m_scene->deleteSelectedNodes();
+}
+
+void
+ViewPanel::saveSelectedMesh()
+{
+    QList<Mesh*> meshes;
+
+    for ( SceneNodeIterator it = m_scene->begin(); it.isValid(); ++it ) {
+        if ( (*it)->hasRenderable() &&
+             (*it)->getType() == SceneNode::SNOW_CONTAINER &&
+             (*it)->getRenderable()->isSelected() ) {
+            Mesh *copy = new Mesh( *dynamic_cast<Mesh*>((*it)->getRenderable()) );
+            copy->applyTransformation( (*it)->getCTM() );
+            meshes += copy;
+        }
+    }
+
+    // If there's a mesh selection, save it
+    if ( !meshes.empty() )  {
+        QString filename = QFileDialog::getSaveFileName( this, "Choose mesh file destination.", PROJECT_PATH "/data/models/" );
+        if ( !filename.isNull() ) {
+            if ( OBJParser::save( filename, meshes ) ) {
+                for ( int i = 0; i < meshes.size(); ++i )
+                    delete meshes[i];
+                meshes.clear();
+                LOG( "Mesh saved to %s", STR(filename) );
+            }
+        }
+    }
+
+
 }

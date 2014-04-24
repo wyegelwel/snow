@@ -26,13 +26,14 @@ public:
 public slots:
 
     virtual void mousePressEvent( QMouseEvent *event );
-    virtual void mouseReleaseEvent( QMouseEvent *event );
+    virtual void mouseReleaseEvent( QMouseEvent* );
 
 protected:
 
     bool m_clicked;
     bool m_collapsed;
-    QColor m_color;
+
+    static void setWidgetPalette( QWidget *widget , const QPalette &palette );
 
 };
 

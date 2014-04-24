@@ -59,7 +59,7 @@ MoveTool::renderAxis( unsigned int i ) const
 {
     glMatrixMode( GL_MODELVIEW );
     glPushMatrix();
-    glm::mat4 translate = glm::translate( glm::mat4(1.f), glm::vec3(m_center.x, m_center.y, m_center.z) );
+    glm::mat4 translate = glm::translate( glm::mat4(1.f), glm::vec3(m_center) );
     glm::mat4 basis = glm::scale( Tool::getAxialBasis(i), glm::vec3(m_scale) );
     glMultMatrixf( glm::value_ptr(translate*basis) );
     glBindBuffer( GL_ARRAY_BUFFER, m_vbo );
@@ -78,7 +78,7 @@ MoveTool::renderCenter() const
 {
     glMatrixMode( GL_MODELVIEW );
     glPushMatrix();
-    glm::mat4 translate = glm::translate( glm::mat4(1.f), glm::vec3(m_center.x, m_center.y, m_center.z) );
+    glm::mat4 translate = glm::translate( glm::mat4(1.f), glm::vec3(m_center) );
     glm::mat4 scale = glm::scale( glm::mat4(1.f), glm::vec3(m_scale) );
     glMultMatrixf( glm::value_ptr(translate*scale) );
     glBindBuffer( GL_ARRAY_BUFFER, m_vbo );
@@ -189,7 +189,7 @@ MoveTool::mouseMoved()
             float t0 = depth / vec3::dot( ray0, camera->getLook() );
             vec3 ray1 = camera->getCameraRay( glm::vec2(p1.x/(float)m_panel->width(),p1.y/(float)m_panel->height()) );
             float t1 = depth / vec3::dot( ray1, camera->getLook() );
-            glm::vec3 translate = (t1*ray1-t0*ray0).toGLM();
+            glm::vec3 translate = t1*ray1-t0*ray0;
             transform = glm::translate( glm::mat4(1.f), translate );
         }
         for ( SceneNodeIterator it = m_panel->m_scene->begin(); it.isValid(); ++it ) {

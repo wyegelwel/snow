@@ -70,8 +70,6 @@ public slots:
 
     void addCollider(ColliderType c,QString planeType);
 
-    void editSnowConstants();
-
     void setTool( int tool );
 
     void updateSceneGrid();
@@ -80,6 +78,8 @@ public slots:
     void teapotDemo();
 
     void clearSelection();
+
+    void saveSelectedMesh();
 
 protected:
 

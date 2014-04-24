@@ -47,8 +47,8 @@ public:
     enum GridMode
     {
         BOX,
-        HALF_CELLS,
-        FULL_CELLS
+        MIN_FACE_CELLS,
+        ALL_FACE_CELLS
     };
 
     enum GridDataMode
@@ -98,6 +98,8 @@ private:
     DEFINE_SETTING( vec3, gridPosition )
     DEFINE_SETTING( glm::ivec3, gridDimensions )
     DEFINE_SETTING( float, gridResolution )
+
+    DEFINE_SETTING( float, timeStep )
 
     DEFINE_SETTING( bool, showMesh )
     DEFINE_SETTING( int, showMeshMode )

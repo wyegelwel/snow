@@ -70,11 +70,11 @@ SceneGrid::render()
         glLineWidth( 3.f );
         glDrawArrays( GL_LINES, 0, 24 );
 
-        if ( UiSettings::showGridMode() == UiSettings::HALF_CELLS ) {
+        if ( UiSettings::showGridMode() == UiSettings::MIN_FACE_CELLS ) {
             glColor4f( c.x, c.y, c.z, 0.25f );
             glLineWidth( 0.5f );
             glDrawArrays( GL_LINES, 24, (m_vboSize-24)/2 );
-        } else if ( UiSettings::showGridMode() == UiSettings::FULL_CELLS ) {
+        } else if ( UiSettings::showGridMode() == UiSettings::ALL_FACE_CELLS ) {
             glColor4f( c.x, c.y, c.z, 0.25f );
             glLineWidth( 0.5f );
             glDrawArrays( GL_LINES, 24, m_vboSize-24 );

@@ -93,6 +93,9 @@ void MainWindow::startSimulation()
         ui->snowContainerGroup->setEnabled( false );
         ui->colliderGroup->setEnabled( false );
         ui->toolGroup->setEnabled( false );
+        ui->gridBox->setEnabled( false );
+        ui->parametersBox->setEnabled( false );
+        ui->exportBox_2->setEnabled( false );
         ui->stopButton->setEnabled( true );
         ui->pauseButton->setEnabled( true );
         ui->resetButton->setEnabled( false );
@@ -106,6 +109,9 @@ void MainWindow::stopSimulation()
     ui->snowContainerGroup->setEnabled( true );
     ui->colliderGroup->setEnabled( true );
     ui->toolGroup->setEnabled( true );
+    ui->gridBox->setEnabled( true );
+    ui->parametersBox->setEnabled( true );
+    ui->exportBox_2->setEnabled( true );
     ui->stopButton->setEnabled( false );
     if ( ui->pauseButton->isChecked() ) {
         ui->pauseButton->click();
@@ -136,6 +142,8 @@ void MainWindow::takeScreenshot()
 
 void MainWindow::setupUI()
 {
+    assert( connect(ui->actionSave_Mesh, SIGNAL(triggered()), ui->viewPanel, SLOT(saveSelectedMesh())) );
+
     // Mesh Filling
     assert( connect(ui->importButton, SIGNAL(clicked()), this, SLOT(importMesh())) );
     assert( connect(ui->fillButton, SIGNAL(clicked()), ui->viewPanel, SLOT(fillSelectedMesh())) );
@@ -156,6 +164,8 @@ void MainWindow::setupUI()
     assert( connect(ui->gridZSpinbox, SIGNAL(valueChanged(int)), ui->viewPanel, SLOT(updateSceneGrid())) );
     assert( connect(ui->gridResolutionSpinbox, SIGNAL(valueChanged(double)), ui->viewPanel, SLOT(updateSceneGrid())) );
 
+    FloatBinding::bindSpinBox( ui->timeStepSpinbox, UiSettings::timeStep(), this );
+
     // exporting
     BoolBinding::bindCheckBox( ui->volumeCheckbox, UiSettings::exportVolume(), this );
     BoolBinding::bindCheckBox(ui->colliderCheckbox, UiSettings::exportColliders(), this);
@@ -164,8 +174,6 @@ void MainWindow::setupUI()
     // Collider
     assert( connect(ui->colliderAddButton, SIGNAL(clicked()), this, SLOT(addCollider())));
     // Connect values to settings - not sure how to do this with combo box.
-
-    assert( connect(ui->editSimConstantsButton, SIGNAL(clicked()), ui->viewPanel, SLOT(editSnowConstants())));
 
     // View Panel
     assert( connect(ui->showGridCheckbox, SIGNAL(toggled(bool)), ui->showGridCombo, SLOT(setEnabled(bool))) );

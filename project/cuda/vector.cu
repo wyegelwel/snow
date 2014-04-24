@@ -44,13 +44,13 @@ struct vec3
     vec3( const glm::vec3 &v ) { x = v.x; y = v.y; z = v.z; }
 
     __host__ __device__ __forceinline__
+    operator glm::vec3() const { return glm::vec3( x, y, z ); }
+
+    __host__ __device__ __forceinline__
     vec3& operator = ( const vec3 &rhs ) { x = rhs.x; y = rhs.y; z = rhs.z; return *this; }
 
     __host__ __device__ __forceinline__
     vec3& operator = ( const glm::vec3 &rhs ) { x = rhs.x; y = rhs.y; z = rhs.z; return *this; }
-
-    __host__ __device__ __forceinline__
-    glm::vec3 toGLM() const { return glm::vec3( x, y, z ); }
 
     __host__ __device__ __forceinline__
     int majorAxis() { return ( (fabsf(x)>fabsf(y)) ? ((fabsf(x)>fabsf(z)) ? 0 : 2) : ((fabsf(y)>fabsf(z)) ? 1 : 2) ); }
