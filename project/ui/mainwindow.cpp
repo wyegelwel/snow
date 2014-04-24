@@ -18,6 +18,7 @@
 #include "ui/userinput.h"
 #include "scene/scene.h"
 
+#include "ui/collapsiblebox.h"
 #include "ui/databinding.h"
 #include "ui/uisettings.h"
 #include "ui/viewpanel.h"
@@ -163,7 +164,6 @@ void MainWindow::setupUI()
     assert( connect(ui->gridYSpinbox, SIGNAL(valueChanged(int)), ui->viewPanel, SLOT(updateSceneGrid())) );
     assert( connect(ui->gridZSpinbox, SIGNAL(valueChanged(int)), ui->viewPanel, SLOT(updateSceneGrid())) );
     assert( connect(ui->gridResolutionSpinbox, SIGNAL(valueChanged(double)), ui->viewPanel, SLOT(updateSceneGrid())) );
-
     FloatBinding::bindSpinBox( ui->timeStepSpinbox, UiSettings::timeStep(), this );
 
     // exporting
@@ -196,6 +196,11 @@ void MainWindow::setupUI()
     ui->toolButtonGroup->setId( ui->scaleToolButton, Tool::SCALE );
     assert( connect(ui->toolButtonGroup, SIGNAL(buttonClicked(int)), ui->viewPanel, SLOT(setTool(int))) );
     ui->selectionToolButton->click();
+
+    ui->gridBox->setCollapsed( true );
+    ui->parametersBox->setCollapsed( true );
+    ui->exportBox_2->setCollapsed( true );
+    ui->viewPanelGroup->setCollapsed( true );
 }
 
 void MainWindow::keyPressEvent( QKeyEvent *event )

@@ -102,7 +102,21 @@ __global__ void voxelizeMeshKernel( Tri *tris, int triCount, Grid grid, bool *fl
 
 }
 
-__global__ void fillMeshVoxelsKernel( curandState *states, unsigned int seed, Grid grid, bool *flags, Particle *particles, int particleCount )
+__global__ void initReduction( bool *flags, int voxelCount, int *reduction, int reductionSize )
+{
+    int tid = threadIdx.x + blockIdx.x * blockDim.x;
+    if ( tid >= reductionSize ) return;
+    reduction[tid] = ( tid < voxelCount ) ? flags[tid] : 0;
+}
+
+__global__ void reduce( int *reduction, int size )
+{
+    int tid = threadIdx.x + blockIdx.x * blockDim.x;
+    if ( tid >= size ) return;
+    reduction[tid] += reduction[tid+size];
+}
+
+__global__ void fillMeshVoxelsKernel( curandState *states, unsigned int seed, Grid grid, bool *flags, Particle *particles, float particleMass, int particleCount )
 {
     int tid = threadIdx.x + blockIdx.x * blockDim.x;
     if ( tid >= particleCount ) return;
@@ -128,11 +142,12 @@ __global__ void fillMeshVoxelsKernel( curandState *states, unsigned int seed, Gr
     vec3 max = min + vec3( grid.h, grid.h, grid.h );
 
     Particle particle;
+    particle.mass = particleMass;
     particle.position = min + r*(max-min);
     particles[tid] = particle;
 }
 
-void fillMesh( cudaGraphicsResource **resource, int triCount, const Grid &grid, Particle *particles, int particleCount )
+void fillMesh( cudaGraphicsResource **resource, int triCount, const Grid &grid, Particle *particles, int particleCount, float targetDensity )
 {
     // Get mesh data
     cudaGraphicsMapResources( 1, resource, 0 );
@@ -151,12 +166,31 @@ void fillMesh( cudaGraphicsResource **resource, int triCount, const Grid &grid, 
     voxelizeMeshKernel<<< blocks, threads >>>( devTris, triCount, grid, devFlags );
     checkCudaErrors( cudaDeviceSynchronize() );
 
+    int powerOfTwo = (int)(log2f(voxelCount)+1);
+    int reductionSize = 1 << powerOfTwo;
+    int *devReduction;
+    cudaMalloc( (void**)&devReduction, reductionSize*sizeof(int) );
+    initReduction<<< (reductionSize+511)/512, 512 >>>( devFlags, voxelCount, devReduction, reductionSize );
+    cudaDeviceSynchronize();
+    for ( int i = 0; i < powerOfTwo-1; ++i ) {
+        int size = 1 << (powerOfTwo-i-1);
+        reduce<<< (size+511)/512, 512 >>>( devReduction, size );
+        cudaDeviceSynchronize();
+    }
+    int count;
+    cudaMemcpy( &count, devReduction, sizeof(int), cudaMemcpyDeviceToHost );
+    cudaFree( devReduction );
+    float volume = count*grid.h*grid.h*grid.h;
+    float particleMass = targetDensity * volume / particleCount;
+    LOG( "Average %.2f particles per grid cell.", float(particleCount)/count );
+    LOG( "Target Density: %.1f kg/m3 -> Particle Mass: %g kg", targetDensity, particleMass );
+
     // Randomly fill mesh voxels and copy back resulting particles
     curandState *devStates;
     cudaMalloc( &devStates, particleCount*sizeof(curandState) );
     Particle *devParticles;
     cudaMalloc( (void**)&devParticles, particleCount*sizeof(Particle) );
-    fillMeshVoxelsKernel<<< (particleCount+511)/512, 512 >>>( devStates, time(NULL), grid, devFlags, devParticles, particleCount );
+    fillMeshVoxelsKernel<<< (particleCount+511)/512, 512 >>>( devStates, time(NULL), grid, devFlags, devParticles, particleMass, particleCount );
     checkCudaErrors( cudaDeviceSynchronize() );
     cudaMemcpy( particles, devParticles, particleCount*sizeof(Particle), cudaMemcpyDeviceToHost );
 

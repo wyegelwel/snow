@@ -133,7 +133,7 @@ ViewPanel::teapotDemo()
     // call fillSelectedMesh()
 
     ParticleSystem *particles = new ParticleSystem;
-    meshes[0]->fill( *particles, 32*512, 0.1f );
+    meshes[0]->fill( *particles, 32*512, 0.1f, 200.f );
     m_engine->addParticleSystem( *particles );
     delete particles;
 
@@ -485,13 +485,10 @@ void ViewPanel::fillSelectedMesh()
     // If there's a selection, do mesh->fill...
     if ( !mesh->isEmpty() )  {
 
-        int nParticles = UiSettings::fillNumParticles();
-        float resolution = UiSettings::fillResolution();
-
         makeCurrent();
 
         ParticleSystem *particles = new ParticleSystem;
-        mesh->fill( *particles, nParticles, resolution );
+        mesh->fill( *particles, UiSettings::fillNumParticles(), UiSettings::fillResolution(), UiSettings::fillDensity() );
         m_engine->addParticleSystem( *particles );
         delete particles;
 

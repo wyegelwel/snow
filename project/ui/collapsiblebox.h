@@ -17,18 +17,27 @@ class CollapsibleBox : public QGroupBox
 {
 
     Q_OBJECT
+    Q_PROPERTY( bool collapsed READ isCollapsed WRITE setCollapsed )
 
 public:
 
     explicit CollapsibleBox( QWidget *parent );
     ~CollapsibleBox() {}
 
+    bool isCollapsed() const { return m_collapsed; }
+
 public slots:
 
     virtual void mousePressEvent( QMouseEvent *event );
     virtual void mouseReleaseEvent( QMouseEvent* );
 
+    virtual void setTitle( const QString &title );
+
+    void setCollapsed( bool collapsed );
+
 protected:
+
+    QString m_rawTitle;
 
     bool m_clicked;
     bool m_collapsed;

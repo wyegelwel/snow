@@ -67,7 +67,7 @@
          <x>0</x>
          <y>0</y>
          <width>282</width>
-         <height>749</height>
+         <height>801</height>
         </rect>
        </property>
        <layout class="QGridLayout" name="gridLayout_2">
@@ -407,7 +407,7 @@
            <property name="spacing">
             <number>4</number>
            </property>
-           <item row="2" column="1">
+           <item row="3" column="1">
             <widget class="QSpinBox" name="fillNumParticlesSpinbox">
              <property name="autoFillBackground">
               <bool>true</bool>
@@ -448,7 +448,17 @@
              </property>
             </widget>
            </item>
-           <item row="2" column="0">
+           <item row="5" column="0">
+            <widget class="QLabel" name="densityLabel">
+             <property name="text">
+              <string>Target Density</string>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+             </property>
+            </widget>
+           </item>
+           <item row="3" column="0">
             <widget class="QLabel" name="fillNumParticlesLabel">
              <property name="autoFillBackground">
               <bool>true</bool>
@@ -483,23 +493,26 @@
              </property>
             </widget>
            </item>
-           <item row="3" column="0">
+           <item row="2" column="0">
             <widget class="QLabel" name="fillResolutionLabel">
              <property name="autoFillBackground">
               <bool>true</bool>
              </property>
              <property name="text">
-              <string>Resolution</string>
+              <string>Cell Size</string>
              </property>
              <property name="alignment">
               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
              </property>
             </widget>
            </item>
-           <item row="3" column="1">
+           <item row="2" column="1">
             <widget class="QDoubleSpinBox" name="fillResolutionSpinbox">
              <property name="autoFillBackground">
               <bool>true</bool>
+             </property>
+             <property name="suffix">
+              <string> m</string>
              </property>
              <property name="decimals">
               <number>4</number>
@@ -515,6 +528,25 @@
              </property>
              <property name="value">
               <double>0.001000000000000</double>
+             </property>
+            </widget>
+           </item>
+           <item row="5" column="1">
+            <widget class="QDoubleSpinBox" name="densitySpinbox">
+             <property name="suffix">
+              <string> kg/m3</string>
+             </property>
+             <property name="decimals">
+              <number>2</number>
+             </property>
+             <property name="minimum">
+              <double>1.000000000000000</double>
+             </property>
+             <property name="maximum">
+              <double>1000.000000000000000</double>
+             </property>
+             <property name="value">
+              <double>150.000000000000000</double>
              </property>
             </widget>
            </item>
@@ -888,6 +920,235 @@
            <property name="spacing">
             <number>4</number>
            </property>
+           <item row="2" column="0" colspan="2">
+            <widget class="CollapsibleBox" name="gridBox">
+             <property name="autoFillBackground">
+              <bool>true</bool>
+             </property>
+             <property name="title">
+              <string>Grid</string>
+             </property>
+             <layout class="QGridLayout" name="gridLayout_8">
+              <property name="margin">
+               <number>4</number>
+              </property>
+              <property name="spacing">
+               <number>4</number>
+              </property>
+              <item row="0" column="1">
+               <widget class="QSpinBox" name="gridXSpinbox">
+                <property name="autoFillBackground">
+                 <bool>true</bool>
+                </property>
+                <property name="minimum">
+                 <number>1</number>
+                </property>
+                <property name="maximum">
+                 <number>512</number>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="4">
+               <widget class="QLabel" name="label_3">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="autoFillBackground">
+                 <bool>true</bool>
+                </property>
+                <property name="text">
+                 <string>Z</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="3">
+               <widget class="QSpinBox" name="gridYSpinbox">
+                <property name="autoFillBackground">
+                 <bool>true</bool>
+                </property>
+                <property name="minimum">
+                 <number>1</number>
+                </property>
+                <property name="maximum">
+                 <number>512</number>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="2">
+               <widget class="QLabel" name="label_2">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="autoFillBackground">
+                 <bool>true</bool>
+                </property>
+                <property name="text">
+                 <string>Y</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="0">
+               <widget class="QLabel" name="label">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="autoFillBackground">
+                 <bool>true</bool>
+                </property>
+                <property name="text">
+                 <string>X</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="5">
+               <widget class="QSpinBox" name="gridZSpinbox">
+                <property name="autoFillBackground">
+                 <bool>true</bool>
+                </property>
+                <property name="minimum">
+                 <number>1</number>
+                </property>
+                <property name="maximum">
+                 <number>512</number>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="0" colspan="6">
+               <layout class="QHBoxLayout" name="horizontalLayout_2">
+                <item>
+                 <widget class="QLabel" name="gridResolutionLable">
+                  <property name="autoFillBackground">
+                   <bool>true</bool>
+                  </property>
+                  <property name="text">
+                   <string>Cell Size</string>
+                  </property>
+                  <property name="alignment">
+                   <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QDoubleSpinBox" name="gridResolutionSpinbox">
+                  <property name="autoFillBackground">
+                   <bool>true</bool>
+                  </property>
+                  <property name="suffix">
+                   <string> m</string>
+                  </property>
+                  <property name="decimals">
+                   <number>3</number>
+                  </property>
+                  <property name="singleStep">
+                   <double>0.001000000000000</double>
+                  </property>
+                  <property name="value">
+                   <double>0.005000000000000</double>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </item>
+             </layout>
+            </widget>
+           </item>
+           <item row="0" column="0">
+            <widget class="QPushButton" name="startButton">
+             <property name="autoFillBackground">
+              <bool>true</bool>
+             </property>
+             <property name="text">
+              <string>Start</string>
+             </property>
+            </widget>
+           </item>
+           <item row="3" column="0" colspan="2">
+            <widget class="CollapsibleBox" name="parametersBox">
+             <property name="autoFillBackground">
+              <bool>true</bool>
+             </property>
+             <property name="title">
+              <string>Parameters</string>
+             </property>
+             <layout class="QGridLayout" name="gridLayout_7">
+              <property name="horizontalSpacing">
+               <number>10</number>
+              </property>
+              <property name="verticalSpacing">
+               <number>4</number>
+              </property>
+              <property name="margin">
+               <number>4</number>
+              </property>
+              <item row="0" column="1">
+               <widget class="QDoubleSpinBox" name="timeStepSpinbox">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="autoFillBackground">
+                 <bool>true</bool>
+                </property>
+                <property name="suffix">
+                 <string> s</string>
+                </property>
+                <property name="decimals">
+                 <number>5</number>
+                </property>
+                <property name="minimum">
+                 <double>0.000010000000000</double>
+                </property>
+                <property name="maximum">
+                 <double>0.100000000000000</double>
+                </property>
+                <property name="singleStep">
+                 <double>0.000010000000000</double>
+                </property>
+                <property name="value">
+                 <double>0.000010000000000</double>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="0">
+               <widget class="QLabel" name="timeStepLabel">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="autoFillBackground">
+                 <bool>true</bool>
+                </property>
+                <property name="text">
+                 <string>Time Step</string>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="0">
+               <widget class="QLabel" name="label_4">
+                <property name="text">
+                 <string>Density</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </widget>
+           </item>
            <item row="1" column="1">
             <widget class="QPushButton" name="resetButton">
              <property name="autoFillBackground">
@@ -909,166 +1170,6 @@
              <property name="text">
               <string>Stop</string>
              </property>
-            </widget>
-           </item>
-           <item row="0" column="1">
-            <widget class="QPushButton" name="pauseButton">
-             <property name="enabled">
-              <bool>false</bool>
-             </property>
-             <property name="autoFillBackground">
-              <bool>true</bool>
-             </property>
-             <property name="text">
-              <string>Pause</string>
-             </property>
-             <property name="checkable">
-              <bool>true</bool>
-             </property>
-            </widget>
-           </item>
-           <item row="0" column="0">
-            <widget class="QPushButton" name="startButton">
-             <property name="autoFillBackground">
-              <bool>true</bool>
-             </property>
-             <property name="text">
-              <string>Start</string>
-             </property>
-            </widget>
-           </item>
-           <item row="2" column="0" colspan="2">
-            <widget class="CollapsibleBox" name="gridBox">
-             <property name="autoFillBackground">
-              <bool>true</bool>
-             </property>
-             <property name="title">
-              <string>Grid</string>
-             </property>
-             <layout class="QGridLayout" name="gridLayout_8">
-              <property name="margin">
-               <number>4</number>
-              </property>
-              <property name="spacing">
-               <number>4</number>
-              </property>
-              <item row="1" column="4" colspan="2">
-               <widget class="QDoubleSpinBox" name="gridResolutionSpinbox">
-                <property name="autoFillBackground">
-                 <bool>true</bool>
-                </property>
-                <property name="decimals">
-                 <number>3</number>
-                </property>
-                <property name="singleStep">
-                 <double>0.001000000000000</double>
-                </property>
-                <property name="value">
-                 <double>0.005000000000000</double>
-                </property>
-               </widget>
-              </item>
-              <item row="1" column="0" colspan="4">
-               <widget class="QLabel" name="gridResolutionLable">
-                <property name="autoFillBackground">
-                 <bool>true</bool>
-                </property>
-                <property name="text">
-                 <string>Resolution</string>
-                </property>
-                <property name="alignment">
-                 <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-                </property>
-               </widget>
-              </item>
-              <item row="0" column="0">
-               <widget class="QLabel" name="label">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="autoFillBackground">
-                 <bool>true</bool>
-                </property>
-                <property name="text">
-                 <string>X</string>
-                </property>
-               </widget>
-              </item>
-              <item row="0" column="2">
-               <widget class="QLabel" name="label_2">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="autoFillBackground">
-                 <bool>true</bool>
-                </property>
-                <property name="text">
-                 <string>Y</string>
-                </property>
-               </widget>
-              </item>
-              <item row="0" column="4">
-               <widget class="QLabel" name="label_3">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="autoFillBackground">
-                 <bool>true</bool>
-                </property>
-                <property name="text">
-                 <string>Z</string>
-                </property>
-               </widget>
-              </item>
-              <item row="0" column="1">
-               <widget class="QSpinBox" name="gridXSpinbox">
-                <property name="autoFillBackground">
-                 <bool>true</bool>
-                </property>
-                <property name="minimum">
-                 <number>1</number>
-                </property>
-                <property name="maximum">
-                 <number>512</number>
-                </property>
-               </widget>
-              </item>
-              <item row="0" column="5">
-               <widget class="QSpinBox" name="gridZSpinbox">
-                <property name="autoFillBackground">
-                 <bool>true</bool>
-                </property>
-                <property name="minimum">
-                 <number>1</number>
-                </property>
-                <property name="maximum">
-                 <number>512</number>
-                </property>
-               </widget>
-              </item>
-              <item row="0" column="3">
-               <widget class="QSpinBox" name="gridYSpinbox">
-                <property name="autoFillBackground">
-                 <bool>true</bool>
-                </property>
-                <property name="minimum">
-                 <number>1</number>
-                </property>
-                <property name="maximum">
-                 <number>512</number>
-                </property>
-               </widget>
-              </item>
-             </layout>
             </widget>
            </item>
            <item row="4" column="0" colspan="2">
@@ -1129,69 +1230,20 @@
              </layout>
             </widget>
            </item>
-           <item row="3" column="0" colspan="2">
-            <widget class="CollapsibleBox" name="parametersBox">
+           <item row="0" column="1">
+            <widget class="QPushButton" name="pauseButton">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
              <property name="autoFillBackground">
               <bool>true</bool>
              </property>
-             <property name="title">
-              <string>Parameters</string>
+             <property name="text">
+              <string>Pause</string>
              </property>
-             <layout class="QGridLayout" name="gridLayout_7">
-              <property name="margin">
-               <number>4</number>
-              </property>
-              <property name="spacing">
-               <number>4</number>
-              </property>
-              <item row="0" column="0">
-               <widget class="QLabel" name="timeStepLabel">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="autoFillBackground">
-                 <bool>true</bool>
-                </property>
-                <property name="text">
-                 <string>Step</string>
-                </property>
-               </widget>
-              </item>
-              <item row="0" column="1">
-               <widget class="QDoubleSpinBox" name="timeStepSpinbox">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="autoFillBackground">
-                 <bool>true</bool>
-                </property>
-                <property name="suffix">
-                 <string> s</string>
-                </property>
-                <property name="decimals">
-                 <number>5</number>
-                </property>
-                <property name="minimum">
-                 <double>0.000010000000000</double>
-                </property>
-                <property name="maximum">
-                 <double>0.100000000000000</double>
-                </property>
-                <property name="singleStep">
-                 <double>0.000010000000000</double>
-                </property>
-                <property name="value">
-                 <double>0.000010000000000</double>
-                </property>
-               </widget>
-              </item>
-             </layout>
+             <property name="checkable">
+              <bool>true</bool>
+             </property>
             </widget>
            </item>
           </layout>

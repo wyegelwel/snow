@@ -37,6 +37,7 @@ UiSettings::loadSettings()
 
     fillNumParticles() = s.value( "fillNumParticles", 512*128 ).toInt();
     fillResolution() = s.value( "fillResolution", 0.05f ).toFloat();
+    fillDensity() = s.value( "fillDensity", 150.f ).toFloat();
 
     exportVolume() = s.value( "exportVolume", false ).toBool();
     exportColliders() = s.value("exportColliders", false).toBool();
@@ -77,6 +78,7 @@ UiSettings::saveSettings()
 
     s.setValue( "fillNumParticles", fillNumParticles() );
     s.setValue( "fillResolution", fillResolution() );
+    s.setValue( "fillDensity", fillDensity() );
 
     s.setValue( "exportVolume", exportVolume() );
     s.setValue( "exportColliders", exportColliders());

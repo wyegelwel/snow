@@ -19,10 +19,18 @@
 
 CollapsibleBox::CollapsibleBox( QWidget *widget )
     : QGroupBox(widget),
+      m_rawTitle(""),
       m_clicked(false),
       m_collapsed(false)
 {
     this->setAutoFillBackground( true );
+}
+
+void
+CollapsibleBox::setTitle( const QString &title )
+{
+    m_rawTitle = title;
+    QGroupBox::setTitle( ((m_collapsed) ? "> " : "v ") + title );
 }
 
 void
@@ -38,17 +46,23 @@ CollapsibleBox::mousePressEvent( QMouseEvent *event )
 }
 
 void
+CollapsibleBox::setCollapsed( bool collapsed )
+{
+    m_collapsed = collapsed;
+    for ( int i = 0; i < children().size(); ++i )
+        children()[i]->setProperty( "visible", !collapsed );
+    if ( m_collapsed ) setMaximumHeight( 1.25*fontMetrics().height() );
+    else setMaximumHeight( 16777215 );
+    this->setTitle( m_rawTitle );
+}
+
+void
 CollapsibleBox::mouseReleaseEvent(QMouseEvent*)
 {
     if ( m_clicked ) {
-        for ( int i = 0; i < children().size(); ++i )
-            children()[i]->setProperty( "visible", m_collapsed );
-        m_collapsed = !m_collapsed;
-        if ( m_collapsed ) setMaximumHeight( 1.25*fontMetrics().height() );
-        else setMaximumHeight( 16777215 );
+        setCollapsed( !m_collapsed );
         setWidgetPalette( this, QApplication::palette() );
         m_clicked = false;
-        updateGeometry();
     }
 }
 

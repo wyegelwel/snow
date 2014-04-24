@@ -89,6 +89,7 @@ private:
     DEFINE_SETTING( QSize, windowSize )
 
     DEFINE_SETTING( int, fillNumParticles )
+    DEFINE_SETTING( float, fillDensity )
     DEFINE_SETTING( float, fillResolution )
 
     DEFINE_SETTING( bool, exportVolume )
