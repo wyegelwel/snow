@@ -312,6 +312,22 @@ struct mat3
                M[3]*(M[1]*M[8]-M[7]*M[2]) +
                M[6]*(M[1]*M[5]-M[4]*M[2]);
     }
+    __host__ __device__ __forceinline__
+   static mat3 adjugate( const mat3 &M )
+   {
+       mat3 tmp;
+       tmp[0] = M[4]*M[8] - M[7]*M[5];
+       tmp[1] = -(M[3]*M[8] - M[6]*M[5]);
+       tmp[2] = M[3]*M[7] - M[6]*M[4];
+       tmp[3] = -(M[1]*M[8] - M[7]*M[2]);
+       tmp[4] = M[0]*M[8] - M[6]*M[2];
+       tmp[5] = -(M[0]*M[7] - M[6]*M[1]);
+       tmp[6] = M[1]*M[5] - M[4]*M[2];
+       tmp[7] = -(M[0]*M[5] - M[3]*M[2]);
+       tmp[8] = M[0]*M[4] - M[3]*M[1];
+       return tmp;
+   }
+
 
     __host__ __device__ __forceinline__
     static mat3 fromQuat( const quat &q )

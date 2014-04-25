@@ -249,7 +249,7 @@ void Engine::initializeCudaResources()
         LOG( "Particle resource error : %lu bytes (%lu expected)", size, m_particleSystem->size()*sizeof(Particle) );
     }
 
-//    fillParticleVolume(devParticles, m_particleSystem->size(), m_devGrid, m_grid.nodeCount());
+    fillParticleVolume(devParticles, m_particleSystem->size(), m_devGrid, m_grid.nodeCount());
 
     checkCudaErrors(cudaMemcpy( m_particleSystem->particles().data(), devParticles, m_particleSystem->size()*sizeof(Particle), cudaMemcpyDeviceToHost ));
 
@@ -259,6 +259,29 @@ void Engine::initializeCudaResources()
 
     checkCudaErrors( cudaGraphicsUnmapResources( 1, &m_particlesResource, 0 ) );
 }
+
+void Engine::readAndPrintParticles(){
+    cudaGraphicsMapResources( 1, &m_particlesResource, 0 );
+    Particle *devParticles;
+    size_t size;
+    checkCudaErrors( cudaGraphicsResourceGetMappedPointer( (void**)&devParticles, &size, m_particlesResource ) );
+    checkCudaErrors( cudaDeviceSynchronize() );
+
+    if ( (int)(size/sizeof(Particle)) != m_particleSystem->size() ) {
+        LOG( "Particle resource error : %lu bytes (%lu expected)", size, m_particleSystem->size()*sizeof(Particle) );
+    }
+
+    checkCudaErrors(cudaMemcpy(m_particleSystem->data(), devParticles, m_particleSystem->size()*sizeof(Particle), cudaMemcpyDeviceToHost));
+
+    for (int i = 0; i < m_particleSystem->size(); i++){
+        Particle &p = m_particleSystem->data()[i];
+        printf("position: (%f, %f, %f), mass: %g, volume: %g, velocity: (%f, %f, %f)\n", p.position.x, p.position.y, p.position.z, p.mass, p.volume, p.velocity.x, p.velocity.y, p.velocity.z);
+    }
+
+     checkCudaErrors( cudaGraphicsUnmapResources( 1, &m_particlesResource, 0 ) );
+     fflush(stdout);
+}
+
 
 void Engine::freeCudaResources()
 {

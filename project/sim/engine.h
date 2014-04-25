@@ -70,6 +70,8 @@ public:
 
     void initExporter(QString fprefix);
 
+    void readAndPrintParticles();
+
     bool isRunning();
 
     virtual void render();

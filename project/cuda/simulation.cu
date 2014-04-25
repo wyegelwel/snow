@@ -163,7 +163,26 @@ __host__ void fillParticleVolume(Particle *particles, int numParticles, Grid *gr
 }
 
 
+__device__ void computeDPsi(mat3 &Fe, mat3 &Fp, MaterialConstants *material, mat3 &dPsi){
+    float Jp = mat3::determinant(Fp);
+    float Je = mat3::determinant(Fe);
 
+    float muFp = material->mu*__expf(material->xi*(1-Jp));
+    float lambdaFp = material->lambda*__expf(material->xi*(1-Jp));
+
+    mat3 Re;
+    computePD(Fe, Re);
+
+    dPsi = 2*muFp*(Fe-Re) + lambdaFp * (Je - 1) * mat3::transpose(mat3::adjugate(Fe));
+}
+
+//This can be and will be severly optimized!
+__device__ void computeSigma( Particle &particle, MaterialConstants *material, mat3 &FepHat, mat3 &sigma )
+{
+    mat3 dPsi;
+    computeDPsi(FepHat, particle.plasticF, material, dPsi);
+    sigma = dPsi * particle.elasticF * particle.volume;
+}
 
 __device__ void computeSigma( Particle &particle, MaterialConstants *material, mat3 &sigma )
 {
@@ -184,6 +203,15 @@ __device__ void computeSigma( Particle &particle, MaterialConstants *material, m
 }
 
 
+__global__ void computeParticleGridPositions(Particle *particles, Grid *grid, ParticleTempData *particleTempData ){
+    int particleIdx = blockIdx.x*blockDim.x + threadIdx.x;
+
+    Particle &particle = particles[particleIdx];
+    ParticleTempData &pgtd = particleTempData[particleIdx];
+
+    pgtd.particleGridPos = (particle.position - grid->pos)/grid->h;
+}
+
 __global__ void computeParticleGridTempData ( Particle *particleData, Grid *grid, MaterialConstants *material, ParticleTempData *particleGridTempData )
 {
     int particleIdx = blockIdx.x*blockDim.x + threadIdx.x;
@@ -203,8 +231,32 @@ void atomicAdd( vec3 *add, vec3 toAdd )
     atomicAdd(&(add->z), toAdd.z);
 }
 
+__global__ void computeCellMassAndVelocityFast( Particle *particles, Grid *grid, ParticleTempData *particleTempData, ParticleGridNode *nodes ){
+    int particleIdx = blockIdx.y*gridDim.x*blockDim.x + blockIdx.x*blockDim.x + threadIdx.x;
+
+    Particle &particle = particles[particleIdx];
+    ParticleTempData &pgtd = particleTempData[particleIdx];
+
+    glm::ivec3 currIJK;
+    gridIndexToIJK(threadIdx.y, glm::ivec3(4,4,4), currIJK);
+    currIJK.x += (int) pgtd.particleGridPos.x - 1; currIJK.y += (int) pgtd.particleGridPos.y - 1; currIJK.z += (int) pgtd.particleGridPos.z - 1;
+
+    if (withinBoundsInclusive(currIJK, glm::ivec3(0,0,0), grid->dim)){
+        ParticleGridNode &node = nodes[getGridIndex(currIJK, grid->dim+1)];
+
+        float w;
+        vec3 wg;
+        vec3 nodePosition(currIJK.x, currIJK.y, currIJK.z);
+        weightAndGradient(pgtd.particleGridPos-nodePosition, w, wg);
+
+        atomicAdd(&node.mass, particle.mass*w);
+        atomicAdd(&node.velocity, particle.velocity*particle.mass*w );
+     }
+}
+
+
 /**
- * Called on each particle.
+ * Called on each particle on each node it affects.
  *
  * Each particle adds it's mass, velocity and force contribution to the grid nodes within 2h of itself.
  *
@@ -238,6 +290,62 @@ __global__ void computeCellMassVelocityAndForceFast( Particle *particleData, Gri
 
         atomicAdd(&node.mass, particle.mass*w);
         atomicAdd(&node.velocity, particle.velocity*particle.mass*w );
+        atomicAdd(&node.force, pgtd.sigma*wg);
+     }
+}
+
+__global__ void computeFepHatAndSigma( Particle *particles, Grid *grid, ParticleGridNode *nodes, MaterialConstants *material, ParticleTempData *particleGridTempData){
+    int particleIdx = blockIdx.x*blockDim.x + threadIdx.x;
+
+    Particle &particle = particles[particleIdx];
+    ParticleTempData &pgtd = particleGridTempData[particleIdx];
+
+    vec3 &particleGridPos = pgtd.particleGridPos;
+    glm::ivec3 min = glm::ivec3(std::ceil(particleGridPos.x - 2), std::ceil(particleGridPos.y - 2), std::ceil(particleGridPos.z - 2));
+    glm::ivec3 max = glm::ivec3(std::floor(particleGridPos.x + 2), std::floor(particleGridPos.y + 2), std::floor(particleGridPos.z + 2));
+
+    mat3 Fe_hat;
+
+    // Apply particles contribution of mass, velocity and force to surrounding nodes
+    min = glm::max(glm::ivec3(0.0f), min);
+    max = glm::min(grid->dim, max);
+    for (int i = min.x; i <= max.x; i++){
+        for (int j = min.y; j <= max.y; j++){
+            for (int k = min.z; k <= max.z; k++){
+                int currIdx = getGridIndex(i, j, k, grid->dim+1);
+                ParticleGridNode &node = nodes[currIdx];
+
+                vec3 wg;
+                weightGradient(particleGridPos - vec3(i, j, k), wg);
+
+                Fe_hat += mat3::outerProduct(node.velocity, wg);
+            }
+        }
+    }
+
+    Fe_hat *= particle.elasticF;
+
+    computeSigma(particle, material, Fe_hat, pgtd.sigma);
+}
+
+__global__ void computeCellForceFast( Grid *grid, ParticleTempData *particleGridTempData, ParticleGridNode *nodes )
+{
+    int particleIdx = blockIdx.y*gridDim.x*blockDim.x + blockIdx.x*blockDim.x + threadIdx.x;
+
+    ParticleTempData &pgtd = particleGridTempData[particleIdx];
+
+    glm::ivec3 currIJK;
+    gridIndexToIJK(threadIdx.y, glm::ivec3(4,4,4), currIJK);
+    currIJK.x += (int) pgtd.particleGridPos.x - 1; currIJK.y += (int) pgtd.particleGridPos.y - 1; currIJK.z += (int) pgtd.particleGridPos.z - 1;
+
+    if (withinBoundsInclusive(currIJK, glm::ivec3(0,0,0), grid->dim)){
+        ParticleGridNode &node = nodes[getGridIndex(currIJK, grid->dim+1)];
+
+        float w;
+        vec3 wg;
+        vec3 nodePosition(currIJK.x, currIJK.y, currIJK.z);
+        weightAndGradient(pgtd.particleGridPos-nodePosition, w, wg);
+
         atomicAdd(&node.force, pgtd.sigma*wg);
      }
 }
@@ -348,7 +456,7 @@ __device__ void updateParticleDeformationGradients( Particle &particle, const ma
 
     // Compute final deformation components
     particle.elasticF = mat3::multiplyADBt( W, S, V );
-    particle.plasticF = mat3::multiplyADBt( V, Sinv, W ) * particle.plasticF;
+    particle.plasticF = mat3::multiplyADBt( V, Sinv, W ) * F * particle.plasticF;
 }
 
 // NOTE: assumes particleCount % blockDim.x = 0, so tid is never out of range!
@@ -372,7 +480,8 @@ __global__ void updateParticlesFromGrid( Particle *particles, Grid *grid, const 
 
 }
 
-
+//Stuff to cache: particle grid position, weight and weight gradient, svd, node index affected
+//To optimize: compute sigma with Fep_hat
 void updateParticles( const SimulationParameters &parameters,
                       Particle *particles, int numParticles,
                       Grid *grid, ParticleGridNode *nodes, int numNodes, ParticleTempData *particleGridTempData,
@@ -381,17 +490,23 @@ void updateParticles( const SimulationParameters &parameters,
 {
     cudaDeviceSetCacheConfig( cudaFuncCachePreferL1 );
 
-    static const int threadCount = 128;
-
-    computeParticleGridTempData<<< numParticles / threadCount , threadCount >>>( particles, grid, mat, particleGridTempData );
-    checkCudaErrors( cudaDeviceSynchronize() );
-
     // Clear grid data before update
     checkCudaErrors( cudaMemset(nodes, 0, numNodes*sizeof(ParticleGridNode)) );
 
+    static const int threadCount = 128;
+
+
+    computeParticleGridPositions<<< numParticles / threadCount , threadCount >>>( particles, grid, particleGridTempData );
+    checkCudaErrors( cudaDeviceSynchronize() );
+
     dim3 blockDim = dim3(numParticles / threadCount, 64);
     dim3 threadDim = dim3(threadCount/64, 64);
-    computeCellMassVelocityAndForceFast<<< blockDim, threadDim >>>( particles, grid, particleGridTempData, nodes );
+    computeCellMassAndVelocityFast<<< blockDim, threadDim >>>( particles, grid, particleGridTempData, nodes );
+    checkCudaErrors( cudaDeviceSynchronize() );
+
+    computeFepHatAndSigma<<< numParticles / threadCount, threadCount >>> ( particles, grid, nodes, mat, particleGridTempData);
+    checkCudaErrors( cudaDeviceSynchronize() );
+    computeCellForceFast<<< blockDim, threadDim >>>( grid, particleGridTempData, nodes);
     checkCudaErrors( cudaDeviceSynchronize() );
 
     updateNodeVelocities<<< numNodes / threadCount, threadCount >>>( nodes, parameters.timeStep, colliders, numColliders, mat, grid, parameters.gravity );

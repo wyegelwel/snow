@@ -210,7 +210,10 @@ ViewPanel::keyPressEvent( QKeyEvent *event )
     if ( event->key() == Qt::Key_Backspace ) {
         m_scene->deleteSelectedNodes();
         event->accept();
-    } else {
+    } else if (event->key() == Qt::Key_P){
+        m_engine->readAndPrintParticles();
+        event->accept();
+    }else {
         event->setAccepted( false );
     }
     if ( m_tool ) m_tool->update();
