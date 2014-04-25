@@ -64,7 +64,8 @@ public:
     {
         PARTICLE_MASS,
         PARTICLE_VELOCITY,
-        PARTICLE_SPEED
+        PARTICLE_SPEED,
+        PARTICLE_SHADED
     };
 
 public:

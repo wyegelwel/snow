@@ -382,11 +382,67 @@ __global__ void updateParticlesFromGrid( Particle *particles, Grid *grid, const 
 }
 
 
+/**
+ * Approximate the shading normal of each particle
+ * for each particle,find its corresponding grid node, then
+ * approximate X,Y,Z component of mass gradient by examining average between the
+ * two nearest neighbors on that axis (6 total - left,right,up,down,front,back)
+ * then normalize the vector. If particle l2 norm is < epsilon (i.e. gradient is zero in all directions)
+ * then just pick a random direction instead of normalizing.
+ *
+ * Particles that lie on boundary of surface will hopefully
+ * have continuous normal.
+ *
+ * we could loop over grid nodes to cache the gradients at each node?
+ * to reduce aliasing we could perturn the normals slightly. after all, snow is slightly scattery...
+ */
+__global__ void updateParticleNormals(Particle *particles, Grid *grid, const ParticleGridNode *nodes)
+{
+    int tid = threadIdx.x + blockIdx.x * blockDim.x;
+    Particle &particle = particles[tid];
+    const vec3 &pos = particle.position;
+    const glm::ivec3 &dim = grid->dim;
+    const float h = grid->h;
+
+    vec3 gridIndex = (pos - grid->pos) / h,
+         gridMax = vec3::floor( gridIndex + vec3(1,1,1) ),
+         gridMin = vec3::ceil( gridIndex - vec3(1,1,1) );
+    glm::ivec3 maxIndex = glm::clamp( VEC2IVEC(gridMax), glm::ivec3(0,0,0), dim ),
+               minIndex = glm::clamp( VEC2IVEC(gridMin), glm::ivec3(0,0,0), dim );
+
+    //glm::ivec3 ijk = VEC2IVEC((pos - grid->pos) / h);
+
+
+    // +x,-x,+y,-y,+z,-z axis-aligned components of negative gradient within grid
+    // for higher resolution we could average over a larger neighborhood
+    vec3 n = vec3(0,1,0);
+//    ParticleGridNode &node;
+//    int i1, i2; // grid indices of neighboring components
+//    float c1,c2;
+//    for (int a=0;a<3;a++)
+//    {
+//        glm::ivec3 da(0);
+//        da[a]=-1;
+
+//        da[1]=+1;
+//        glm::ivec3 neighbor = ijk + glm::ivec3();
+
+//        n[i] = (c1+c2)*.5;
+//    }
+
+
+//    //
+
+
+    particle.normal = n;
+}
+
 void updateParticles( const SimulationParameters &parameters,
                       Particle *particles, int numParticles,
                       Grid *grid, ParticleGridNode *nodes, int numNodes, ParticleTempData *particleGridTempData,
                       ImplicitCollider *colliders, int numColliders,
-                      MaterialConstants *mat )
+                      MaterialConstants *mat,
+                      bool doShading)
 {
     cudaDeviceSetCacheConfig( cudaFuncCachePreferL1 );
 
@@ -402,6 +458,12 @@ void updateParticles( const SimulationParameters &parameters,
     dim3 threadDim = dim3(threadCount/64, 64);
     computeCellMassVelocityAndForceFast<<< blockDim, threadDim >>>( particles, grid, particleGridTempData, nodes );
     checkCudaErrors( cudaDeviceSynchronize() );
+
+    if (doShading)
+    {
+        updateParticleNormals<<< numParticles/threadCount, threadCount >>> (particles, grid, nodes);
+        checkCudaErrors( cudaDeviceSynchronize() );
+    }
 
     updateNodeVelocities<<< numNodes / threadCount, threadCount >>>( nodes, parameters.timeStep, colliders, numColliders, mat, grid );
     checkCudaErrors( cudaDeviceSynchronize() );

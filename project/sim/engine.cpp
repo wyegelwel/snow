@@ -175,8 +175,9 @@ void Engine::update()
             LOG( "Grid nodes resource error : %lu bytes (%lu expected)", size, m_particleGrid->size()*sizeof(ParticleGridNode) );
         }
 
+        bool doShading = UiSettings::showParticlesMode() == UiSettings::PARTICLE_SHADED;
         updateParticles( m_params, devParticles, m_particleSystem->size(), m_devGrid,
-                         devNodes, m_grid.nodeCount(), m_devPGTD, m_devColliders, m_colliders.size(), m_devMaterial );
+                         devNodes, m_grid.nodeCount(), m_devPGTD, m_devColliders, m_colliders.size(), m_devMaterial, doShading);
 
         if (m_export && (m_time - m_exporter->getLastUpdateTime() >= m_exporter->getspf()))
         {
