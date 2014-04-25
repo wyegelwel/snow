@@ -99,11 +99,15 @@ ParticleSystem::buildBuffers()
 
     // Mass attribute
     glEnableVertexAttribArray( 2 );
-    glVertexAttribPointer( 2, 1, GL_FLOAT, GL_FALSE, sizeof(Particle), (void*)(2*sizeof(vec3)) );
+    glVertexAttribPointer( 2, 1, GL_FLOAT, GL_FALSE, sizeof(Particle), (void*)(sizeof(vec3)+sizeof(vec3)) );
 
     // Volume attribute
     glEnableVertexAttribArray( 3 );
-    glVertexAttribPointer( 3, 1, GL_FLOAT, GL_FALSE, sizeof(Particle), (void*)(2*sizeof(vec3)+sizeof(GLfloat)) );
+    glVertexAttribPointer( 3, 1, GL_FLOAT, GL_FALSE, sizeof(Particle), (void*)(sizeof(vec3)+sizeof(vec3)+sizeof(GLfloat)) );
+
+    // Normal attribute
+    glEnableVertexAttribArray(4);
+    glVertexAttribPointer( 4, 3, GL_FLOAT, GL_FALSE, sizeof(Particle), (void*)(sizeof(vec3)+sizeof(vec3)+sizeof(GLfloat)+sizeof(GLfloat)+2*sizeof(mat3)));
 
     glBindVertexArray( 0 );
     glBindBuffer( GL_ARRAY_BUFFER, 0 );
@@ -164,6 +168,7 @@ ParticleSystem::shader()
             SHADER->bindAttributeLocation( "particleVelocity", 1 );
             SHADER->bindAttributeLocation( "particleMass", 2 );
             SHADER->bindAttributeLocation( "particleVolume", 3 );
+            SHADER->bindAttributeLocation( "particleNormal",4 );
             glBindFragDataLocation( SHADER->programId(), 0, "fragmentColor" );
             if ( !SHADER->link() ) {
                 LOG( "ParticleSystem::shader() : Link error: \n%s\n", STR(SHADER->log().trimmed()) );

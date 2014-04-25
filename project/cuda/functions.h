@@ -35,7 +35,12 @@ void updateParticles( const SimulationParameters &parameters,
                       Particle *particles, int numParticles,
                       Grid *grid, ParticleGridNode *nodes, int numNodes, ParticleTempData *particleGridTempData,
                       ImplicitCollider *colliders, int numColliders,
-                      MaterialConstants *mat );
+                      MaterialConstants *mat,
+                      bool doShading);
+
+// normal approximation for shading
+void updateParticleNormals(Particle *particles, int numParticles,
+                           Grid *grid, ParticleGridNode *nodes, int numNodes);
 
 // Mesh filling
 void fillMesh( cudaGraphicsResource **resource, int triCount, const Grid &grid, Particle *particles, int particleCount, float targetDensity );

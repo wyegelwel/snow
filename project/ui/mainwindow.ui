@@ -65,9 +65,9 @@
        <property name="geometry">
         <rect>
          <x>0</x>
-         <y>0</y>
-         <width>282</width>
-         <height>801</height>
+         <y>-307</y>
+         <width>284</width>
+         <height>813</height>
         </rect>
        </property>
        <layout class="QGridLayout" name="gridLayout_2">
@@ -900,6 +900,11 @@
                <string>Speed</string>
               </property>
              </item>
+             <item>
+              <property name="text">
+               <string>Shaded</string>
+              </property>
+             </item>
             </widget>
            </item>
           </layout>
@@ -1277,7 +1282,7 @@
      <x>0</x>
      <y>0</y>
      <width>1000</width>
-     <height>26</height>
+     <height>29</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
