@@ -153,7 +153,7 @@ void fillMesh( cudaGraphicsResource **resource, int triCount, const Grid &grid, 
     cudaGraphicsMapResources( 1, resource, 0 );
     Tri *devTris;
     size_t size;
-    cudaGraphicsResourceGetMappedPointer( (void**)&devTris, &size, *resource );
+    checkCudaErrors( cudaGraphicsResourceGetMappedPointer((void**)&devTris, &size, *resource) );
 
     // Voxelize mesh
     int x = grid.dim.x > 16 ? MAX( 1, MIN(16, grid.dim.x/8)) : 1;
@@ -161,25 +161,25 @@ void fillMesh( cudaGraphicsResource **resource, int triCount, const Grid &grid, 
     dim3 blocks( (grid.dim.x+x-1)/x, (grid.dim.y+y-1)/y ), threads( x, y );
     int voxelCount = grid.dim.x * grid.dim.y * grid.dim.z;
     bool *devFlags;
-    cudaMalloc( (void**)&devFlags, voxelCount*sizeof(bool) );
-    cudaMemset( (void*)devFlags, 0, voxelCount*sizeof(bool) );
+    checkCudaErrors( cudaMalloc((void**)&devFlags, voxelCount*sizeof(bool)) );
+    checkCudaErrors( cudaMemset((void*)devFlags, 0, voxelCount*sizeof(bool)) );
     voxelizeMeshKernel<<< blocks, threads >>>( devTris, triCount, grid, devFlags );
     checkCudaErrors( cudaDeviceSynchronize() );
 
     int powerOfTwo = (int)(log2f(voxelCount)+1);
     int reductionSize = 1 << powerOfTwo;
     int *devReduction;
-    cudaMalloc( (void**)&devReduction, reductionSize*sizeof(int) );
+    checkCudaErrors( cudaMalloc((void**)&devReduction, reductionSize*sizeof(int)) );
     initReduction<<< (reductionSize+511)/512, 512 >>>( devFlags, voxelCount, devReduction, reductionSize );
-    cudaDeviceSynchronize();
+    checkCudaErrors( cudaDeviceSynchronize() );
     for ( int i = 0; i < powerOfTwo-1; ++i ) {
         int size = 1 << (powerOfTwo-i-1);
         reduce<<< (size+511)/512, 512 >>>( devReduction, size );
-        cudaDeviceSynchronize();
+        checkCudaErrors( cudaDeviceSynchronize() );
     }
     int count;
-    cudaMemcpy( &count, devReduction, sizeof(int), cudaMemcpyDeviceToHost );
-    cudaFree( devReduction );
+    checkCudaErrors( cudaMemcpy(&count, devReduction, sizeof(int), cudaMemcpyDeviceToHost) );
+    checkCudaErrors( cudaFree(devReduction) );
     float volume = count*grid.h*grid.h*grid.h;
     float particleMass = targetDensity * volume / particleCount;
     LOG( "Average %.2f particles per grid cell.", float(particleCount)/count );
@@ -187,17 +187,16 @@ void fillMesh( cudaGraphicsResource **resource, int triCount, const Grid &grid, 
 
     // Randomly fill mesh voxels and copy back resulting particles
     curandState *devStates;
-    cudaMalloc( &devStates, particleCount*sizeof(curandState) );
+    checkCudaErrors( cudaMalloc(&devStates, particleCount*sizeof(curandState)) );
     Particle *devParticles;
-    cudaMalloc( (void**)&devParticles, particleCount*sizeof(Particle) );
+    checkCudaErrors( cudaMalloc((void**)&devParticles, particleCount*sizeof(Particle)) );
     fillMeshVoxelsKernel<<< (particleCount+511)/512, 512 >>>( devStates, time(NULL), grid, devFlags, devParticles, particleMass, particleCount );
     checkCudaErrors( cudaDeviceSynchronize() );
-    cudaMemcpy( particles, devParticles, particleCount*sizeof(Particle), cudaMemcpyDeviceToHost );
+    checkCudaErrors( cudaMemcpy(particles, devParticles, particleCount*sizeof(Particle), cudaMemcpyDeviceToHost) );
 
-    cudaFree( devFlags );
-    cudaFree( devStates );
-    cudaGraphicsUnmapResources( 1, resource, 0 );
-
+    checkCudaErrors( cudaFree(devFlags) );
+    checkCudaErrors( cudaFree(devStates) );
+    checkCudaErrors( cudaGraphicsUnmapResources(1, resource, 0) );
 }
 
 #endif // MESH_CU

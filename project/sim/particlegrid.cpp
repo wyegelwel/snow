@@ -56,6 +56,7 @@ ParticleGrid::render()
             shader->setUniformValue( "pos", m_grid.pos.x, m_grid.pos.y, m_grid.pos.z );
             shader->setUniformValue( "dim", (float)m_grid.dim.x, (float)m_grid.dim.y, (float)m_grid.dim.z );
             shader->setUniformValue( "h", m_grid.h );
+            shader->setUniformValue( "density", UiSettings::fillDensity() );
             shader->setUniformValue( "mode", UiSettings::showGridDataMode() );
         } else {
             glPushAttrib( GL_LIGHTING_BIT );
@@ -63,6 +64,9 @@ ParticleGrid::render()
             glColor4f( 1.0f, 1.0f, 1.0f, 0.f );
             glPointSize( 1.f );
         }
+
+        glPushAttrib( GL_DEPTH_BUFFER_BIT );
+        glDisable( GL_DEPTH_TEST );
 
         glPushAttrib( GL_COLOR_BUFFER_BIT );
         glEnable( GL_BLEND );
@@ -79,6 +83,7 @@ ParticleGrid::render()
         glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, 0 );
         glBindVertexArray( 0 );
 
+        glPopAttrib();
         glPopAttrib();
 
         if ( shader ) {

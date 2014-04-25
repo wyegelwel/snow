@@ -25,8 +25,6 @@
 #include <helper_functions.h>
 #include <helper_cuda.h>
 
-#include <QtConcurrentRun>
-
 #define TICKS 50
 
 Engine::Engine()
@@ -236,9 +234,9 @@ void Engine::initializeCudaResources()
     checkCudaErrors(cudaMalloc( (void**)&m_devMaterial, sizeof(MaterialConstants) ));
     checkCudaErrors(cudaMemcpy( m_devMaterial, &m_materialConstants, sizeof(MaterialConstants), cudaMemcpyHostToDevice ));
 
-    LOG("Allocated %.2f MB in total", particlesSize + nodesSize + tempSize );
+    LOG( "Allocated %.2f MB in total", particlesSize + nodesSize + tempSize );
 
-    LOG("Computing particle volumes:");
+    LOG( "Computing particle volumes..." );
 
     cudaGraphicsMapResources( 1, &m_particlesResource, 0 );
     Particle *devParticles;
@@ -249,15 +247,14 @@ void Engine::initializeCudaResources()
         LOG( "Particle resource error : %lu bytes (%lu expected)", size, m_particleSystem->size()*sizeof(Particle) );
     }
 
-//    fillParticleVolume(devParticles, m_particleSystem->size(), m_devGrid, m_grid.nodeCount());
+    initializeParticleVolumes( devParticles, m_particleSystem->size(), m_devGrid, m_grid.nodeCount() );
 
-    checkCudaErrors(cudaMemcpy( m_particleSystem->particles().data(), devParticles, m_particleSystem->size()*sizeof(Particle), cudaMemcpyDeviceToHost ));
+//    checkCudaErrors(cudaMemcpy( m_particleSystem->particles().data(), devParticles, m_particleSystem->size()*sizeof(Particle), cudaMemcpyDeviceToHost ));
+//    for ( int i = 0; i < 10; ++i ) {
+//        LOG( "Volume: %g", m_particleSystem->particles().at(i).volume );
+//    }
 
-    for (int i = 0; i < 30; i++){
-        LOG("Volume: %g\n", m_particleSystem->particles().at(i).volume);
-    }
-
-    checkCudaErrors( cudaGraphicsUnmapResources( 1, &m_particlesResource, 0 ) );
+    checkCudaErrors( cudaGraphicsUnmapResources(1, &m_particlesResource, 0) );
 }
 
 void Engine::freeCudaResources()
@@ -274,7 +271,7 @@ void Engine::freeCudaResources()
 void Engine::render()
 {
     if ( UiSettings::showParticles() ) m_particleSystem->render();
-    if ( UiSettings::showGridData() ) m_particleGrid->render();
+    if ( UiSettings::showGridData() && m_running ) m_particleGrid->render();
 }
 
 BBox Engine::getBBox( const glm::mat4 &ctm )

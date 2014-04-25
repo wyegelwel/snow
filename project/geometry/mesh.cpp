@@ -123,7 +123,7 @@ Mesh::render()
         buildVBO();
     }
 
-    if ( UiSettings::showMesh() ) {
+    if ( ( m_type == SNOW_CONTAINER ) ? UiSettings::showContainers() : UiSettings::showColliders() ) {
 
         glPushAttrib( GL_DEPTH_TEST );
         glEnable( GL_DEPTH_TEST );
@@ -137,7 +137,9 @@ Mesh::render()
 
         glm::vec4 color = ( m_selected ) ? glm::mix( m_color, UiSettings::selectionColor(), 0.5f ) : m_color;
 
-        if ( UiSettings::showMeshMode() == UiSettings::SOLID || UiSettings::showMeshMode() == UiSettings::SOLID_AND_WIREFRAME ) {
+        if ( (m_type == SNOW_CONTAINER) ?
+             (UiSettings::showContainersMode() == UiSettings::SOLID || UiSettings::showContainersMode() == UiSettings::SOLID_AND_WIREFRAME ) :
+             (UiSettings::showCollidersMode() == UiSettings::SOLID || UiSettings::showCollidersMode() == UiSettings::SOLID_AND_WIREFRAME ) ) {
             glPushAttrib( GL_LIGHTING_BIT );
             glEnable( GL_LIGHTING );
             glMaterialfv( GL_FRONT_AND_BACK, GL_AMBIENT, glm::value_ptr(color*0.2f) );
@@ -147,7 +149,9 @@ Mesh::render()
             glPopAttrib();
         }
 
-        if ( UiSettings::showMeshMode() == UiSettings::WIREFRAME || UiSettings::showMeshMode() == UiSettings::SOLID_AND_WIREFRAME ) {
+        if ( (m_type == SNOW_CONTAINER) ?
+             (UiSettings::showContainersMode() == UiSettings::WIREFRAME || UiSettings::showContainersMode() == UiSettings::SOLID_AND_WIREFRAME) :
+             (UiSettings::showCollidersMode() == UiSettings::WIREFRAME || UiSettings::showCollidersMode() == UiSettings::SOLID_AND_WIREFRAME ) ) {
             glPushAttrib( GL_POLYGON_BIT );
             glEnable( GL_POLYGON_OFFSET_LINE );
             glPolygonOffset( -1.f, -1.f );
@@ -173,7 +177,7 @@ Mesh::renderForPicker()
     if ( !hasVBO() ) {
         buildVBO();
     }
-    if ( UiSettings::showMesh() ) {
+    if ( (m_type == SNOW_CONTAINER) ? UiSettings::showContainers() : UiSettings::showColliders() ) {
         glPushAttrib( GL_DEPTH_TEST );
         glEnable( GL_DEPTH_TEST );
         glPushAttrib( GL_LIGHTING_BIT );

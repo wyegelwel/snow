@@ -64,8 +64,6 @@ public slots:
     void pauseDrawing();
     void resumeDrawing();
 
-    // Filling
-    void fillSelectedMesh();
     void loadMesh( const QString &filename );
 
     void addCollider(ColliderType c,QString planeType);
@@ -74,12 +72,17 @@ public slots:
 
     void updateSceneGrid();
 
+    void clearSelection();
+    void fillSelectedMesh();
+    void saveSelectedMesh();
+
     // Demo Scenes
     void teapotDemo();
 
-    void clearSelection();
+signals:
 
-    void saveSelectedMesh();
+    void showMeshes();
+    void showParticles();
 
 protected:
 

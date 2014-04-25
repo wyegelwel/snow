@@ -23,7 +23,7 @@ struct MaterialConstants
         lambda = (YOUNGS_MODULUS*POISSONS_RATIO)/((1-POISSONS_RATIO)*(1-2*POISSONS_RATIO));
         mu = YOUNGS_MODULUS/(2*(1+POISSONS_RATIO));
         xi = 10;
-        coeffFriction = 1; // XXX: FIND A GOOD ONE!
+        coeffFriction = 0.5; // XXX: FIND A GOOD ONE!
         criticalCompression = 1.0 - 2.5e-2;
         criticalStretch = 1.0 + 7.5e-3;
     }

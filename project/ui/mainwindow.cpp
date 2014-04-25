@@ -57,7 +57,6 @@ void MainWindow::importMesh()
     if ( !filename.isEmpty() ) {
         ui->viewPanel->loadMesh( filename );
     }
-    ui->showMeshCheckbox->setChecked( true );
 
     ui->viewPanel->resumeSimulation();
     ui->viewPanel->resumeDrawing();
@@ -91,12 +90,12 @@ void MainWindow::startSimulation()
         ui->viewPanel->clearSelection();
         ui->selectionToolButton->click();
         ui->startButton->setEnabled( false );
-        ui->snowContainerGroup->setEnabled( false );
-        ui->colliderGroup->setEnabled( false );
-        ui->toolGroup->setEnabled( false );
-        ui->gridBox->setEnabled( false );
-        ui->parametersBox->setEnabled( false );
-        ui->exportBox_2->setEnabled( false );
+        ui->snowContainersGroupBox->setEnabled( false );
+        ui->collidersGroupBox->setEnabled( false );
+        ui->toolGroupBox->setEnabled( false );
+        ui->gridGroupBox->setEnabled( false );
+        ui->parametersGroupBox->setEnabled( false );
+        ui->exportGroupBox->setEnabled( false );
         ui->stopButton->setEnabled( true );
         ui->pauseButton->setEnabled( true );
         ui->resetButton->setEnabled( false );
@@ -107,12 +106,12 @@ void MainWindow::stopSimulation()
 {
     ui->viewPanel->stopSimulation();
     ui->startButton->setEnabled( true );
-    ui->snowContainerGroup->setEnabled( true );
-    ui->colliderGroup->setEnabled( true );
-    ui->toolGroup->setEnabled( true );
-    ui->gridBox->setEnabled( true );
-    ui->parametersBox->setEnabled( true );
-    ui->exportBox_2->setEnabled( true );
+    ui->snowContainersGroupBox->setEnabled( true );
+    ui->collidersGroupBox->setEnabled( true );
+    ui->toolGroupBox->setEnabled( true );
+    ui->gridGroupBox->setEnabled( true );
+    ui->parametersGroupBox->setEnabled( true );
+    ui->exportGroupBox->setEnabled( true );
     ui->stopButton->setEnabled( false );
     if ( ui->pauseButton->isChecked() ) {
         ui->pauseButton->click();
@@ -150,6 +149,7 @@ void MainWindow::setupUI()
     assert( connect(ui->fillButton, SIGNAL(clicked()), ui->viewPanel, SLOT(fillSelectedMesh())) );
     FloatBinding::bindSpinBox( ui->fillResolutionSpinbox, UiSettings::fillResolution(), this );
     IntBinding::bindSpinBox( ui->fillNumParticlesSpinbox, UiSettings::fillNumParticles(), this );
+    FloatBinding::bindSpinBox( ui->densitySpinbox, UiSettings::fillDensity(), this );
 
     // Simulation
     assert( connect(ui->startButton, SIGNAL(clicked()), this, SLOT(startSimulation())) );
@@ -176,12 +176,17 @@ void MainWindow::setupUI()
     // Connect values to settings - not sure how to do this with combo box.
 
     // View Panel
+    assert( connect(ui->showContainersCheckbox, SIGNAL(toggled(bool)), ui->showContainersCombo, SLOT(setEnabled(bool))) );
+    assert( connect(ui->showCollidersCheckbox, SIGNAL(toggled(bool)), ui->showCollidersCombo, SLOT(setEnabled(bool))) );
     assert( connect(ui->showGridCheckbox, SIGNAL(toggled(bool)), ui->showGridCombo, SLOT(setEnabled(bool))) );
-    assert( connect(ui->showMeshCheckbox, SIGNAL(toggled(bool)), ui->showMeshCombo, SLOT(setEnabled(bool))) );
     assert( connect(ui->showGridDataCheckbox, SIGNAL(toggled(bool)), ui->showGridDataCombo, SLOT(setEnabled(bool))) );
     assert( connect(ui->showParticlesCheckbox, SIGNAL(toggled(bool)), ui->showParticlesCombo, SLOT(setEnabled(bool))) );
-    CheckboxBoolAttribute::bindBool( ui->showMeshCheckbox, &UiSettings::showMesh(), this );
-    ComboIntAttribute::bindInt( ui->showMeshCombo, &UiSettings::showMeshMode(), this );
+    assert( connect(ui->viewPanel, SIGNAL(showParticles()), ui->showParticlesCheckbox, SLOT(click())) );
+    assert( connect(ui->viewPanel, SIGNAL(showMeshes()), ui->showContainersCheckbox, SLOT(click())) );
+    CheckboxBoolAttribute::bindBool( ui->showContainersCheckbox, &UiSettings::showContainers(), this );
+    ComboIntAttribute::bindInt( ui->showContainersCombo, &UiSettings::showContainersMode(), this );
+    CheckboxBoolAttribute::bindBool( ui->showCollidersCheckbox, &UiSettings::showColliders(), this );
+    ComboIntAttribute::bindInt( ui->showCollidersCombo, &UiSettings::showCollidersMode(), this );
     CheckboxBoolAttribute::bindBool( ui->showGridCheckbox, &UiSettings::showGrid(), this );
     ComboIntAttribute::bindInt( ui->showGridCombo, &UiSettings::showGridMode(), this );
     CheckboxBoolAttribute::bindBool( ui->showGridDataCheckbox, &UiSettings::showGridData(), this );
@@ -197,10 +202,14 @@ void MainWindow::setupUI()
     assert( connect(ui->toolButtonGroup, SIGNAL(buttonClicked(int)), ui->viewPanel, SLOT(setTool(int))) );
     ui->selectionToolButton->click();
 
-    ui->gridBox->setCollapsed( true );
-    ui->parametersBox->setCollapsed( true );
-    ui->exportBox_2->setCollapsed( true );
-    ui->viewPanelGroup->setCollapsed( true );
+    ui->toolGroupBox->init();
+    ui->snowContainersGroupBox->init();
+    ui->simulationGroupBox->init();
+    ui->gridGroupBox->init();
+    ui->exportGroupBox->init();
+    ui->parametersGroupBox->init();
+    ui->collidersGroupBox->init();
+    ui->viewPanelGroupBox->init();
 }
 
 void MainWindow::keyPressEvent( QKeyEvent *event )

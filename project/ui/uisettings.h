@@ -20,6 +20,7 @@
 
 #include <QPoint>
 #include <QSize>
+#include <QVariant>
 
 #ifndef GLM_FORCE_RADIANS
     #define GLM_FORCE_RADIANS
@@ -53,7 +54,7 @@ public:
 
     enum GridDataMode
     {
-        NODE_MASS,
+        NODE_DENSITY,
         NODE_VELOCITY,
         NODE_SPEED,
         NODE_FORCE
@@ -73,6 +74,9 @@ public:
 
     static void loadSettings();
     static void saveSettings();
+
+    static QVariant getSetting( const QString &name, const QVariant &d = QVariant() );
+    static void setSetting( const QString &name, const QVariant &value );
 
     static Grid buildGrid( const glm::mat4 &ctm );
 
@@ -102,8 +106,10 @@ private:
 
     DEFINE_SETTING( float, timeStep )
 
-    DEFINE_SETTING( bool, showMesh )
-    DEFINE_SETTING( int, showMeshMode )
+    DEFINE_SETTING( bool, showContainers )
+    DEFINE_SETTING( int, showContainersMode )
+    DEFINE_SETTING( bool, showColliders )
+    DEFINE_SETTING( int, showCollidersMode )
     DEFINE_SETTING( bool, showGrid )
     DEFINE_SETTING( int, showGridMode )
     DEFINE_SETTING( bool, showGridData )

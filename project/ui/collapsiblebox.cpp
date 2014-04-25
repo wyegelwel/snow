@@ -16,6 +16,7 @@
 #include "collapsiblebox.h"
 
 #include "common/common.h"
+#include "ui/uisettings.h"
 
 CollapsibleBox::CollapsibleBox( QWidget *widget )
     : QGroupBox(widget),
@@ -24,6 +25,17 @@ CollapsibleBox::CollapsibleBox( QWidget *widget )
       m_collapsed(false)
 {
     this->setAutoFillBackground( true );
+}
+
+CollapsibleBox::~CollapsibleBox()
+{
+    UiSettings::setSetting( this->objectName() + "IsCollapsed", m_collapsed );
+}
+
+void
+CollapsibleBox::init()
+{
+    setCollapsed( UiSettings::getSetting( this->objectName() + "IsCollapsed", false ).toBool() );
 }
 
 void

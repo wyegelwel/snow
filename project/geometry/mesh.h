@@ -22,6 +22,7 @@
 #include "glm/mat4x4.hpp"
 
 #include "common/renderable.h"
+#include "ui/uisettings.h"
 
 typedef unsigned int GLuint;
 struct cudaGraphicsResource;
@@ -33,6 +34,12 @@ class Mesh : public Renderable
 {
 
 public:
+
+    enum Type
+    {
+        SNOW_CONTAINER,
+        COLLIDER
+    };
 
     struct Tri {
         union {
@@ -52,6 +59,9 @@ public:
     Mesh( const QVector<Vertex> &vertices, const QVector<Tri> &tris );
     Mesh( const QVector<Vertex> &vertices, const QVector<Tri> &tris, const QVector<Normal> &normals );
     Mesh( const Mesh &mesh );
+
+    void setType( Type type ) { m_type = type; }
+    Type getType() const { return m_type; }
 
     virtual ~Mesh();
 
@@ -108,6 +118,7 @@ private:
 
     QString m_name;
     QString m_filename; // The OBJ file source
+    Type m_type;
 
     // List of vertices
     QVector<Vertex> m_vertices;

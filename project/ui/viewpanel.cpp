@@ -295,16 +295,20 @@ void ViewPanel::loadMesh( const QString &filename )
     QList<Mesh*> meshes;
     OBJParser::load( filename, meshes );
 
+    clearSelection();
+
     for ( int i = 0; i < meshes.size(); ++i ) {
+        Mesh *mesh = meshes[i];
+        mesh->setSelected( true );
+        mesh->setType( Mesh::SNOW_CONTAINER );
         SceneNode *node = new SceneNode( SceneNode::SNOW_CONTAINER );
-        node->setRenderable( meshes[i] );
+        node->setRenderable( mesh );
         m_scene->root()->addChild( node );
     }
 
-    clearSelection();
-    meshes[0]->setSelected(true);
-
     m_tool->update();
+
+    if ( !UiSettings::showContainers() ) emit showMeshes();
 
 }
 
@@ -497,7 +501,7 @@ void ViewPanel::fillSelectedMesh()
 
     delete mesh;
 
-    m_scene->deleteSelectedNodes();
+    if ( !UiSettings::showParticles() ) emit showParticles();
 }
 
 void

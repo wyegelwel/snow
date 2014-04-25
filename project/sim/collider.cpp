@@ -39,7 +39,8 @@ void Collider::render()
     glPopMatrix();
 }
 
-void Collider::renderForPicker()  {
+void Collider::renderForPicker()
+{
     glPushMatrix();
     glTranslatef( m_collider.center.x, m_collider.center.y, m_collider.center.z );
     switch( m_collider.type )  {
@@ -83,17 +84,19 @@ void Collider::renderPlane()
     glScalef(PLANE_CONSTANT,PLANE_CONSTANT,PLANE_CONSTANT);
 }
 
-void Collider::initializeMesh()  {
-        QList<Mesh*> colliderMeshes;
-        switch( m_collider.type )  {
-        case SPHERE:
-            OBJParser::load( PROJECT_PATH "/data/models/sphere.obj", colliderMeshes);
-            break;
-        case HALF_PLANE:
-            OBJParser::load( PROJECT_PATH "/data/models/plane.obj", colliderMeshes);
-            break;
-        default:
-            break;
-        }
-        m_mesh = colliderMeshes[0];
+void Collider::initializeMesh()
+{
+    QList<Mesh*> colliderMeshes;
+    switch( m_collider.type ) {
+    case SPHERE:
+        OBJParser::load( PROJECT_PATH "/data/models/sphere.obj", colliderMeshes );
+        break;
+    case HALF_PLANE:
+        OBJParser::load( PROJECT_PATH "/data/models/plane.obj", colliderMeshes );
+        break;
+    default:
+        break;
+    }
+    m_mesh = colliderMeshes[0];
+    m_mesh->setType( Mesh::COLLIDER );
 }

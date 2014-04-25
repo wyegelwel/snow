@@ -22,9 +22,11 @@ class CollapsibleBox : public QGroupBox
 public:
 
     explicit CollapsibleBox( QWidget *parent );
-    ~CollapsibleBox() {}
+    ~CollapsibleBox();
 
     bool isCollapsed() const { return m_collapsed; }
+
+    void init();
 
 public slots:
 

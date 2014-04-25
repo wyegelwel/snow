@@ -34,7 +34,6 @@ SOURCES += \
     geometry/bbox.cpp \
     sim/engine.cpp \
     io/sceneparser.cpp \
-    #sim/AppSettings.cpp \
     ui/uisettings.cpp \
     ui/picker.cpp \
     ui/tools/selectiontool.cpp \
@@ -73,7 +72,6 @@ HEADERS  += \
     geometry/grid.h \
     sim/engine.h \
     io/sceneparser.h \
-    #sim/AppSettings.h
     ui/databinding.h \
     ui/uisettings.h \
     sim/material.h \

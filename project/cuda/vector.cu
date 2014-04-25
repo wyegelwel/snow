@@ -21,6 +21,10 @@
 
 #include "common/math.h"
 
+#ifdef CUDA_INCLUDE
+    #include "math.h"
+#endif
+
 struct vec3
 {
     union {
@@ -151,6 +155,19 @@ struct vec3
 
     __host__ __device__ __forceinline__
     vec3 operator / ( float f ) const { float fi = 1.f/f; return vec3( x*fi, y*fi, z*fi ); }
+
+    __host__ __device__ __forceinline__
+    bool valid( bool *nan = NULL ) const
+    {
+        if ( isnan(x) || isnan(y) || isnan(z) ) {
+            if ( nan ) *nan = true;
+            return false;
+        } else if ( isinf(x) || isinf(y) || isinf(z) ) {
+            if ( nan ) *nan = false;
+            return false;
+        }
+        return true;
+    }
 
 };
 

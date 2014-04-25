@@ -338,6 +338,25 @@ struct mat3
         return M;
     }
 
+    __host__ __device__ __forceinline__
+    static mat3 inverse( const mat3 &M )
+    {
+        float invDet = 1.f / (M[0]*(M[4]*M[8]-M[7]*M[5]) -
+                              M[3]*(M[1]*M[8]-M[7]*M[2]) +
+                              M[6]*(M[1]*M[5]-M[4]*M[2]));
+        mat3 A;
+        A[0] = invDet * (M[4]*M[8]-M[5]*M[7]);
+        A[1] = invDet * (M[2]*M[7]-M[1]*M[8]);
+        A[2] = invDet * (M[1]*M[5]-M[2]*M[4]);
+        A[3] = invDet * (M[5]*M[6]-M[3]*M[8]);
+        A[4] = invDet * (M[0]*M[8]-M[2]*M[6]);
+        A[5] = invDet * (M[2]*M[3]-M[0]*M[5]);
+        A[6] = invDet * (M[3]*M[7]-M[4]*M[6]);
+        A[7] = invDet * (M[1]*M[6]-M[0]*M[7]);
+        A[8] = invDet * (M[0]*M[4]-M[1]*M[3]);
+        return A;
+    }
+
 };
 
 __host__ __device__ __forceinline__

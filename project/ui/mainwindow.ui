@@ -65,14 +65,14 @@
        <property name="geometry">
         <rect>
          <x>0</x>
-         <y>0</y>
+         <y>-283</y>
          <width>282</width>
-         <height>801</height>
+         <height>861</height>
         </rect>
        </property>
        <layout class="QGridLayout" name="gridLayout_2">
         <item row="0" column="0">
-         <widget class="CollapsibleBox" name="toolGroup">
+         <widget class="CollapsibleBox" name="toolGroupBox">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
             <horstretch>0</horstretch>
@@ -89,8 +89,17 @@
            <property name="spacing">
             <number>4</number>
            </property>
-           <property name="margin">
+           <property name="leftMargin">
             <number>4</number>
+           </property>
+           <property name="topMargin">
+            <number>9</number>
+           </property>
+           <property name="rightMargin">
+            <number>4</number>
+           </property>
+           <property name="bottomMargin">
+            <number>9</number>
            </property>
            <item>
             <widget class="QPushButton" name="selectionToolButton">
@@ -323,7 +332,7 @@
          </spacer>
         </item>
         <item row="6" column="0">
-         <widget class="CollapsibleBox" name="colliderGroup">
+         <widget class="CollapsibleBox" name="collidersGroupBox">
           <property name="autoFillBackground">
            <bool>true</bool>
           </property>
@@ -331,8 +340,17 @@
            <string>Collider</string>
           </property>
           <layout class="QGridLayout" name="gridLayout_6">
-           <property name="margin">
+           <property name="leftMargin">
             <number>4</number>
+           </property>
+           <property name="topMargin">
+            <number>9</number>
+           </property>
+           <property name="rightMargin">
+            <number>4</number>
+           </property>
+           <property name="bottomMargin">
+            <number>9</number>
            </property>
            <property name="spacing">
             <number>4</number>
@@ -393,7 +411,7 @@
          </widget>
         </item>
         <item row="2" column="0">
-         <widget class="CollapsibleBox" name="snowContainerGroup">
+         <widget class="CollapsibleBox" name="snowContainersGroupBox">
           <property name="autoFillBackground">
            <bool>true</bool>
           </property>
@@ -401,8 +419,17 @@
            <string>Snow Containers</string>
           </property>
           <layout class="QGridLayout" name="gridLayout_3">
-           <property name="margin">
+           <property name="leftMargin">
             <number>4</number>
+           </property>
+           <property name="topMargin">
+            <number>9</number>
+           </property>
+           <property name="rightMargin">
+            <number>4</number>
+           </property>
+           <property name="bottomMargin">
+            <number>9</number>
            </property>
            <property name="spacing">
             <number>4</number>
@@ -537,7 +564,7 @@
               <string> kg/m3</string>
              </property>
              <property name="decimals">
-              <number>2</number>
+              <number>0</number>
              </property>
              <property name="minimum">
               <double>1.000000000000000</double>
@@ -574,7 +601,7 @@
          </widget>
         </item>
         <item row="8" column="0">
-         <widget class="CollapsibleBox" name="viewPanelGroup">
+         <widget class="CollapsibleBox" name="viewPanelGroupBox">
           <property name="autoFillBackground">
            <bool>true</bool>
           </property>
@@ -582,235 +609,115 @@
            <string>View Panel</string>
           </property>
           <layout class="QGridLayout" name="gridLayout_5">
-           <property name="margin">
+           <property name="leftMargin">
             <number>4</number>
+           </property>
+           <property name="topMargin">
+            <number>9</number>
+           </property>
+           <property name="rightMargin">
+            <number>4</number>
+           </property>
+           <property name="bottomMargin">
+            <number>9</number>
            </property>
            <property name="spacing">
             <number>4</number>
            </property>
-           <item row="3" column="1">
+           <item row="4" column="0">
             <widget class="QCheckBox" name="showParticlesCheckbox">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
-             </property>
-             <property name="minimumSize">
-              <size>
-               <width>75</width>
-               <height>0</height>
-              </size>
-             </property>
-             <property name="maximumSize">
-              <size>
-               <width>75</width>
-               <height>16777215</height>
-              </size>
-             </property>
-             <property name="autoFillBackground">
-              <bool>true</bool>
-             </property>
-             <property name="text">
-              <string>Show</string>
-             </property>
-            </widget>
-           </item>
-           <item row="0" column="1">
-            <widget class="QCheckBox" name="showMeshCheckbox">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
-             </property>
-             <property name="minimumSize">
-              <size>
-               <width>75</width>
-               <height>0</height>
-              </size>
-             </property>
-             <property name="maximumSize">
-              <size>
-               <width>75</width>
-               <height>16777215</height>
-              </size>
-             </property>
-             <property name="autoFillBackground">
-              <bool>true</bool>
-             </property>
-             <property name="text">
-              <string>Show</string>
-             </property>
-            </widget>
-           </item>
-           <item row="3" column="0">
-            <widget class="QLabel" name="viewParticlesLabel">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
-             </property>
-             <property name="maximumSize">
-              <size>
-               <width>60</width>
-               <height>16777215</height>
-              </size>
-             </property>
              <property name="font">
               <font>
                <weight>75</weight>
                <bold>true</bold>
               </font>
              </property>
-             <property name="autoFillBackground">
-              <bool>true</bool>
-             </property>
-             <property name="text">
-              <string>Particles: </string>
-             </property>
-             <property name="alignment">
-              <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-             </property>
-            </widget>
-           </item>
-           <item row="1" column="0">
-            <widget class="QLabel" name="viewGridLabel">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
-             </property>
-             <property name="maximumSize">
-              <size>
-               <width>60</width>
-               <height>16777215</height>
-              </size>
-             </property>
-             <property name="font">
-              <font>
-               <weight>75</weight>
-               <bold>true</bold>
-              </font>
+             <property name="layoutDirection">
+              <enum>Qt::RightToLeft</enum>
              </property>
              <property name="autoFillBackground">
               <bool>true</bool>
              </property>
              <property name="text">
-              <string>Grid: </string>
-             </property>
-             <property name="alignment">
-              <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-             </property>
-            </widget>
-           </item>
-           <item row="1" column="1">
-            <widget class="QCheckBox" name="showGridCheckbox">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
-             </property>
-             <property name="minimumSize">
-              <size>
-               <width>75</width>
-               <height>0</height>
-              </size>
-             </property>
-             <property name="maximumSize">
-              <size>
-               <width>75</width>
-               <height>16777215</height>
-              </size>
-             </property>
-             <property name="autoFillBackground">
-              <bool>true</bool>
-             </property>
-             <property name="text">
-              <string>Show</string>
+              <string>Particles</string>
              </property>
             </widget>
            </item>
            <item row="0" column="0">
-            <widget class="QLabel" name="viewMeshLabel">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
-             </property>
-             <property name="maximumSize">
-              <size>
-               <width>60</width>
-               <height>16777215</height>
-              </size>
-             </property>
+            <widget class="QCheckBox" name="showContainersCheckbox">
              <property name="font">
               <font>
                <weight>75</weight>
                <bold>true</bold>
               </font>
              </property>
+             <property name="layoutDirection">
+              <enum>Qt::RightToLeft</enum>
+             </property>
              <property name="autoFillBackground">
               <bool>true</bool>
              </property>
              <property name="text">
-              <string>Mesh: </string>
-             </property>
-             <property name="alignment">
-              <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+              <string>Containers</string>
              </property>
             </widget>
            </item>
            <item row="2" column="0">
-            <widget class="QLabel" name="showGridDataLabel">
+            <widget class="QCheckBox" name="showGridCheckbox">
              <property name="font">
               <font>
                <weight>75</weight>
                <bold>true</bold>
               </font>
              </property>
+             <property name="layoutDirection">
+              <enum>Qt::RightToLeft</enum>
+             </property>
              <property name="autoFillBackground">
               <bool>true</bool>
              </property>
              <property name="text">
-              <string>Grid Data: </string>
+              <string>Grid</string>
              </property>
             </widget>
            </item>
-           <item row="2" column="1">
+           <item row="3" column="0">
             <widget class="QCheckBox" name="showGridDataCheckbox">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
+             <property name="font">
+              <font>
+               <weight>75</weight>
+               <bold>true</bold>
+              </font>
              </property>
-             <property name="minimumSize">
-              <size>
-               <width>75</width>
-               <height>0</height>
-              </size>
-             </property>
-             <property name="maximumSize">
-              <size>
-               <width>75</width>
-               <height>16777215</height>
-              </size>
+             <property name="layoutDirection">
+              <enum>Qt::RightToLeft</enum>
              </property>
              <property name="autoFillBackground">
               <bool>true</bool>
              </property>
              <property name="text">
-              <string>Show</string>
+              <string>Grid Data</string>
              </property>
             </widget>
            </item>
-           <item row="0" column="2">
-            <widget class="QComboBox" name="showMeshCombo">
+           <item row="1" column="0">
+            <widget class="QCheckBox" name="showCollidersCheckbox">
+             <property name="font">
+              <font>
+               <weight>75</weight>
+               <bold>true</bold>
+              </font>
+             </property>
+             <property name="layoutDirection">
+              <enum>Qt::RightToLeft</enum>
+             </property>
+             <property name="text">
+              <string>Colliders</string>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="1">
+            <widget class="QComboBox" name="showContainersCombo">
              <property name="autoFillBackground">
               <bool>true</bool>
              </property>
@@ -831,7 +738,7 @@
              </item>
             </widget>
            </item>
-           <item row="1" column="2">
+           <item row="2" column="1">
             <widget class="QComboBox" name="showGridCombo">
              <property name="autoFillBackground">
               <bool>true</bool>
@@ -853,14 +760,14 @@
              </item>
             </widget>
            </item>
-           <item row="2" column="2">
+           <item row="3" column="1">
             <widget class="QComboBox" name="showGridDataCombo">
              <property name="autoFillBackground">
               <bool>true</bool>
              </property>
              <item>
               <property name="text">
-               <string>Mass</string>
+               <string>Density</string>
               </property>
              </item>
              <item>
@@ -880,7 +787,7 @@
              </item>
             </widget>
            </item>
-           <item row="3" column="2">
+           <item row="4" column="1">
             <widget class="QComboBox" name="showParticlesCombo">
              <property name="autoFillBackground">
               <bool>true</bool>
@@ -902,11 +809,30 @@
              </item>
             </widget>
            </item>
+           <item row="1" column="1">
+            <widget class="QComboBox" name="showCollidersCombo">
+             <item>
+              <property name="text">
+               <string>Wireframe</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>Solid</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>Both</string>
+              </property>
+             </item>
+            </widget>
+           </item>
           </layout>
          </widget>
         </item>
         <item row="4" column="0">
-         <widget class="CollapsibleBox" name="simulationBox">
+         <widget class="CollapsibleBox" name="simulationGroupBox">
           <property name="autoFillBackground">
            <bool>true</bool>
           </property>
@@ -914,14 +840,23 @@
            <string>Simulation</string>
           </property>
           <layout class="QGridLayout" name="gridLayout_4">
-           <property name="margin">
+           <property name="leftMargin">
             <number>4</number>
+           </property>
+           <property name="topMargin">
+            <number>9</number>
+           </property>
+           <property name="rightMargin">
+            <number>4</number>
+           </property>
+           <property name="bottomMargin">
+            <number>9</number>
            </property>
            <property name="spacing">
             <number>4</number>
            </property>
            <item row="2" column="0" colspan="2">
-            <widget class="CollapsibleBox" name="gridBox">
+            <widget class="CollapsibleBox" name="gridGroupBox">
              <property name="autoFillBackground">
               <bool>true</bool>
              </property>
@@ -1072,7 +1007,7 @@
             </widget>
            </item>
            <item row="3" column="0" colspan="2">
-            <widget class="CollapsibleBox" name="parametersBox">
+            <widget class="CollapsibleBox" name="parametersGroupBox">
              <property name="autoFillBackground">
               <bool>true</bool>
              </property>
@@ -1139,13 +1074,6 @@
                 </property>
                </widget>
               </item>
-              <item row="1" column="0">
-               <widget class="QLabel" name="label_4">
-                <property name="text">
-                 <string>Density</string>
-                </property>
-               </widget>
-              </item>
              </layout>
             </widget>
            </item>
@@ -1173,7 +1101,7 @@
             </widget>
            </item>
            <item row="4" column="0" colspan="2">
-            <widget class="CollapsibleBox" name="exportBox_2">
+            <widget class="CollapsibleBox" name="exportGroupBox">
              <property name="autoFillBackground">
               <bool>true</bool>
              </property>

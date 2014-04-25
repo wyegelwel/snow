@@ -27,6 +27,20 @@ UiSettings::deleteInstance()
     SAFE_DELETE( INSTANCE );
 }
 
+QVariant
+UiSettings::getSetting( const QString &name, const QVariant &d )
+{
+    QSettings s( "CS224", "snow" );
+    return s.value( name, d );
+}
+
+void
+UiSettings::setSetting( const QString &name, const QVariant &value )
+{
+    QSettings s( "CS224", "snow" );
+    s.setValue( name, value );
+}
+
 void
 UiSettings::loadSettings()
 {
@@ -56,12 +70,14 @@ UiSettings::loadSettings()
 
     timeStep() = s.value( "timeStep", 1e-5 ).toFloat();
 
-    showMesh() = s.value( "showMesh", true ).toBool();
-    showMeshMode() = s.value( "showMeshMode", WIREFRAME ).toInt();
+    showContainers() = s.value( "showContainers", true ).toBool();
+    showContainersMode() = s.value( "showContainersMode", WIREFRAME ).toInt();
+    showColliders() = s.value( "showColliders", true ).toBool();
+    showCollidersMode() = s.value( "showCollidersMode", SOLID ).toInt();
     showGrid() = s.value( "showGrid", false ).toBool();
     showGridMode() = s.value( "showGridMode", MIN_FACE_CELLS ).toInt();
     showGridData() = s.value( "showGridData", false ).toBool();
-    showGridDataMode() = s.value( "showGridDataMode", NODE_MASS ).toInt();
+    showGridDataMode() = s.value( "showGridDataMode", NODE_DENSITY ).toInt();
     showParticles() = s.value( "showParticles", true ).toBool();
     showParticlesMode() = s.value( "showParticlesMode", PARTICLE_MASS ).toInt();
 
@@ -96,8 +112,10 @@ UiSettings::saveSettings()
 
     s.setValue( "timeStep", timeStep() );
 
-    s.setValue( "showMesh", showMesh() );
-    s.setValue( "showMeshMode", showMeshMode() );
+    s.setValue( "showContainers", showContainers() );
+    s.setValue( "showContainersMode", showContainersMode() );
+    s.setValue( "showColliders", showColliders() );
+    s.setValue( "showCollidersMode", showCollidersMode() );
     s.setValue( "showGrid", showGrid() );
     s.setValue( "showGridMode", showGridMode() );
     s.setValue( "showGridData", showGridData() );

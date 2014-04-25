@@ -3,6 +3,7 @@
 uniform vec3 pos;
 uniform vec3 dim;
 uniform float h;
+uniform float density;
 
 in float nodeMass;
 in vec3 nodeVelocity;
@@ -18,7 +19,7 @@ const int FORCE = 3;
 
 void main( void )
 {
-    float alpha = smoothstep( 0.0, 1e-6, nodeMass );
+    float alpha = 0.5 * smoothstep( 0.0, density, nodeMass/(h*h*h) );
     nodeColor = vec4( 0.8, 0.8, 0.9, alpha );
     if ( mode == VELOCITY ) {
         nodeColor.rgb = abs(nodeVelocity);
