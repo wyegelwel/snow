@@ -20,7 +20,7 @@ struct MaterialConstants
 
     __host__ __device__ MaterialConstants()
     {
-        lambda = (YOUNGS_MODULUS*POISSONS_RATIO)/((1-POISSONS_RATIO)*(1-2*POISSONS_RATIO));
+        lambda = (YOUNGS_MODULUS*POISSONS_RATIO)/((1+POISSONS_RATIO)*(1-2*POISSONS_RATIO));
         mu = YOUNGS_MODULUS/(2*(1+POISSONS_RATIO));
         xi = 10;
         coeffFriction = 1; // XXX: FIND A GOOD ONE!

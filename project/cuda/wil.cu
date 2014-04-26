@@ -1138,4 +1138,151 @@ checkCudaErrors(cudaDeviceSynchronize());
 
 
 
+
+
+
+
+
+
+/**
+ * Called on each particle on each node it affects.
+ *
+ * Each particle adds it's mass, velocity and force contribution to the grid nodes within 2h of itself.
+ *
+ * In:
+ * particleData -- list of particles
+ * grid -- Stores grid paramters
+ * worldParams -- Global parameters dealing with the physics of the world
+ *
+ * Out:
+ * nodes -- list of every node in grid ((dim.x+1)*(dim.y+1)*(dim.z+1))
+ *
+ */
+__global__ void computeCellMassVelocityAndForceFast( Particle *particleData, Grid *grid, ParticleTempData *particleGridTempData, ParticleGridNode *nodes )
+{
+    int particleIdx = blockIdx.y*gridDim.x*blockDim.x + blockIdx.x*blockDim.x + threadIdx.x;
+
+    Particle &particle = particleData[particleIdx];
+    ParticleTempData &pgtd = particleGridTempData[particleIdx];
+
+    glm::ivec3 currIJK;
+    gridIndexToIJK(threadIdx.y, glm::ivec3(4,4,4), currIJK);
+    currIJK.x += (int) pgtd.particleGridPos.x - 1; currIJK.y += (int) pgtd.particleGridPos.y - 1; currIJK.z += (int) pgtd.particleGridPos.z - 1;
+
+    if (withinBoundsInclusive(currIJK, glm::ivec3(0,0,0), grid->dim)){
+        ParticleGridNode &node = nodes[getGridIndex(currIJK, grid->dim+1)];
+
+        float w;
+        vec3 wg;
+        vec3 nodePosition(currIJK.x, currIJK.y, currIJK.z);
+        weightAndGradient(pgtd.particleGridPos-nodePosition, w, wg);
+
+        atomicAdd(&node.mass, particle.mass*w);
+        atomicAdd(&node.velocity, particle.velocity*particle.mass*w );
+        atomicAdd(&node.force, pgtd.sigma*wg);
+     }
+}
+
+/**
+ * Called on each particle on each node it affects.
+ *
+ * Each particle adds it's mass, velocity and force contribution to the grid nodes within 2h of itself.
+ *
+ * In:
+ * particleData -- list of particles
+ * grid -- Stores grid paramters
+ * worldParams -- Global parameters dealing with the physics of the world
+ *
+ * Out:
+ * nodes -- list of every node in grid ((dim.x+1)*(dim.y+1)*(dim.z+1))
+ *
+ */
+__global__ void computeCellMassVelocityAndForceFast( Particle *particleData, Grid *grid, ParticleTempData *particleGridTempData, ParticleGridNode *nodes )
+{
+    int particleIdx = blockIdx.y*gridDim.x*blockDim.x + blockIdx.x*blockDim.x + threadIdx.x;
+
+    Particle &particle = particleData[particleIdx];
+    ParticleTempData &pgtd = particleGridTempData[particleIdx];
+
+    glm::ivec3 currIJK;
+    gridIndexToIJK(threadIdx.y, glm::ivec3(4,4,4), currIJK);
+    currIJK.x += (int) pgtd.particleGridPos.x - 1; currIJK.y += (int) pgtd.particleGridPos.y - 1; currIJK.z += (int) pgtd.particleGridPos.z - 1;
+
+    if (withinBoundsInclusive(currIJK, glm::ivec3(0,0,0), grid->dim)){
+        ParticleGridNode &node = nodes[getGridIndex(currIJK, grid->dim+1)];
+
+        float w;
+        vec3 wg;
+        vec3 nodePosition(currIJK.x, currIJK.y, currIJK.z);
+        weightAndGradient(pgtd.particleGridPos-nodePosition, w, wg);
+
+        atomicAdd(&node.mass, particle.mass*w);
+        atomicAdd(&node.velocity, particle.velocity*particle.mass*w );
+        atomicAdd(&node.force, pgtd.sigma*wg);
+     }
+}
+
+/**
+ * Called on each particle on each node it affects.
+ *
+ * Each particle adds it's mass, velocity and force contribution to the grid nodes within 2h of itself.
+ *
+ * In:
+ * particleData -- list of particles
+ * grid -- Stores grid paramters
+ * worldParams -- Global parameters dealing with the physics of the world
+ *
+ * Out:
+ * nodes -- list of every node in grid ((dim.x+1)*(dim.y+1)*(dim.z+1))
+ *
+ */
+__global__ void computeCellMassVelocityAndForceFast( Particle *particleData, Grid *grid, ParticleTempData *particleGridTempData, ParticleGridNode *nodes )
+{
+    int particleIdx = blockIdx.y*gridDim.x*blockDim.x + blockIdx.x*blockDim.x + threadIdx.x;
+
+    Particle &particle = particleData[particleIdx];
+    ParticleTempData &pgtd = particleGridTempData[particleIdx];
+
+    glm::ivec3 currIJK;
+    gridIndexToIJK(threadIdx.y, glm::ivec3(4,4,4), currIJK);
+    currIJK.x += (int) pgtd.particleGridPos.x - 1; currIJK.y += (int) pgtd.particleGridPos.y - 1; currIJK.z += (int) pgtd.particleGridPos.z - 1;
+
+    if (withinBoundsInclusive(currIJK, glm::ivec3(0,0,0), grid->dim)){
+        ParticleGridNode &node = nodes[getGridIndex(currIJK, grid->dim+1)];
+
+        float w;
+        vec3 wg;
+        vec3 nodePosition(currIJK.x, currIJK.y, currIJK.z);
+        weightAndGradient(pgtd.particleGridPos-nodePosition, w, wg);
+
+        atomicAdd(&node.mass, particle.mass*w);
+        atomicAdd(&node.velocity, particle.velocity*particle.mass*w );
+        atomicAdd(&node.force, pgtd.sigma*wg);
+     }
+}
+
+__device__ void computeDPsi(mat3 &Fe, mat3 &Fp, MaterialConstants *material, mat3 &dPsi){
+    float Jp = mat3::determinant(Fp);
+    float Je = mat3::determinant(Fe);
+
+    float muFp = material->mu*__expf(material->xi*(1-Jp));
+    float lambdaFp = material->lambda*__expf(material->xi*(1-Jp));
+
+    mat3 Re;
+    computePD(Fe, Re);
+
+    dPsi = 2*muFp*(Fe-Re) + lambdaFp * (Je - 1) * mat3::transpose(mat3::adjugate(Fe));
+}
+
+
+
+
+
+
+
+
+
+
+
+
 #endif // WIL_CU
