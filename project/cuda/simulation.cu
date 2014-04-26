@@ -174,7 +174,7 @@ __device__ void computeSigma( Particle &particle, MaterialConstants *material, m
     float lambdaFp = material->lambda*__expf(material->xi*(1-Jpp));
 
 //    sigma = (2*muFp*(Fe-Re)*mat3::transpose(Fe)+lambdaFp*(Jep-1)*Jep*mat3(1.0f)) * (particle.volume);
-    sigma = (2*muFp*mat3::multiplyABt(Fe-Re, Fe) + mat3(lambdaFp*(Jep-1)*Jep)) * particle.volume;
+    sigma = (2*muFp*mat3::multiplyABt(Fe-Re, Fe) + mat3(lambdaFp*(Jep-1)*Jep)) * -particle.volume;
 }
 
 
