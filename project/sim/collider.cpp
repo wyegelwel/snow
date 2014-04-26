@@ -23,38 +23,38 @@ ImplicitCollider* Collider::getImplicitCollider()  {
 
 void Collider::render()
 {
-    glPushMatrix();
-    glTranslatef( m_collider.center.x, m_collider.center.y, m_collider.center.z );
-    switch( m_collider.type )  {
-    case(SPHERE):
-        renderSphere();
-        break;
-    case(HALF_PLANE):
-        renderPlane();
-        break;
-    default:
-        break;
-    }
+//    glPushMatrix();
+//    glTranslatef( m_collider.center.x, m_collider.center.y, m_collider.center.z );
+//    switch( m_collider.type )  {
+//    case(SPHERE):
+//        renderSphere();
+//        break;
+//    case(HALF_PLANE):
+//        renderPlane();
+//        break;
+//    default:
+//        break;
+//    }
     m_mesh->render();
-    glPopMatrix();
+//    glPopMatrix();
 }
 
 void Collider::renderForPicker()
 {
-    glPushMatrix();
-    glTranslatef( m_collider.center.x, m_collider.center.y, m_collider.center.z );
-    switch( m_collider.type )  {
-    case(SPHERE):
-        renderSphere();
-        break;
-    case(HALF_PLANE):
-        renderPlane();
-        break;
-    default:
-        break;
-    }
+//    glPushMatrix();
+//    glTranslatef( m_collider.center.x, m_collider.center.y, m_collider.center.z );
+//    switch( m_collider.type )  {
+//    case(SPHERE):
+//        renderSphere();
+//        break;
+//    case(HALF_PLANE):
+//        renderPlane();
+//        break;
+//    default:
+//        break;
+//    }
     m_mesh->renderForPicker();
-    glPopMatrix();
+//    glPopMatrix();
 }
 
 BBox
@@ -71,17 +71,17 @@ Collider::getCentroid( const glm::mat4 &ctm )
 
 void Collider::renderSphere()
 {
-    glScalef( m_collider.param.x, m_collider.param.x, m_collider.param.x );
+//    glScalef( m_collider.param.x, m_collider.param.x, m_collider.param.x );
 }
 
 void Collider::renderPlane()
 {
-    vec3 oldNormal = vec3(0,1,0);
-    vec3 rotationAxis = vec3::cross( oldNormal, m_collider.param );
-    float rotationAngle = acos(vec3::dot(m_collider.param,oldNormal));
-    rotationAngle *= (180.0/M_PI);
-    glRotatef(rotationAngle,rotationAxis.x,rotationAxis.y,rotationAxis.z);
-    glScalef(PLANE_CONSTANT,PLANE_CONSTANT,PLANE_CONSTANT);
+//    vec3 oldNormal = vec3(0,1,0);
+//    vec3 rotationAxis = vec3::cross( oldNormal, m_collider.param );
+//    float rotationAngle = acos(vec3::dot(m_collider.param,oldNormal));
+//    rotationAngle *= (180.0/M_PI);
+//    glRotatef(rotationAngle,rotationAxis.x,rotationAxis.y,rotationAxis.z);
+//    glScalef(PLANE_CONSTANT,PLANE_CONSTANT,PLANE_CONSTANT);
 }
 
 void Collider::initializeMesh()

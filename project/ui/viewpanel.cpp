@@ -242,9 +242,9 @@ bool ViewPanel::startSimulation()
                 if ( (*it)->getType() == SceneNode::SIMULATION_GRID ) {
                     m_engine->setGrid( UiSettings::buildGrid((*it)->getCTM()) );
                 } else if ( (*it)->getType() == SceneNode::IMPLICIT_COLLIDER ) {
-                    Collider *collider = dynamic_cast<Collider*>((*it)->getRenderable());
-                    ImplicitCollider &c = *(collider->getImplicitCollider());
-                    m_engine->addCollider(c);
+                    Collider collider = *(dynamic_cast<Collider*>((*it)->getRenderable()));
+                    glm::mat4 ctm = (*it)->getCTM();
+                    m_engine->addCollider(collider,ctm);
                 }
             }
         }
@@ -333,8 +333,8 @@ void ViewPanel::addCollider(ColliderType c,QString planeType)  {
     SceneNode *node = new SceneNode( SceneNode::IMPLICIT_COLLIDER );
     node->setRenderable( col );
     m_scene->root()->addChild( node );
-    ImplicitCollider &ic = *(col->getImplicitCollider());
-    m_engine->addCollider(ic);
+//    ImplicitCollider &ic = *(col->getImplicitCollider());
+//    m_engine->addCollider(ic);
 
     clearSelection();
 

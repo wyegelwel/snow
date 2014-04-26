@@ -64,7 +64,8 @@ public:
 
     MaterialConstants& materialConstants() { return m_materialConstants; }
 
-    void addCollider( const ImplicitCollider &collider ) { m_colliders += collider; }
+//    void addCollider( const ImplicitCollider &collider ) { m_colliders += collider; }
+    void addCollider(Collider &collider, const glm::mat4 &ctm);
     void clearColliders() { m_colliders.clear(); }
     QVector<ImplicitCollider>& colliders() { return m_colliders; }
 

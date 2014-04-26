@@ -62,6 +62,35 @@ void Engine::setGrid(const Grid &grid)
     m_particleGrid->setGrid( grid );
 }
 
+void Engine::addCollider(Collider &collider, const glm::mat4 &ctm)  {
+//    ImplicitCollider &col = *(collider.getImplicitCollider());
+//    glm::vec4 centerTemp = glm::vec4(col.center.x,col.center.y,col.center.z,1);
+//    //transform center
+//    centerTemp = ctm*centerTemp;
+//    col.center = glm::vec3(centerTemp.x,centerTemp.y,centerTemp.z);
+
+    //transform center
+
+    col.center = glm::vec3(ctm[0][3],ctm[1][3],ctm[2][3]);
+
+    //transform scale for sphere
+    glm::vec3 scale(glm::length(glm::vec4(ctm[0][0],ctm[1][0],ctm[2][0],ctm[3][0])),glm::length(glm::vec4(ctm[0][1],ctm[1][1],ctm[2][1],ctm[3][1])),glm::length(glm::vec4(ctm[0][2],ctm[1][2],ctm[2][2],ctm[3][2])));
+    if(col.type == SPHERE)  {
+        col.param.x = scale.x;
+    }
+
+    if(col.type == HALF_PLANE)  {
+        glm::vec4 basisOne(glm::vec4(ctm[0][0],ctm[1][0],ctm[2][0],ctm[3][0])/scale.x);
+        glm::vec4 basisTwo(glm::vec4(ctm[0][1],ctm[1][1],ctm[2][1],ctm[3][1])/scale.x);
+        glm::vec4 basisThree(glm::vec4(ctm[0][2],ctm[1][2],ctm[2][2],ctm[3][2])/scale.x);
+        glm::mat3 rotation(basisOne.x,basisTwo.x,basisThree.x,
+                           basisOne.y,basisTwo.y,basisThree.y,
+                           basisOne.z,basisTwo.z,basisThree.z);
+        col.param = glm::vec3(0,1,0)*rotation;
+    }
+    m_colliders.append(col);
+}
+
 void Engine::addParticleSystem( const ParticleSystem &particles )
 {
     *m_particleSystem += particles;
