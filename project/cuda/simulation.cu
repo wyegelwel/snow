@@ -256,21 +256,25 @@ __global__ void computeCellMassVelocityAndForceFast( Particle *particleData, Gri
 __global__ void updateNodeVelocities( ParticleGridNode *nodes, float dt, ImplicitCollider* colliders, int numColliders, MaterialConstants *material, Grid *grid )
 {
     int nodeIdx = blockIdx.x*blockDim.x + threadIdx.x;
-    int gridI, gridJ, gridK;
-    gridIndexToIJK(nodeIdx, gridI, gridJ, gridK, grid->dim+1);
     ParticleGridNode &node = nodes[nodeIdx];
-    vec3 nodePosition = vec3(gridI, gridJ, gridK)*grid->h + grid->pos;
 
-    float scale = ( node.mass > 1e-10 ) ? 1.f/node.mass : 0.f;
+    if (node.mass > 1e-12){
+        float scale = 1.f/node.mass;
 
-    node.velocity *= scale; //Have to normalize velocity by mass to conserve momentum
+        node.velocity *= scale; //Have to normalize velocity by mass to conserve momentum
 
-    // Update velocity with node force
-    vec3 tmpVelocity = node.velocity + dt*node.force*scale;
+        // Update velocity with node force
+        vec3 tmpVelocity = node.velocity + dt*node.force*scale;
 
-    checkForAndHandleCollisions( colliders, numColliders, material->coeffFriction, nodePosition, tmpVelocity );
-    node.velocityChange = tmpVelocity - node.velocity;
-    node.velocity = tmpVelocity;
+        // Handle collisions
+        int gridI, gridJ, gridK;
+        gridIndexToIJK(nodeIdx, gridI, gridJ, gridK, grid->dim+1);
+        vec3 nodePosition = vec3(gridI, gridJ, gridK)*grid->h + grid->pos;
+        checkForAndHandleCollisions( colliders, numColliders, material->coeffFriction, nodePosition, tmpVelocity );
+
+        node.velocityChange = tmpVelocity - node.velocity;
+        node.velocity = tmpVelocity;
+    }
 }
 
 #define VEC2IVEC( V ) ( glm::ivec3((int)V.x, (int)V.y, (int)V.z) )
