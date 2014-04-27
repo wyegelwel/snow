@@ -33,6 +33,10 @@
 #include "ui/uisettings.h"
 #include "sim/collider.h"
 
+#include "glm/mat4x4.hpp"
+#include "glm/gtc/matrix_transform.hpp"
+#include "glm/gtc/type_ptr.hpp"
+
 #include <QFileDialog>
 #include <QMessageBox>
 
@@ -316,21 +320,25 @@ void ViewPanel::addCollider(ColliderType c,QString planeType)  {
     //TODO add a collider to the scene and set it as selected renderable.
     ImplicitCollider *collider = new ImplicitCollider;
     vec3 parameter;
+    SceneNode *node = new SceneNode( SceneNode::IMPLICIT_COLLIDER );
+    glm::mat4 transform;glm::vec3 scale;float r;
     switch(c)  {
         case SPHERE:
-            parameter = vec3(1,0,0);
+            r = Collider::SphereRadius();
+            parameter = vec3(r,0,0);
+            scale = glm::vec3(r,r,r);
+            transform = glm::scale( glm::mat4(1.f), scale );
+            node->applyTransformation(transform);
             break;
         case HALF_PLANE:
-            if(planeType == "Horizontal Plane")
-                parameter = vec3(0,1,0);
-            else parameter = vec3(1,0,0);
+            parameter = vec3(0,1,0);
             break;
         default:
             break;
     }
     Collider *col = new Collider(*collider,c,parameter);
 
-    SceneNode *node = new SceneNode( SceneNode::IMPLICIT_COLLIDER );
+
     node->setRenderable( col );
     m_scene->root()->addChild( node );
 //    ImplicitCollider &ic = *(col->getImplicitCollider());

@@ -34,7 +34,7 @@ public:
 
     Collider( ImplicitCollider &collider, ColliderType t, vec3 p, vec3 c = vec3(0,0,0), vec3 v = vec3(0,0,0));
     virtual void render();//{mesh->render();}
-
+    static constexpr float SphereRadius(){return .05f;}
 //    virtual void init() = 0;
 
     virtual void renderForPicker();

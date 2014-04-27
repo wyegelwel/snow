@@ -63,30 +63,35 @@ void Engine::setGrid(const Grid &grid)
 }
 
 void Engine::addCollider(Collider &collider, const glm::mat4 &ctm)  {
-//    ImplicitCollider &col = *(collider.getImplicitCollider());
+    ImplicitCollider &col = *(collider.getImplicitCollider());
 //    glm::vec4 centerTemp = glm::vec4(col.center.x,col.center.y,col.center.z,1);
 //    //transform center
 //    centerTemp = ctm*centerTemp;
 //    col.center = glm::vec3(centerTemp.x,centerTemp.y,centerTemp.z);
 
     //transform center
-
-    col.center = glm::vec3(ctm[0][3],ctm[1][3],ctm[2][3]);
-
+    std::cout << "ctm: " << std::endl << ctm[0][0] << "," << ctm[0][1] << "," << ctm[0][2] << "," << ctm[0][3] << std::endl
+                         << std::endl << ctm[1][0] << "," << ctm[1][1] << "," << ctm[1][2] << "," << ctm[1][3] << std::endl
+                         << std::endl << ctm[2][0] << "," << ctm[2][1] << "," << ctm[2][2] << "," << ctm[2][3] << std::endl
+                         << std::endl << ctm[3][0] << "," << ctm[3][1] << "," << ctm[3][2] << "," << ctm[3][3] << std::endl << std::endl;
+    col.center = glm::vec3(ctm[3][0],ctm[3][1],ctm[3][2]);
+    std::cout << "center: " << col.center.x << "," << col.center.y << "," << col.center.z << std::endl;
     //transform scale for sphere
-    glm::vec3 scale(glm::length(glm::vec4(ctm[0][0],ctm[1][0],ctm[2][0],ctm[3][0])),glm::length(glm::vec4(ctm[0][1],ctm[1][1],ctm[2][1],ctm[3][1])),glm::length(glm::vec4(ctm[0][2],ctm[1][2],ctm[2][2],ctm[3][2])));
+    glm::vec3 scale(glm::length(glm::vec4(ctm[0][0],ctm[0][1],ctm[0][2],ctm[0][3])),glm::length(glm::vec4(ctm[1][0],ctm[1][1],ctm[1][2],ctm[1][3])),glm::length(glm::vec4(ctm[2][0],ctm[2][1],ctm[2][2],ctm[2][3])));
     if(col.type == SPHERE)  {
         col.param.x = scale.x;
+        std::cout << "param: " << col.param.x << std::endl;
     }
 
     if(col.type == HALF_PLANE)  {
-        glm::vec4 basisOne(glm::vec4(ctm[0][0],ctm[1][0],ctm[2][0],ctm[3][0])/scale.x);
-        glm::vec4 basisTwo(glm::vec4(ctm[0][1],ctm[1][1],ctm[2][1],ctm[3][1])/scale.x);
-        glm::vec4 basisThree(glm::vec4(ctm[0][2],ctm[1][2],ctm[2][2],ctm[3][2])/scale.x);
+        glm::vec4 basisOne(glm::vec4(ctm[0][0],ctm[0][1],ctm[0][2],ctm[0][3])/scale.x);
+        glm::vec4 basisTwo(glm::vec4(ctm[1][0],ctm[1][1],ctm[1][2],ctm[1][3])/scale.x);
+        glm::vec4 basisThree(glm::vec4(ctm[2][0],ctm[2][1],ctm[2][2],ctm[2][3])/scale.x);
         glm::mat3 rotation(basisOne.x,basisTwo.x,basisThree.x,
                            basisOne.y,basisTwo.y,basisThree.y,
                            basisOne.z,basisTwo.z,basisThree.z);
         col.param = glm::vec3(0,1,0)*rotation;
+        std::cout << "param: " << col.param.x << "," << col.param.y << "," << col.param.z << std::endl;
     }
     m_colliders.append(col);
 }

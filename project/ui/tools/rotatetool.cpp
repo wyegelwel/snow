@@ -159,9 +159,21 @@ RotateTool::mouseMoved()
         glm::mat4 transform = T * R * Tinv;
         for ( SceneNodeIterator it = m_panel->m_scene->begin(); it.isValid(); ++it ) {
             if ( (*it)->hasRenderable() && (*it)->getRenderable()->isSelected() &&
-                 (*it)->getType() != SceneNode::SIMULATION_GRID ) {
+                 (*it)->getType() != SceneNode::SIMULATION_GRID && (*it)->getType() != SceneNode::IMPLICIT_COLLIDER) {
                 (*it)->applyTransformation( transform );
             }
+            else if((*it)->getType() == SceneNode::IMPLICIT_COLLIDER && (*it)->hasRenderable() && (*it)->getRenderable()->isSelected())  {
+                switch(dynamic_cast<Collider*>((*it)->getRenderable())->getImplicitCollider()->type) {
+                    case SPHERE:
+                        break;
+                    case HALF_PLANE:
+                        (*it)->applyTransformation( transform );
+                        break;
+                    default:
+                        break;
+                }
+            }
+            else {}
         }
     }
     update();
