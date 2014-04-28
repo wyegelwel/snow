@@ -86,7 +86,8 @@ HEADERS  += \
     sim/particlegrid.h \
     ui/tools/rotatetool.h \
     ui/tools/scaletool.h \
-    ui/collapsiblebox.h
+    ui/collapsiblebox.h \
+    cuda/caches.h
 
 FORMS    += ui/mainwindow.ui
 
