@@ -110,31 +110,19 @@ __device__ void compute_dJF_invTrans(mat3 &F, mat3 &dF, mat3 &dJF_invTrans){
 // TODO: Replace JFe_invTrans with the trans of adjugate
 __device__ void computeAp( Particle &particle, mat3 &dF, MaterialConstants *material, ParticleFeHatCache &pFeHatCache, mat3 &Ap)
 {
-    mat3 &Fp = particle.plasticF; //for the sake of making the code look like the math
-    mat3 &Fe = pFeHatCache.FeHat;
 
-    float Jpp = mat3::determinant(Fp);
-    float Jep = mat3::determinant(Fe);
-
-    float muFp = material->mu*__expf(material->xi*(1-Jpp));
-    float lambdaFp = material->lambda*__expf(material->xi*(1-Jpp));
-
-    mat3 &Re = pFeHatCache.ReHat;
-    mat3 &Se = pFeHatCache.SeHat;
-
-    mat3 dR;
-    computedR(dF, Se, Re, dR);
-
-    mat3 dJFe_invTrans;
-    compute_dJF_invTrans(Fe, dF, dJFe_invTrans);
-
-    mat3 jFe_invTrans = Jep * mat3::transpose(mat3::inverse(Fe));
-
-    Ap = (2*muFp*(dF - dR) + lambdaFp*jFe_invTrans*mat3::innerProduct(jFe_invTrans, dF) + lambdaFp*(Jep - 1)*dJFe_invTrans);
 }
 
+/**
+ * Called over particles
+ **/
 #define VEC2IVEC( V ) ( glm::ivec3((int)V.x, (int)V.y, (int)V.z) )
-__device__ void computedF(Particle &particle, Grid *grid, vec3 *dus, float dt, mat3 &dF){
+__global__ void computedF(Particle *particles, Grid *grid, float dt, vec3 *dus, ParticleFeHatCache *particleFeHatCache){
+    int particleIdx = blockIdx.y*gridDim.x*blockDim.x + blockIdx.x*blockDim.x + threadIdx.x;
+
+    Particle &particle = particles[particleIdx];
+    mat3 dF(0.0f);
+
     const vec3 &pos = particle.position;
     const glm::ivec3 &dim = grid->dim;
     const float h = grid->h;
@@ -175,31 +163,79 @@ __device__ void computedF(Particle &particle, Grid *grid, vec3 *dus, float dt, m
     dF *= particle.elasticF;
 }
 
+
+__global__ void computeFeHat(Particle *particles, Grid *grid, float dt, ParticleGridNode *nodes, ParticleFeHatCache *particleFeHatCache){
+    int particleIdx = blockIdx.x*blockDim.x + threadIdx.x;
+
+       Particle &particle = particles[particleIdx];
+       ParticleFeHatCache &pFeHatCache = particleFeHatCache[particleIdx];
+
+       vec3 particleGridPos = (particle.position - grid->pos) / grid->h;
+       glm::ivec3 min = glm::ivec3(std::ceil(particleGridPos.x - 2), std::ceil(particleGridPos.y - 2), std::ceil(particleGridPos.z - 2));
+       glm::ivec3 max = glm::ivec3(std::floor(particleGridPos.x + 2), std::floor(particleGridPos.y + 2), std::floor(particleGridPos.z + 2));
+
+       mat3 vGradient(0.0f);
+
+       // Apply particles contribution of mass, velocity and force to surrounding nodes
+       min = glm::max(glm::ivec3(0.0f), min);
+       max = glm::min(grid->dim, max);
+       for (int i = min.x; i <= max.x; i++){
+           for (int j = min.y; j <= max.y; j++){
+               for (int k = min.z; k <= max.z; k++){
+                   int currIdx = grid->getGridIndex(i, j, k, grid->dim+1);
+                   ParticleGridNode &node = nodes[currIdx];
+
+                   vec3 wg;
+                   weightGradient(particleGridPos - vec3(i, j, k), wg);
+
+                   vGradient += mat3::outerProduct(dt*node.velocity, wg);
+               }
+           }
+       }
+
+       pFeHatCache.FeHat = mat3::addIdentity(vGradient) * particle.elasticF;
+       computePD(pFeHatCache.FeHat, pFeHatCache.ReHat, pFeHatCache.SeHat);
+}
+
 /**
  * Called over particles
- *
- *
  **/
-__global__ void computedFandAps( Particle *particles, Grid *grid, float dt, MaterialConstants *material, ParticleFeHatCache *particleFeHatCache, vec3 *dus, mat3 *Aps)
+__global__ void computeAp(Particle *particles, ParticleFeHatCache *particleFeHatCache, MaterialConstants *material, mat3 *dFs, mat3 *Aps)
 {
     int particleIdx = blockIdx.y*gridDim.x*blockDim.x + blockIdx.x*blockDim.x + threadIdx.x;
-
     Particle &particle = particles[particleIdx];
-    mat3 dF(0.0f);
-
-    computedF(particle, grid, dus, dt, dF);
-
-
     mat3 &Ap = Aps[particleIdx];
+    mat3 &dF = dFs[particleIdx];
     ParticleFeHatCache &pFeHatCache = particleFeHatCache[particleIdx];
 
-    computeAp(particle, dF, material, pFeHatCache, Ap);
- }
+
+    mat3 &Fp = particle.plasticF; //for the sake of making the code look like the math
+    mat3 &Fe = pFeHatCache.FeHat;
+
+    float Jpp = mat3::determinant(Fp);
+    float Jep = mat3::determinant(Fe);
+
+    float muFp = material->mu*__expf(material->xi*(1-Jpp));
+    float lambdaFp = material->lambda*__expf(material->xi*(1-Jpp));
+
+    mat3 &Re = pFeHatCache.ReHat;
+    mat3 &Se = pFeHatCache.SeHat;
+
+    mat3 dR;
+    computedR(dF, Se, Re, dR);
+
+    mat3 dJFe_invTrans;
+    compute_dJF_invTrans(Fe, dF, dJFe_invTrans);
+
+    mat3 jFe_invTrans = Jep * mat3::transpose(mat3::inverse(Fe));
+
+    Ap = (2*muFp*(dF - dR) + lambdaFp*jFe_invTrans*mat3::innerProduct(jFe_invTrans, dF) + lambdaFp*(Jep - 1)*dJFe_invTrans);
+}
 
 
-//__global__ void computeFeHat(Particle *particles, Grid *grid, float dt, ParticleFeHatCache *particleFeHatCache){
 
-//}
+
+
 
 
 __global__ void computedf( Particle *particles, Grid *grid, mat3 *Aps, vec3 *dfs )
