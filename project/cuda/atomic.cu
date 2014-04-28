@@ -19,7 +19,7 @@
 #include "cuda/matrix.cu"
 
 __device__ __forceinline__
-void atomicAdd( vec3 *add, vec3 toAdd )
+void atomicAdd( vec3 *add, const vec3 &toAdd )
 {
     atomicAdd(&(add->x), toAdd.x);
     atomicAdd(&(add->y), toAdd.y);
@@ -27,7 +27,7 @@ void atomicAdd( vec3 *add, vec3 toAdd )
 }
 
 __device__ __forceinline__
-void atomicAdd( mat3 *add, mat3 toAdd )
+void atomicAdd( mat3 *add, const mat3 &toAdd )
 {
     atomicAdd(&(add->data[0]), toAdd[0]);
     atomicAdd(&(add->data[1]), toAdd[1]);
