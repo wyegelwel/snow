@@ -76,7 +76,6 @@ __global__ void computedF(Particle *particles, Grid *grid, float dt, ParticleGri
                 vec3 du_j = dt * dus[rowOffset+k];
                 dF += mat3::outerProduct(du_j, wg);
 
-
                 vGradient += mat3::outerProduct(dt*nodes[rowOffset+k].velocity, wg);
 
             }
@@ -127,12 +126,12 @@ __device__ void computedR(mat3 &dF, mat3 &Se, mat3 &Re, mat3 &dR){
     mat3 V = mat3::multiplyAtB(Re, dF) - mat3::multiplyAtB(dF, Re);
 
     // Solve for compontents of R^T * dR
-    mat3 S = mat3(S[0]+S[4], S[5], -S[2], //remember, column major
+    mat3 A = mat3(S[0]+S[4], S[5], -S[2], //remember, column major
                   S[5], S[0]+S[8], S[1],
                   -S[2], S[1], S[4]+S[8]);
 
     vec3 b(V[3], V[6], V[7]);
-    vec3 x = mat3::inverse(S) * b; // Should replace this with a linear system solver function
+    vec3 x = mat3::solve(A, b);// Should replace this with a linear system solver function
 
     // Fill R^T * dR
     mat3 RTdR = mat3( 0, -x.x, -x.y, //remember, column major
