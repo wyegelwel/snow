@@ -47,12 +47,6 @@ struct ParticleTempData
     vec3 particleGridPos;
 };
 
-struct ParticleFeHatCache
-{
-    mat3 FeHat;
-    mat3 ReHat;
-    mat3 SeHat;
-    mat3 dF;
-};
+
 
 #endif // PARTICLE_H

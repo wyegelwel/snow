@@ -35,12 +35,12 @@
  * Called over particles
  **/
 #define VEC2IVEC( V ) ( glm::ivec3((int)V.x, (int)V.y, (int)V.z) )
-__global__ void computedF(Particle *particles, Grid *grid, float dt, vec3 *dus, ParticleFeHatCache *particleFeHatCache){
+__global__ void computedF(Particle *particles, Grid *grid, float dt, ParticleGridNode *nodes, vec3 *dus, Implicit::ACache *ACaches){
     int particleIdx = blockIdx.y*gridDim.x*blockDim.x + blockIdx.x*blockDim.x + threadIdx.x;
 
     Particle &particle = particles[particleIdx];
-    ParticleFeHatCache &pFeHatCache = particleFeHatCache[particleIdx];
-    pFeHatCache.dF = mat3(0.0f);
+    Implicit::ACache &ACache = ACaches[particleIdx];
+    mat3 dF(0.0f);
 
     const vec3 &pos = particle.position;
     const glm::ivec3 &dim = grid->dim;
@@ -52,6 +52,8 @@ __global__ void computedF(Particle *particles, Grid *grid, float dt, vec3 *dus, 
          gridMin = vec3::ceil( gridIndex - vec3(2,2,2) );
     glm::ivec3 maxIndex = glm::clamp( VEC2IVEC(gridMax), glm::ivec3(0,0,0), dim ),
                minIndex = glm::clamp( VEC2IVEC(gridMin), glm::ivec3(0,0,0), dim );
+
+    mat3 vGradient(0.0f);
 
     // Fill dF
     int rowSize = dim.z+1;
@@ -68,53 +70,58 @@ __global__ void computedF(Particle *particles, Grid *grid, float dt, vec3 *dus, 
             for ( int k = minIndex.z; k <= maxIndex.z; ++k ) {
                 d.z = gridIndex.z - k;
                 d.z *= ( s.z = ( d.z < 0 ) ? -1.f : 1.f );
-                vec3 du_j = dt * dus[rowOffset+k];
-
-                float w;
                 vec3 wg;
-                weightAndGradient( -s, d, w, wg );
+                weightGradient( -s, d, wg );
 
-                pFeHatCache.dF += mat3::outerProduct(du_j, wg);
+                vec3 du_j = dt * dus[rowOffset+k];
+                dF += mat3::outerProduct(du_j, wg);
+
+
+                vGradient += mat3::outerProduct(dt*nodes[rowOffset+k].velocity, wg);
+
             }
         }
     }
 
-    pFeHatCache.dF *= particle.elasticF;
+    ACache.dF = dF * particle.elasticF;
+
+    ACache.FeHat = mat3::addIdentity(vGradient) * particle.elasticF;
+    computePD(ACache.FeHat, ACache.ReHat, ACache.SeHat);
 }
 
+/** Currently computed in computedF, we could parallelize this and computedF but not sure what the time benefit would be*/
+//__global__ void computeFeHat(Particle *particles, Grid *grid, float dt, ParticleGridNode *nodes, ACache *ACaches){
+//    int particleIdx = blockIdx.x*blockDim.x + threadIdx.x;
 
-__global__ void computeFeHat(Particle *particles, Grid *grid, float dt, ParticleGridNode *nodes, ParticleFeHatCache *particleFeHatCache){
-    int particleIdx = blockIdx.x*blockDim.x + threadIdx.x;
+//       Particle &particle = particles[particleIdx];
+//       ACache &ACache = ACaches[particleIdx];
 
-       Particle &particle = particles[particleIdx];
-       ParticleFeHatCache &pFeHatCache = particleFeHatCache[particleIdx];
+//       vec3 particleGridPos = (particle.position - grid->pos) / grid->h;
+//       glm::ivec3 min = glm::ivec3(std::ceil(particleGridPos.x - 2), std::ceil(particleGridPos.y - 2), std::ceil(particleGridPos.z - 2));
+//       glm::ivec3 max = glm::ivec3(std::floor(particleGridPos.x + 2), std::floor(particleGridPos.y + 2), std::floor(particleGridPos.z + 2));
 
-       vec3 particleGridPos = (particle.position - grid->pos) / grid->h;
-       glm::ivec3 min = glm::ivec3(std::ceil(particleGridPos.x - 2), std::ceil(particleGridPos.y - 2), std::ceil(particleGridPos.z - 2));
-       glm::ivec3 max = glm::ivec3(std::floor(particleGridPos.x + 2), std::floor(particleGridPos.y + 2), std::floor(particleGridPos.z + 2));
+//       mat3 vGradient(0.0f);
 
-       mat3 vGradient(0.0f);
+//       // Apply particles contribution of mass, velocity and force to surrounding nodes
+//       min = glm::max(glm::ivec3(0.0f), min);
+//       max = glm::min(grid->dim, max);
+//       for (int i = min.x; i <= max.x; i++){
+//           for (int j = min.y; j <= max.y; j++){
+//               for (int k = min.z; k <= max.z; k++){
+//                   int currIdx = grid->getGridIndex(i, j, k, grid->dim+1);
+//                   ParticleGridNode &node = nodes[currIdx];
 
-       // Apply particles contribution of mass, velocity and force to surrounding nodes
-       min = glm::max(glm::ivec3(0.0f), min);
-       max = glm::min(grid->dim, max);
-       for (int i = min.x; i <= max.x; i++){
-           for (int j = min.y; j <= max.y; j++){
-               for (int k = min.z; k <= max.z; k++){
-                   int currIdx = grid->getGridIndex(i, j, k, grid->dim+1);
-                   ParticleGridNode &node = nodes[currIdx];
+//                   vec3 wg;
+//                   weightGradient(particleGridPos - vec3(i, j, k), wg);
 
-                   vec3 wg;
-                   weightGradient(particleGridPos - vec3(i, j, k), wg);
+//                   vGradient += mat3::outerProduct(dt*node.velocity, wg);
+//               }
+//           }
+//       }
 
-                   vGradient += mat3::outerProduct(dt*node.velocity, wg);
-               }
-           }
-       }
-
-       pFeHatCache.FeHat = mat3::addIdentity(vGradient) * particle.elasticF;
-       computePD(pFeHatCache.FeHat, pFeHatCache.ReHat, pFeHatCache.SeHat);
-}
+//       ACache.FeHat = mat3::addIdentity(vGradient) * particle.elasticF;
+//       computePD(ACache.FeHat, ACache.ReHat, ACache.SeHat);
+//}
 
 __device__ void computedR(mat3 &dF, mat3 &Se, mat3 &Re, mat3 &dR){
     mat3 V = mat3::multiplyAtB(Re, dF) - mat3::multiplyAtB(dF, Re);
@@ -196,17 +203,15 @@ __device__ void compute_dJF_invTrans(mat3 &F, mat3 &dF, mat3 &dJF_invTrans){
  * Called over particles
  **/
 // TODO: Replace JFe_invTrans with the trans of adjugate
-__global__ void computeAp(Particle *particles, ParticleFeHatCache *particleFeHatCache, MaterialConstants *material, mat3 *dFs, mat3 *Aps)
+__global__ void computeAp(Particle *particles, MaterialConstants *material, Implicit::ACache *ACaches)
 {
     int particleIdx = blockIdx.y*gridDim.x*blockDim.x + blockIdx.x*blockDim.x + threadIdx.x;
     Particle &particle = particles[particleIdx];
-    mat3 &Ap = Aps[particleIdx];
-    mat3 &dF = dFs[particleIdx];
-    ParticleFeHatCache &pFeHatCache = particleFeHatCache[particleIdx];
-
+    Implicit::ACache &ACache = ACaches[particleIdx];
+    mat3 dF = ACache.dF;
 
     mat3 &Fp = particle.plasticF; //for the sake of making the code look like the math
-    mat3 &Fe = pFeHatCache.FeHat;
+    mat3 &Fe = ACache.FeHat;
 
     float Jpp = mat3::determinant(Fp);
     float Jep = mat3::determinant(Fe);
@@ -214,8 +219,8 @@ __global__ void computeAp(Particle *particles, ParticleFeHatCache *particleFeHat
     float muFp = material->mu*__expf(material->xi*(1-Jpp));
     float lambdaFp = material->lambda*__expf(material->xi*(1-Jpp));
 
-    mat3 &Re = pFeHatCache.ReHat;
-    mat3 &Se = pFeHatCache.SeHat;
+    mat3 &Re = ACache.ReHat;
+    mat3 &Se = ACache.SeHat;
 
     mat3 dR;
     computedR(dF, Se, Re, dR);
@@ -225,7 +230,7 @@ __global__ void computeAp(Particle *particles, ParticleFeHatCache *particleFeHat
 
     mat3 jFe_invTrans = Jep * mat3::transpose(mat3::inverse(Fe));
 
-    Ap = (2*muFp*(dF - dR) + lambdaFp*jFe_invTrans*mat3::innerProduct(jFe_invTrans, dF) + lambdaFp*(Jep - 1)*dJFe_invTrans);
+    ACache.Ap = (2*muFp*(dF - dR) + lambdaFp*jFe_invTrans*mat3::innerProduct(jFe_invTrans, dF) + lambdaFp*(Jep - 1)*dJFe_invTrans);
 }
 
 
