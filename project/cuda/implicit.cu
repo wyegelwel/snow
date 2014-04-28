@@ -173,11 +173,8 @@ __device__ void computedF(Particle &particle, Grid *grid, vec3 *dus, float dt, m
 }
 
 /**
- * Called over particles over nodes the particle affects. (numParticles * 64)
+ * Called over particles
  *
- * Recommended:
- *  dim3 blockDim = dim3(numParticles / threadCount, 64);
- *  dim3 threadDim = dim3(threadCount/64, 64);
  *
  **/
 __global__ void computedFandAps( Particle *particles, Grid *grid, float dt, MaterialConstants *material, ParticleFeHatCache *particleFeHatCache, vec3 *dus, mat3 *Aps)
@@ -197,8 +194,9 @@ __global__ void computedFandAps( Particle *particles, Grid *grid, float dt, Mate
  }
 
 
+//__global__ void computeFeHat(Particle *particles, Grid *grid, float dt, ParticleFeHatCache *particleFeHatCache){
 
-
+//}
 
 /**
  * Computes the matrix-vector product Eu. All the pointer arguments are assumed to be
