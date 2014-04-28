@@ -24,6 +24,7 @@
 #include "cuda/vector.cu"
 
 #include "cuda/atomic.cu"
+#include "cuda/caches.h"
 #include "cuda/decomposition.cu"
 #include "cuda/weighting.cu"
 
@@ -289,7 +290,5 @@ __host__ void conjugateResidual( Particle *particles, int numParticles,
 {
 
 }
-
-
 
 #endif // IMPLICIT_H
