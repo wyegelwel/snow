@@ -245,6 +245,24 @@ __host__ __device__ void computePD( const mat3 &A, mat3 &R )
 }
 
 /*
+ * Returns polar decomposition of 3x3 matrix M where
+ * M = Fe = Re * Se = U * P
+ * U is an orthonormal matrix
+ * S is symmetric positive semidefinite
+ * Can get Polar Decomposition from SVD, see first section of http://en.wikipedia.org/wiki/Polar_decomposition
+ */
+__host__ __device__ void computePD( const mat3 &A, mat3 &R, mat3 &P )
+{
+    // U is unitary matrix (i.e. orthogonal/orthonormal)
+    // P is positive semidefinite Hermitian matrix
+    mat3 W, S, V;
+    computeSVD( A, W, S, V );
+    R = mat3::multiplyABt( W, V );
+    P = mat3::multiplyADBt(V, S, V);
+}
+
+
+/*
  * In snow we desire both SVD and polar decompositions simultaneously without
  * re-computing USV for polar.
  * here is a function that returns all the relevant values
