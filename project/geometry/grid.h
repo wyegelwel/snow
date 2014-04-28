@@ -72,6 +72,16 @@ struct Grid
         return (ijk.x*(nodeDim.y*nodeDim.z)+ijk.y*(nodeDim.z)+ijk.z);
     }
 
+    FUNC static bool withinBoundsInclusive( const float &v, const float &min, const float &max )
+    {
+        return ( v >= min && v <= max );
+    }
+
+    FUNC static bool withinBoundsInclusive( const glm::ivec3 &v, const glm::ivec3 &min, const glm::ivec3 &max )
+    {
+        return withinBoundsInclusive(v.x, min.x, max.x) && withinBoundsInclusive(v.y, min.y, max.y) && withinBoundsInclusive(v.z, min.z, max.z);
+    }
+
 };
 
 #endif // GRID_H

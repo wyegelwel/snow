@@ -26,21 +26,10 @@
 #include "cuda/atomic.cu"
 #include "cuda/collider.cu"
 #include "cuda/decomposition.cu"
+#include "cuda/implicit.cu"
 #include "cuda/weighting.cu"
 
 #include "cuda/functions.h"
-
-__host__ __device__ __forceinline__
-bool withinBoundsInclusive( const float &v, const float &min, const float &max )
-{
-    return ( v >= min && v <= max );
-}
-
-__host__ __device__ __forceinline__
-bool withinBoundsInclusive( const glm::ivec3 &v, const glm::ivec3 &min, const glm::ivec3 &max )
-{
-    return withinBoundsInclusive(v.x, min.x, max.x) && withinBoundsInclusive(v.y, min.y, max.y) && withinBoundsInclusive(v.z, min.z, max.z);
-}
 
 // Chain to compute the volume of the particle
 
@@ -60,7 +49,7 @@ __global__ void computeCellMasses( Particle *particleData, Grid *grid, float* ce
     vec3 particleGridPos = (particle.position - grid->pos) / grid->h;
     currIJK.x += (int) particleGridPos.x - 1; currIJK.y += (int) particleGridPos.y - 1; currIJK.z += (int) particleGridPos.z - 1;
 
-    if ( withinBoundsInclusive(currIJK, glm::ivec3(0,0,0), grid->dim) ) {
+    if ( Grid::withinBoundsInclusive(currIJK, glm::ivec3(0,0,0), grid->dim) ) {
         vec3 nodePosition( currIJK.x, currIJK.y, currIJK.z );
         vec3 dx = vec3::abs( particleGridPos - nodePosition );
         float w = weight( dx );
@@ -84,7 +73,7 @@ __global__ void computeParticleDensity( Particle *particleData, Grid *grid, floa
     vec3 particleGridPos = ( particle.position - grid->pos ) / grid->h;
     currIJK.x += (int) particleGridPos.x - 1; currIJK.y += (int) particleGridPos.y - 1; currIJK.z += (int) particleGridPos.z - 1;
 
-    if ( withinBoundsInclusive(currIJK, glm::ivec3(0,0,0), grid->dim) ) {
+    if ( Grid::withinBoundsInclusive(currIJK, glm::ivec3(0,0,0), grid->dim) ) {
         vec3 nodePosition( currIJK.x, currIJK.y, currIJK.z );
         vec3 dx = vec3::abs( particleGridPos - nodePosition );
         float w = weight( dx );
@@ -186,7 +175,7 @@ __global__ void computeCellMassVelocityAndForceFast( Particle *particleData, Gri
     Grid::gridIndexToIJK(threadIdx.y, glm::ivec3(4,4,4), currIJK);
     currIJK.x += (int) pgtd.particleGridPos.x - 1; currIJK.y += (int) pgtd.particleGridPos.y - 1; currIJK.z += (int) pgtd.particleGridPos.z - 1;
 
-    if (withinBoundsInclusive(currIJK, glm::ivec3(0,0,0), grid->dim)){
+    if ( Grid::withinBoundsInclusive(currIJK, glm::ivec3(0,0,0), grid->dim) ) {
         ParticleGridNode &node = nodes[Grid::getGridIndex(currIJK, grid->dim+1)];
 
         float w;
