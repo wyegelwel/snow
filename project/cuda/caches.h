@@ -12,6 +12,9 @@
 #define CACHES_H
 
 struct vec3;
+struct mat3;
+
+namespace Implicit {
 
 // Cache for data used by Conjugate Residual Method
 struct CRCache
@@ -20,7 +23,9 @@ struct CRCache
     vec3 *s;
     vec3 *p;
     vec3 *q;
-    vec3 *v;
+    vec3 *u;
 };
+
+}
 
 #endif // CACHES_H
