@@ -13,6 +13,8 @@
 
 #include <cuda.h>
 #include <cuda_runtime.h>
+#include <helper_functions.h>
+#include <helper_cuda.h>
 
 #define CUDA_INCLUDE
 #include "geometry/grid.h"
@@ -21,9 +23,11 @@
 
 #include "cuda/atomic.cu"
 #include "cuda/decomposition.cu"
+#include "cuda/weighting.cu"
 
+#include "sim/material.h"
 
-__device__ void computedR(mat3 &df, mat3 &Se, mat3 &Re, mat3 &dR){
+__device__ void computedR(mat3 &dF, mat3 &Se, mat3 &Re, mat3 &dR){
     mat3 V = mat3::multiplyAtB(Re, dF) - mat3::multiplyAtB(dF, Re);
 
     // Solve for compontents of R^T * dR
@@ -31,9 +35,7 @@ __device__ void computedR(mat3 &df, mat3 &Se, mat3 &Re, mat3 &dR){
                   S[5], S[0]+S[8], S[1],
                   -S[2], S[1], S[4]+S[8]);
 
-
     vec3 b(V[3], V[6], V[7]);
-
     vec3 x = mat3::inverse(S) * b; // Should replace this with a linear system solver function
 
     // Fill R^T * dR
@@ -49,7 +51,7 @@ __device__ void compute_dJF_invTrans(mat3 &F, mat3 &dF, mat3 &dJF_invTrans){
     // considering F[0]
     tmp[0] = 0; tmp[3] =  0;    tmp[6] =  0;
     tmp[1] = 0; tmp[4] =  F[8]; tmp[7] = -F[7];
-    tmp[2] = 0; tmp[5] = -F[5]; tmp[8] =  Fp[4];
+    tmp[2] = 0; tmp[5] = -F[5]; tmp[8] =  F[4];
     dJF_invTrans[0] = mat3::innerProduct(tmp, dF);
 
     // considering F[1]
@@ -103,14 +105,8 @@ __device__ void compute_dJF_invTrans(mat3 &F, mat3 &dF, mat3 &dJF_invTrans){
 
 
 // TODO: Replace JFe_invTrans with the trans of adjugate
-__device__ void computeAp( Particle &particles, mat3 &dF, mat3 &Ap, ParticleFeHatCache &pFeHatCache )
+__device__ void computeAp( Particle &particle, mat3 &dF, MaterialConstants *material, ParticleFeHatCache &pFeHatCache, mat3 &Ap)
 {
-    int particleIdx = blockIdx.y*gridDim.x*blockDim.x + blockIdx.x*blockDim.x + threadIdx.x;
-
-    Particle &particle = particles[particleIdx];
-    mat3 &dF = dFs[particleIdx];
-    mat3 &Ap = Aps[particleIdx];
-
     mat3 &Fp = particle.plasticF; //for the sake of making the code look like the math
     mat3 &Fe = pFeHatCache.FeHat;
 
@@ -126,18 +122,16 @@ __device__ void computeAp( Particle &particles, mat3 &dF, mat3 &Ap, ParticleFeHa
     mat3 dR;
     computedR(dF, Se, Re, dR);
 
-    mat3 jFe_invTrans = Jep*mat3::transpose(mat3::inverse(Fe));
-
     mat3 dJFe_invTrans;
     compute_dJF_invTrans(Fe, dF, dJFe_invTrans);
 
-    Ap = (2*muFp*(dF - dRe) + lambdaFp*jFe_invTrans*mat3::innerProduct(jFe_invTrans, dF) + lambdaFp*(Jep - 1)*dJFe_invTrans);
+    mat3 jFe_invTrans = Jep * mat3::transpose(mat3::inverse(Fe));
 
-//    sigma = (2*muFp*(Fe-Re)*mat3::transpose(Fe)+lambdaFp*(Jep-1)*Jep*mat3(1.0f)) * (particle.volume);
-//    sigma = (2*muFp*mat3::multiplyABt(Fe-Re, Fe) + mat3(lambdaFp*(Jep-1)*Jep)) * -particle.volume;
+    Ap = (2*muFp*(dF - dR) + lambdaFp*jFe_invTrans*mat3::innerProduct(jFe_invTrans, dF) + lambdaFp*(Jep - 1)*dJFe_invTrans);
 }
 
-__device__ void computedF(Particle &particle, Grid *grid, mat3 &dF){
+#define VEC2IVEC( V ) ( glm::ivec3((int)V.x, (int)V.y, (int)V.z) )
+__device__ void computedF(Particle &particle, Grid *grid, vec3 *dus, float dt, mat3 &dF){
     const vec3 &pos = particle.position;
     const glm::ivec3 &dim = grid->dim;
     const float h = grid->h;
@@ -164,7 +158,7 @@ __device__ void computedF(Particle &particle, Grid *grid, mat3 &dF){
             for ( int k = minIndex.z; k <= maxIndex.z; ++k ) {
                 d.z = gridIndex.z - k;
                 d.z *= ( s.z = ( d.z < 0 ) ? -1.f : 1.f );
-                vec3 du_j = dt * u[rowOffset+k];
+                vec3 du_j = dt * dus[rowOffset+k];
 
                 float w;
                 vec3 wg;
@@ -186,20 +180,20 @@ __device__ void computedF(Particle &particle, Grid *grid, mat3 &dF){
  *  dim3 threadDim = dim3(threadCount/64, 64);
  *
  **/
-__global__ void computedFandAps( Particle *particles, Grid *grid, float dt, ParticleFeHatCache *particleFeHatCache, vec3 *u, mat3 *Aps)
+__global__ void computedFandAps( Particle *particles, Grid *grid, float dt, MaterialConstants *material, ParticleFeHatCache *particleFeHatCache, vec3 *dus, mat3 *Aps)
 {
     int particleIdx = blockIdx.y*gridDim.x*blockDim.x + blockIdx.x*blockDim.x + threadIdx.x;
 
     Particle &particle = particles[particleIdx];
     mat3 dF(0.0f);
 
-    computedF(particle, grid, dF);
+    computedF(particle, grid, dus, dt, dF);
 
 
     mat3 &Ap = Aps[particleIdx];
     ParticleFeHatCache &pFeHatCache = particleFeHatCache[particleIdx];
 
-    computeAp(particle, dF, Ap, pFeHatCache);
+    computeAp(particle, dF, material, pFeHatCache, Ap);
  }
 
 
@@ -210,15 +204,22 @@ __global__ void computedFandAps( Particle *particles, Grid *grid, float dt, Part
  * Computes the matrix-vector product Eu. All the pointer arguments are assumed to be
  * device pointers.
  *
- *      u:  vector to multiply
- * result:  store the values of Eu
+ *      u:  device pointer to vector to multiply
+ *    dFs:  device pointer to storage for per-particle dF matrices
+ * result:  device pointer to array store the values of Eu
  */
-__host__ void computeEu( Particle *particles, int numParticles, Grid *grid, float dt, vec3 *u, vec3 *result )
+__host__ void computeEu( Particle *particles, int numParticles, Grid *grid, float dt, vec3 *u, mat3 *dFs, mat3 *Aps, vec3 *result )
 {
 
     static const int threadCount = 128;
     dim3 blocks = dim3( numParticles/threadCount, 64 );
     dim3 threads = dim3( threadCount/64, 64 );
+
+//    computedF<<< blocks, threads >>>( particles, grid, dt, u, dFs );
+    checkCudaErrors( cudaDeviceSynchronize() );
+
+//    computeAp<<< numParticles/threadCount, threadCount >>>( particles, grid, dFs, Aps );
+    checkCudaErrors( cudaDeviceSynchronize() );
 
 
 
