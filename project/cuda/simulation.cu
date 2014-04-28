@@ -29,6 +29,7 @@
 
 #include "cuda/functions.h"
 
+
 __host__ __device__ __forceinline__
 bool withinBoundsInclusive( const float &v, const float &min, const float &max )
 {
@@ -410,30 +411,26 @@ __global__ void updateParticleNormals(Particle *particles, Grid *grid, const Par
     glm::ivec3 maxIndex = glm::clamp( VEC2IVEC(gridMax), glm::ivec3(0,0,0), dim ),
                minIndex = glm::clamp( VEC2IVEC(gridMin), glm::ivec3(0,0,0), dim );
 
-    //glm::ivec3 ijk = VEC2IVEC((pos - grid->pos) / h);
+    glm::ivec3 gridIJK = VEC2IVEC(gridIndex);
+    int gridIdx = getGridIndex(gridIJK, grid->dim);
 
+    float m = nodes[gridIdx].mass; // mass of this node
 
+    //const ParticleGridNode &node = nodes[gridIdx];
     // +x,-x,+y,-y,+z,-z axis-aligned components of negative gradient within grid
-    // for higher resolution we could average over a larger neighborhood
     vec3 n = vec3(0,1,0);
 //    ParticleGridNode &node;
-//    int i1, i2; // grid indices of neighboring components
-//    float c1,c2;
+////    int i1, i2; // grid indices of neighboring components
+//    float n1,n2;
 //    for (int a=0;a<3;a++)
 //    {
-//        glm::ivec3 da(0);
-//        da[a]=-1;
 
-//        da[1]=+1;
-//        glm::ivec3 neighbor = ijk + glm::ivec3();
+//        n2 = -(m - );
 
-//        n[i] = (c1+c2)*.5;
+//        // average components gradient vectors
+//        n[i] = (n1+n2)*.5;
 //    }
-
-
-//    //
-
-
+    //
     particle.normal = n;
 }
 

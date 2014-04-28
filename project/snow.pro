@@ -127,6 +127,7 @@ OTHER_FILES += \
     cuda/quaternion.cu \
     cuda/simulation.cu \
     cuda/collider.cu \
+    cuda/noise.cu \
     resources/shaders/particlesystem.vert \
     resources/shaders/particlesystem.frag \
     resources/shaders/particlegrid.frag \

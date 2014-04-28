@@ -56,6 +56,7 @@ UiSettings::loadSettings()
     exportVolume() = s.value( "exportVolume", false ).toBool();
     exportColliders() = s.value("exportColliders", false).toBool();
     exportFPS() = s.value("exportFPS", 24).toInt();
+    maxTime() = s.value("maxTime", 3).toFloat();
 
     gridPosition() = vec3( s.value("gridPositionX", 0.f).toFloat(),
                            s.value("gridPositionY", 0.f).toFloat(),
@@ -98,7 +99,8 @@ UiSettings::saveSettings()
 
     s.setValue( "exportVolume", exportVolume() );
     s.setValue( "exportColliders", exportColliders());
-    s.setValue("exportFPS",exportFPS());
+    s.setValue( "exportFPS", exportFPS());
+    s.setValue( "maxTime", maxTime());
 
     s.setValue( "gridPositionX", gridPosition().x );
     s.setValue( "gridPositionY", gridPosition().y );

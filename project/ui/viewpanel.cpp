@@ -220,22 +220,8 @@ ViewPanel::keyPressEvent( QKeyEvent *event )
 bool ViewPanel::startSimulation()
 {
     makeCurrent();
-
+    QString fprefix;
     if ( !m_engine->isRunning() ) {
-        if ( UiSettings::exportVolume() ) {
-            // ask the user where the data should be saved
-            //        QDir sceneDir("~/offline_renders");
-            //        sceneDir.makeAbsolute();
-            QString fprefix = QFileDialog::getSaveFileName(this, QString("Choose Export Name"), QString());
-            if ( fprefix.isEmpty() ) {
-                // cancel
-                QMessageBox msgBox;
-                msgBox.setText("Error : Invalid Volume Export Path");
-                msgBox.exec();
-                return false;
-            }
-            m_engine->initExporter(fprefix);
-        }
         m_engine->clearColliders();
         for ( SceneNodeIterator it = m_scene->begin(); it.isValid(); ++it ) {
             if ( (*it)->hasRenderable() ) {
@@ -248,6 +234,19 @@ bool ViewPanel::startSimulation()
                 }
             }
         }
+
+        if ( UiSettings::exportVolume() ) {
+            fprefix = QFileDialog::getSaveFileName(this, QString("Choose Export Name"), QString());
+            if ( fprefix.isEmpty() ) {
+                // cancel
+                QMessageBox msgBox;
+                msgBox.setText("Error : Invalid Volume Export Path");
+                msgBox.exec();
+                return false;
+            }
+            m_engine->initExporter(fprefix);
+        }
+
         return m_engine->start( UiSettings::exportVolume() );
     }
 

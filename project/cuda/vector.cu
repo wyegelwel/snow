@@ -103,6 +103,12 @@ struct vec3
     static vec3 max( const vec3 &v, const vec3 &w ) { return vec3( fmaxf(v.x, w.x), fmaxf(v.y, w.y), fmaxf(v.z,w.z) ); }
 
     __host__ __device__ __forceinline__
+    static vec3 mix(const vec3 &x, const vec3 &y, const vec3 &a) { return x*(1-a) + y*a; }
+
+    __host__ __device__ __forceinline__
+    static vec3 mix(const vec3 &x, const vec3 &y, float a) { return x*(1-a) + y*a; }
+
+    __host__ __device__ __forceinline__
     static float length2( const vec3 &v ) { return v.x*v.x + v.y*v.y + v.z*v.z; }
 
     __host__ __device__ __forceinline__

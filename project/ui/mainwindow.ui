@@ -65,9 +65,9 @@
        <property name="geometry">
         <rect>
          <x>0</x>
-         <y>-283</y>
-         <width>282</width>
-         <height>861</height>
+         <y>-139</y>
+         <width>280</width>
+         <height>886</height>
         </rect>
        </property>
        <layout class="QGridLayout" name="gridLayout_2">
@@ -1105,6 +1105,22 @@
              </property>
             </widget>
            </item>
+           <item row="0" column="1">
+            <widget class="QPushButton" name="pauseButton">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
+             <property name="autoFillBackground">
+              <bool>true</bool>
+             </property>
+             <property name="text">
+              <string>Pause</string>
+             </property>
+             <property name="checkable">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
            <item row="4" column="0" colspan="2">
             <widget class="CollapsibleBox" name="exportGroupBox">
              <property name="autoFillBackground">
@@ -1123,30 +1139,17 @@
               <property name="spacing">
                <number>4</number>
               </property>
-              <item row="0" column="3">
+              <item row="1" column="0" alignment="Qt::AlignLeft">
+               <widget class="QLabel" name="maxTimeLabel">
+                <property name="text">
+                 <string>Time</string>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="3" alignment="Qt::AlignLeft">
                <widget class="QSpinBox" name="exportFPSSpinBox">
                 <property name="autoFillBackground">
                  <bool>true</bool>
-                </property>
-               </widget>
-              </item>
-              <item row="0" column="0" alignment="Qt::AlignLeft">
-               <widget class="QCheckBox" name="volumeCheckbox">
-                <property name="autoFillBackground">
-                 <bool>true</bool>
-                </property>
-                <property name="text">
-                 <string>Volume</string>
-                </property>
-               </widget>
-              </item>
-              <item row="0" column="2" alignment="Qt::AlignRight">
-               <widget class="QLabel" name="fpsLabel">
-                <property name="autoFillBackground">
-                 <bool>true</bool>
-                </property>
-                <property name="text">
-                 <string>FPS</string>
                 </property>
                </widget>
               </item>
@@ -1160,23 +1163,30 @@
                 </property>
                </widget>
               </item>
+              <item row="0" column="0">
+               <widget class="QCheckBox" name="volumeCheckbox">
+                <property name="autoFillBackground">
+                 <bool>true</bool>
+                </property>
+                <property name="text">
+                 <string>Volume</string>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="2" alignment="Qt::AlignLeft">
+               <widget class="QLabel" name="fpsLabel">
+                <property name="autoFillBackground">
+                 <bool>true</bool>
+                </property>
+                <property name="text">
+                 <string>FPS</string>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="1" alignment="Qt::AlignLeft">
+               <widget class="QDoubleSpinBox" name="maxTimeSpinBox"/>
+              </item>
              </layout>
-            </widget>
-           </item>
-           <item row="0" column="1">
-            <widget class="QPushButton" name="pauseButton">
-             <property name="enabled">
-              <bool>false</bool>
-             </property>
-             <property name="autoFillBackground">
-              <bool>true</bool>
-             </property>
-             <property name="text">
-              <string>Pause</string>
-             </property>
-             <property name="checkable">
-              <bool>true</bool>
-             </property>
             </widget>
            </item>
           </layout>
@@ -1210,7 +1220,7 @@
      <x>0</x>
      <y>0</y>
      <width>1000</width>
-     <height>29</height>
+     <height>26</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">

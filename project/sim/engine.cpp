@@ -190,6 +190,13 @@ void Engine::update()
         checkCudaErrors( cudaDeviceSynchronize() );
 
         m_time += m_params.timeStep;
+
+        if (m_time > UiSettings::maxTime())
+        {
+            stop();
+            LOG( "Simulation Completed" );
+        }
+
         m_busy = false;
 
     } else {

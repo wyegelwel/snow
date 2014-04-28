@@ -170,6 +170,7 @@ void MainWindow::setupUI()
     BoolBinding::bindCheckBox( ui->volumeCheckbox, UiSettings::exportVolume(), this );
     BoolBinding::bindCheckBox(ui->colliderCheckbox, UiSettings::exportColliders(), this);
     IntBinding::bindSpinBox(ui->exportFPSSpinBox, UiSettings::exportFPS(), this);
+    FloatBinding::bindSpinBox(ui->maxTimeSpinBox, UiSettings::maxTime(),this);
 
     // Collider
     assert( connect(ui->colliderAddButton, SIGNAL(clicked()), this, SLOT(addCollider())));

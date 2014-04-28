@@ -277,8 +277,41 @@ Mesh::fill( ParticleSystem &particles, int particleCount, float h, float targetD
     particles.resize( particleCount );
     fillMesh( &m_cudaVBO, getNumTris(), grid, particles.data(), particleCount, targetDensity );
 
+    /// alternative mesh filling algorithm:
+    fillMesh2(&m_cudaVBO, getNumTris(), grid, particles.data(), particleCount);
+
     LOG( "Mesh filled with %s particles in %lld ms.", STR(QLocale().toString(particleCount)), timer.restart() );
 }
+
+
+// write a cpu-side mesh filling algo first.
+//void
+//Mesh::fill2(ParticleSystem &particles, int particleCount, float h, float targetDensity)
+//{
+//    if ( !hasVBO() ) {
+//        buildVBO();
+//    }
+
+//    QElapsedTimer timer;
+//    timer.start();
+
+// //   Grid grid = getObjectBBox().toGrid( h );
+
+//    BBox box = getObjectBBox();
+
+//    particles.resize( particleCount );
+
+//    for (int i=0; i<particleCount; i++)
+//    {
+
+//    }
+
+//    fillMesh2( &m_cudaVBO, getNumTris(), box, particles.data(), particleCount );
+
+
+//    LOG( "Mesh filled with %s particles in %lld ms.", STR(QLocale().toString(particleCount)), timer.restart() );
+//}
+
 
 BBox
 Mesh::getBBox( const glm::mat4 &ctm )
