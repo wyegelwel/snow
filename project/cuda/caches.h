@@ -26,6 +26,15 @@ struct CRCache
     vec3 *u;
 };
 
+struct ACache
+{
+    mat3 Ap;
+    mat3 FeHat;
+    mat3 ReHat;
+    mat3 SeHat;
+    mat3 dF;
+};
+
 }
 
 #endif // CACHES_H
