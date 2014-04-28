@@ -19,10 +19,13 @@
 #define CUDA_INCLUDE
 #include "geometry/grid.h"
 #include "sim/particle.h"
+#include "sim/particlegridnode.h"
 #include "cuda/vector.cu"
 
 #include "cuda/atomic.cu"
 #include "cuda/weighting.cu"
+
+#define BETA 0.5
 
 /**
  * Called over particles over nodes the particle affects. (numParticles * 64)
@@ -87,7 +90,7 @@ __global__ void computeAp( Particle *particles, Grid *grid, mat3 *dFs, mat3 *Aps
 ////    sigma = (2*muFp*mat3::multiplyABt(Fe-Re, Fe) + mat3(lambdaFp*(Jep-1)*Jep)) * -particle.volume;
 }
 
-__global__ void computedf( Particle *particles, int numParticles, Grid *grid )
+__global__ void computedf( Particle *particles, Grid *grid, mat3 *Aps, vec3 *dfs )
 {
     int particleIdx = blockIdx.y*gridDim.x*blockDim.x + blockIdx.x*blockDim.x + threadIdx.x;
 
@@ -98,6 +101,24 @@ __global__ void computedf( Particle *particles, int numParticles, Grid *grid )
     Grid::gridIndexToIJK( threadIdx.y, glm::ivec3(4,4,4), ijk );
     ijk += glm::ivec3( gridPos.x-1, gridPos.y-1, gridPos.z-1 );
 
+    if ( Grid::withinBoundsInclusive(ijk, glm::ivec3(0,0,0), grid->dim) ) {
+
+        vec3 wg;
+        vec3 nodePos(ijk);
+        weightGradient( gridPos-nodePos, wg );
+
+        const mat3 &Ap = Aps[particleIdx];
+        vec3 df = -particle.volume * mat3::multiplyABt( Ap, particle.elasticF ) * wg;
+
+        atomicAdd( &dfs[Grid::getGridIndex(ijk,grid->nodeDim())], df );
+    }
+}
+
+__global__ void computeResult( ParticleGridNode *nodes, int numNodes, float dt, const vec3 *u, const vec3 *dfs, vec3 *result )
+{
+    int tid = blockDim.x*blockIdx.x + threadIdx.x;
+    if ( tid >= numNodes ) return;
+    result[tid] = u[tid] - (BETA*dt/nodes[tid].mass)*dfs[tid];
 }
 
 /**
@@ -106,23 +127,37 @@ __global__ void computedf( Particle *particles, int numParticles, Grid *grid )
  *
  *      u:  device pointer to vector to multiply
  *    dFs:  device pointer to storage for per-particle dF matrices
+ *    Aps:  device pointer to storage for per-particle Ap matrices
  * result:  device pointer to array store the values of Eu
  */
-__host__ void computeEu( Particle *particles, int numParticles, Grid *grid, float dt, vec3 *u, mat3 *dFs, mat3 *Aps, vec3 *result )
+__host__ void computeEu( Particle *particles, int numParticles,
+                         Grid *grid, ParticleGridNode *nodes, int numNodes,
+                         float dt, vec3 *u, mat3 *dFs, mat3 *Aps, vec3 *dfs, vec3 *result )
 {
-
     static const int threadCount = 128;
-    dim3 blocks = dim3( numParticles/threadCount, 64 );
-    dim3 threads = dim3( threadCount/64, 64 );
 
-    computedF<<< blocks, threads >>>( particles, grid, dt, u, dFs );
+    computedF<<< numParticles/threadCount, threadCount >>>( particles, grid, dt, u, dFs );
     checkCudaErrors( cudaDeviceSynchronize() );
 
     computeAp<<< numParticles/threadCount, threadCount >>>( particles, grid, dFs, Aps );
     checkCudaErrors( cudaDeviceSynchronize() );
 
+    dim3 blocks = dim3( numParticles/threadCount, 64 );
+    dim3 threads = dim3( threadCount/64, 64 );
+    computedf<<< blocks, threads >>>( particles, grid, Aps, dfs );
+    checkCudaErrors( cudaDeviceSynchronize() );
 
+    computeResult<<< numNodes/threadCount, threadCount >>>( nodes, numNodes, dt, u, dfs, result );
+    checkCudaErrors( cudaDeviceSynchronize() );
+}
+
+__host__ void conjugateResidual( Particle *particles, int numParticles,
+                                 Grid *grid, ParticleGridNode *nodes, int numNodes,
+                                 float dt, vec3 *u, mat3 *dFs, mat3 *Aps, vec3 *dfs, vec3 *result )
+{
 
 }
+
+
 
 #endif // IMPLICIT_H
