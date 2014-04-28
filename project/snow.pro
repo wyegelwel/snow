@@ -46,8 +46,6 @@ SOURCES += \
     ui/tools/tool.cpp \
     ui/collapsiblebox.cpp \
 
-
-
 HEADERS  += \
     ui/mainwindow.h \
     ui/viewpanel.h \
@@ -128,6 +126,7 @@ OTHER_FILES += \
     cuda/simulation.cu \
     cuda/collider.cu \
     cuda/implicit.cu \
+    cuda/atomic.cu \
     resources/shaders/particlesystem.vert \
     resources/shaders/particlesystem.frag \
     resources/shaders/particlegrid.frag \
