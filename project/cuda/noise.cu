@@ -72,7 +72,7 @@ float halton(int index, int base)
         i /= base;
         f /= base;
     }
-    return f;
+    return result;
 }
 
 #endif

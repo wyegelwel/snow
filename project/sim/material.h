@@ -42,7 +42,6 @@ struct MaterialConstants
         lambda = (youngsModulus*POISSONS_RATIO)/((1-POISSONS_RATIO)*(1-2*POISSONS_RATIO));
         mu = youngsModulus/(2*(1+POISSONS_RATIO));
     }
-
 };
 
 #endif // WORLD_H

@@ -275,44 +275,14 @@ Mesh::fill( ParticleSystem &particles, int particleCount, float h, float targetD
     LOG( "Filling mesh in %d x %d x %d grid (%s voxels)...", grid.dim.x, grid.dim.y, grid.dim.z, STR(QLocale().toString(grid.dim.x*grid.dim.y*grid.dim.z)) );
 
     particles.resize( particleCount );
-    //fillMesh( &m_cudaVBO, getNumTris(), grid, particles.data(), particleCount, targetDensity );
+    fillMesh( &m_cudaVBO, getNumTris(), grid, particles.data(), particleCount, targetDensity );
 
     /// alternative mesh filling algorithm:
-    float chunkiness = 0.0;
-    fillMesh2( &m_cudaVBO, getNumTris(), grid, chunkiness , particles.data() , particleCount, targetDensity);
+    //float chunkiness = 0.0;
+    //fillMesh2(&m_cudaVBO, getNumTris(), grid, particles.data(), particleCount, targetDensity);
 
     LOG( "Mesh filled with %s particles in %lld ms.", STR(QLocale().toString(particleCount)), timer.restart() );
 }
-
-
-// write a cpu-side mesh filling algo first.
-//void
-//Mesh::fill2(ParticleSystem &particles, int particleCount, float h, float targetDensity)
-//{
-//    if ( !hasVBO() ) {
-//        buildVBO();
-//    }
-
-//    QElapsedTimer timer;
-//    timer.start();
-
-// //   Grid grid = getObjectBBox().toGrid( h );
-
-//    BBox box = getObjectBBox();
-
-//    particles.resize( particleCount );
-
-//    for (int i=0; i<particleCount; i++)
-//    {
-
-//    }
-
-//    fillMesh2( &m_cudaVBO, getNumTris(), box, particles.data(), particleCount );
-
-
-//    LOG( "Mesh filled with %s particles in %lld ms.", STR(QLocale().toString(particleCount)), timer.restart() );
-//}
-
 
 BBox
 Mesh::getBBox( const glm::mat4 &ctm )

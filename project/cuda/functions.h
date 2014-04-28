@@ -45,8 +45,7 @@ void updateParticleNormals(Particle *particles, int numParticles,
 // Mesh filling
 void fillMesh( cudaGraphicsResource **resource, int triCount, const Grid &grid, Particle *particles, int particleCount, float targetDensity );
 
-
-void fillMesh2( cudaGraphicsResource **resource, int triCount, const Grid &grid, float chunkiness, Particle *particles, int particleCount, float targetDensity);
+void fillMesh2( cudaGraphicsResource **resource, int triCount, const Grid &grid, Particle *particles, int particleCount, float targetDensity);
 
 // One time computation to get particle volumes
 void initializeParticleVolumes( Particle *particles, int numParticles, Grid *grid, int numNodes );

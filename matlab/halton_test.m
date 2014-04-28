@@ -6,7 +6,7 @@ base = [3 5 7];
 
 for i=1:n
    for j=1:3
-      X(i,j) = halton(i,base(j)); 
+      X(i,j) = halton(i+20,base(j)); 
    end 
 end
 
