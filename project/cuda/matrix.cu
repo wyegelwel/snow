@@ -254,6 +254,27 @@ struct mat3
                      A[6], A[7], A[8]+1.f );
     }
 
+    __host__ __device__ __forceinline__
+    static mat3 emult(const mat3 &A, const mat3 &B){
+        mat3 tmp;
+        tmp[0] = A[0]*B[0];
+        tmp[1] = A[1]*B[1];
+        tmp[2] = A[2]*B[2];
+        tmp[3] = A[3]*B[3];
+        tmp[4] = A[4]*B[4];
+        tmp[5] = A[5]*B[5];
+        tmp[6] = A[6]*B[6];
+        tmp[7] = A[7]*B[7];
+        tmp[8] = A[8]*B[8];
+        return tmp;
+    }
+
+    __host__ __device__ __forceinline__
+    static float innerProduct(const mat3 &A, const mat3 &B){
+        return A[0]*B[0] + A[1]*B[1] + A[2]*B[2] + A[3]*B[3] + A[4]*B[4]
+                + A[5]*B[5] + A[6]*B[6] + A[7]*B[7] + A[8]*B[8];
+    }
+
     // Optimize transpose(A) * B;
     __host__ __device__ __forceinline__
     static mat3 multiplyAtB( const mat3 &A, const mat3 &B )
