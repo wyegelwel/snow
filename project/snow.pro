@@ -44,7 +44,7 @@ SOURCES += \
     ui/tools/rotatetool.cpp \
     ui/tools/scaletool.cpp \
     ui/tools/tool.cpp \
-    ui/collapsiblebox.cpp
+    ui/collapsiblebox.cpp \
 
 
 
@@ -127,6 +127,7 @@ OTHER_FILES += \
     cuda/quaternion.cu \
     cuda/simulation.cu \
     cuda/collider.cu \
+    cuda/implicit.cu \
     resources/shaders/particlesystem.vert \
     resources/shaders/particlesystem.frag \
     resources/shaders/particlegrid.frag \
