@@ -40,7 +40,7 @@ __global__ void computedF(Particle *particles, Grid *grid, float dt, vec3 *dus, 
 
     Particle &particle = particles[particleIdx];
     ParticleFeHatCache &pFeHatCache = particleFeHatCache[particleIdx];
-    pFeHatCache.dF = mat3(0.0f);
+    mat3 dF(0.0f);
 
     const vec3 &pos = particle.position;
     const glm::ivec3 &dim = grid->dim;
@@ -52,6 +52,8 @@ __global__ void computedF(Particle *particles, Grid *grid, float dt, vec3 *dus, 
          gridMin = vec3::ceil( gridIndex - vec3(2,2,2) );
     glm::ivec3 maxIndex = glm::clamp( VEC2IVEC(gridMax), glm::ivec3(0,0,0), dim ),
                minIndex = glm::clamp( VEC2IVEC(gridMin), glm::ivec3(0,0,0), dim );
+
+    mat3 vGradient(0.0f);
 
     // Fill dF
     int rowSize = dim.z+1;
@@ -70,51 +72,54 @@ __global__ void computedF(Particle *particles, Grid *grid, float dt, vec3 *dus, 
                 d.z *= ( s.z = ( d.z < 0 ) ? -1.f : 1.f );
                 vec3 du_j = dt * dus[rowOffset+k];
 
-                float w;
                 vec3 wg;
-                weightAndGradient( -s, d, w, wg );
+                weightGradient( -s, d, wg );
 
-                pFeHatCache.dF += mat3::outerProduct(du_j, wg);
+                dF += mat3::outerProduct(du_j, wg);
+                vGradient += mat3::outerProduct(dt*node.velocity, wg);
             }
         }
     }
 
-    pFeHatCache.dF *= particle.elasticF;
+    pFeHatCache.dF = dF * particle.elasticF;
+
+    pFeHatCache.FeHat = mat3::addIdentity(vGradient) * particle.elasticF;
+    computePD(pFeHatCache.FeHat, pFeHatCache.ReHat, pFeHatCache.SeHat);
 }
 
+/** Currently computed in computedF, we could parallelize this and computedF but not sure what the time benefit would be*/
+//__global__ void computeFeHat(Particle *particles, Grid *grid, float dt, ParticleGridNode *nodes, ParticleFeHatCache *particleFeHatCache){
+//    int particleIdx = blockIdx.x*blockDim.x + threadIdx.x;
 
-__global__ void computeFeHat(Particle *particles, Grid *grid, float dt, ParticleGridNode *nodes, ParticleFeHatCache *particleFeHatCache){
-    int particleIdx = blockIdx.x*blockDim.x + threadIdx.x;
+//       Particle &particle = particles[particleIdx];
+//       ParticleFeHatCache &pFeHatCache = particleFeHatCache[particleIdx];
 
-       Particle &particle = particles[particleIdx];
-       ParticleFeHatCache &pFeHatCache = particleFeHatCache[particleIdx];
+//       vec3 particleGridPos = (particle.position - grid->pos) / grid->h;
+//       glm::ivec3 min = glm::ivec3(std::ceil(particleGridPos.x - 2), std::ceil(particleGridPos.y - 2), std::ceil(particleGridPos.z - 2));
+//       glm::ivec3 max = glm::ivec3(std::floor(particleGridPos.x + 2), std::floor(particleGridPos.y + 2), std::floor(particleGridPos.z + 2));
 
-       vec3 particleGridPos = (particle.position - grid->pos) / grid->h;
-       glm::ivec3 min = glm::ivec3(std::ceil(particleGridPos.x - 2), std::ceil(particleGridPos.y - 2), std::ceil(particleGridPos.z - 2));
-       glm::ivec3 max = glm::ivec3(std::floor(particleGridPos.x + 2), std::floor(particleGridPos.y + 2), std::floor(particleGridPos.z + 2));
+//       mat3 vGradient(0.0f);
 
-       mat3 vGradient(0.0f);
+//       // Apply particles contribution of mass, velocity and force to surrounding nodes
+//       min = glm::max(glm::ivec3(0.0f), min);
+//       max = glm::min(grid->dim, max);
+//       for (int i = min.x; i <= max.x; i++){
+//           for (int j = min.y; j <= max.y; j++){
+//               for (int k = min.z; k <= max.z; k++){
+//                   int currIdx = grid->getGridIndex(i, j, k, grid->dim+1);
+//                   ParticleGridNode &node = nodes[currIdx];
 
-       // Apply particles contribution of mass, velocity and force to surrounding nodes
-       min = glm::max(glm::ivec3(0.0f), min);
-       max = glm::min(grid->dim, max);
-       for (int i = min.x; i <= max.x; i++){
-           for (int j = min.y; j <= max.y; j++){
-               for (int k = min.z; k <= max.z; k++){
-                   int currIdx = grid->getGridIndex(i, j, k, grid->dim+1);
-                   ParticleGridNode &node = nodes[currIdx];
+//                   vec3 wg;
+//                   weightGradient(particleGridPos - vec3(i, j, k), wg);
 
-                   vec3 wg;
-                   weightGradient(particleGridPos - vec3(i, j, k), wg);
+//                   vGradient += mat3::outerProduct(dt*node.velocity, wg);
+//               }
+//           }
+//       }
 
-                   vGradient += mat3::outerProduct(dt*node.velocity, wg);
-               }
-           }
-       }
-
-       pFeHatCache.FeHat = mat3::addIdentity(vGradient) * particle.elasticF;
-       computePD(pFeHatCache.FeHat, pFeHatCache.ReHat, pFeHatCache.SeHat);
-}
+//       pFeHatCache.FeHat = mat3::addIdentity(vGradient) * particle.elasticF;
+//       computePD(pFeHatCache.FeHat, pFeHatCache.ReHat, pFeHatCache.SeHat);
+//}
 
 __device__ void computedR(mat3 &dF, mat3 &Se, mat3 &Re, mat3 &dR){
     mat3 V = mat3::multiplyAtB(Re, dF) - mat3::multiplyAtB(dF, Re);
