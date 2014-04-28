@@ -27,9 +27,8 @@
 #include "cuda/functions.h"
 #include "sim/particle.h"
 #include "geometry/grid.h"
-
-#include <thrust/sort.h>
-
+#include "geometry/bbox.h"
+#include "cuda/noise.cu"
 
 struct Tri {
     vec3 v0, n0;
@@ -205,15 +204,15 @@ void fillMesh( cudaGraphicsResource **resource, int triCount, const Grid &grid, 
 
 /// new mesh filling algorithm
 
-__device__ bool isInMesh(vec3 pos, Tri *tris, int triCount, Grid grid)
+__device__ bool isInMesh(vec3 pos, Tri *tris, int triCount)
 {
     // returns true if point lies inside mesh.
     // this is a simple scanline check, returns true if number of intersections
     // between point and top of boudning box is odd.
-    const glm::ivec3 &dim = grid.dim;
+    //const glm::ivec3 &dim = grid.dim;
     // Shoot ray in +y - direction (results in fewer intersections to count and less aliasing)
    // vec3 origin = grid.pos + grid.h * vec3( x+0.5f, y+0.5f, 0.f );
-    vec3 direction = vec3( 0.f, 1.f, 0.f );
+    vec3 direction = vec3( 0.f, -1.f, 0.f );
     int c = 0; // number of intersections
     float t;
     for ( int i = 0; i < triCount; ++i ) {
@@ -223,7 +222,7 @@ __device__ bool isInMesh(vec3 pos, Tri *tris, int triCount, Grid grid)
     return c%2;
 }
 
-__global__ void fillMeshKernel( Grid grid, Particle *particles, float chunkiness, float particleMass, int particleCount)
+__global__ void fillMeshKernel( Tri *tris, int triCount, vec3 bbox_min, vec3 bbox_size, Particle *particles, float chunkiness, float particleMass, int particleCount)
 {
     // naive mesh filling algorithm
     // this approach results in less successes than scanline projection from Z plane and sorting the intersections,
@@ -234,42 +233,46 @@ __global__ void fillMeshKernel( Grid grid, Particle *particles, float chunkiness
 
     vec3 pos;
     int ii = 0; // increment
-    accept = false;
+    bool accept = false;
     while (!accept) {
         vec3 u = vec3(halton(tid+ii, 3), halton(tid+ii, 3), halton(tid+ii, 3));
-        pos = grid.pos() + u * grid.dim; // sample random point within bounding box
-        accept = isInMesh(pos);
-        ii += 1;
+        pos = bbox_min + u * bbox_size; // sample random point within bounding box
+        accept = isInMesh(pos, tris, triCount);
+        ii += 1; // rejected, keep going
     }
 
-    // TODO - use the chunkiness parameter here to mix
-    // spatially varying constitutive parameters
-
-    // snowballs are harder and heavier on the outside (stiffer, crunchier)
-    // stiffness varied with noise fraction - chunky fracture.
-
     Particle particle;
-    particle.mass = particleMass; // TODO - this can be adjusted using FBM
+    particle.mass = particleMass;// can be adjusted?
     particle.position = pos;
     particles[tid] = particle;
 }
 
-
-void fillMesh2( cudaGraphicsResource **resource, int triCount, const Grid &grid, float chunkiness, Particle *particles, int particleCount)
+__global__ void applyMaterial()
 {
-    // Get mesh data
+
+    // TODO - use the chunkiness parameter here to mix
+    // spatially varying constitutive parameters
+    // do this later...
+    // snowballs are harder and heavier on the outside (stiffer, crunchier)
+    // stiffness varied with noise fraction - chunky fracture.
+
+}
+
+
+void fillMesh2( cudaGraphicsResource **resource, int triCount, const Grid &grid, float chunkiness, Particle *particles, int particleCount, float targetDensity)
+{
+    // Get mesh data    
     cudaGraphicsMapResources( 1, resource, 0 );
     Tri *devTris;
     size_t size;
     checkCudaErrors( cudaGraphicsResourceGetMappedPointer((void**)&devTris, &size, *resource) );
-    voxelizeMeshKernel<<< blocks, threads >>>( devTris, triCount, grid, devFlags );
-    checkCudaErrors( cudaDeviceSynchronize() );
 
     Particle *devParticles;
     checkCudaErrors( cudaMalloc((void**)&devParticles, particleCount*sizeof(Particle)) );
-    float volume = count*grid.h*grid.h*grid.h;
+    float volume = particleCount*grid.h*grid.h*grid.h;
     float particleMass = targetDensity * volume / particleCount;
-    fillMeshKernel<<< (particleCount+511)/512, 512 >>>( grid, devParticles, chunkiness, particleMass, particleCount );
+    BBox box(grid);
+    fillMeshKernel<<< (particleCount+511)/512, 512 >>>( devTris, triCount, box.min(), box.size(), devParticles, chunkiness, particleMass, particleCount );
     checkCudaErrors( cudaDeviceSynchronize() );
     checkCudaErrors( cudaMemcpy(particles, devParticles, particleCount*sizeof(Particle), cudaMemcpyDeviceToHost) );
 

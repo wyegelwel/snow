@@ -3,14 +3,18 @@ function fbm3_test
     % plot scatter grid of points
     gv = 0.1:.01:.3;
     [X,Y,Z] = meshgrid(gv,gv,gv);
+    %[X,Y,Z] = sphere(10);
     X = X(:); Y = Y(:); Z = Z(:);
     C = zeros(length(X),1);
+    center = [.5,.5,.5];
     for i=1:length(C)
-        C(i) = fbm3([X(i),Y(i),Z(i)]);
+        p = [X(i),Y(i),Z(i)];
+        dist2 = sum((p-center).*(p-center));
+        C(i) = fbm3(p);
     end
-    %fbm3([.5,.5,.5])
     C = (C+.3)*1.6667;
     scatter3(X,Y,Z,3,C);
+    title('Spatially Varying Stiffness');
     axis square;
 end
 

@@ -19,20 +19,26 @@
 #include "cuda/vector.cu"
 
 // fractional component of a number
-__host__ __device__ __forceinline__
-float fract(float x) {return x - floor(x);}
+//__host__ __device__ __forceinline__
+//float fract(float x) {return x - floor(x);}
 
 // Noise functions from IQ.
 // https://www.shadertoy.com/view/lsj3zy
-__host__ __device__ __forceinline__
+__device__ __forceinline__
 float hash( float n ) { return fract(sin(n)*43758.5453123); }
 
-__host__ __device__ __forceinline__
+__device__ __forceinline__
+vec3 fract(const vec3 &v) { return v-vec3::floor(v); }
+
+__device__ __forceinline__
+float mix(float x, float y, float a) {return (1.f-a)*x + a*y; }
+
+__device__ __forceinline__
 float noise3( vec3 x )
 {
-    vec3 p = floor(x);
+    vec3 p = vec3::floor(x);
     vec3 f = fract(x);
-    f = f*f*(3.0-2.0*f);
+    f = f*f*(vec3(3.0) - 2.0*f);
 
     float n = p.x + p.y*157.0 + 113.0*p.z;
     return mix(mix(mix( hash(n+  0.0), hash(n+  1.0),f.x),
@@ -42,7 +48,7 @@ float noise3( vec3 x )
 }
 
 // 3D fractal brownian motion - https://www.shadertoy.com/view/lsj3zy
-__host__ __device__ __forceinline__
+__device__ __forceinline__
 float fbm3(vec3 p)
 {
     float f = 0.0, x;
@@ -53,8 +59,6 @@ float fbm3(vec3 p)
     }
     return (f+.3)*1.6667; // returns range between 0,1
 }
-
-#define fbm2(float x, float y) fbm3(vec3(x,y, 0.0))
 
 __host__ __device__ __forceinline__
 float halton(int index, int base)
@@ -68,6 +72,7 @@ float halton(int index, int base)
         i /= base;
         f /= base;
     }
+    return f;
 }
 
 #endif
