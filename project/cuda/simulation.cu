@@ -487,34 +487,57 @@ __global__ void computedF(Particle *particles, Grid *grid, vec3 *du, mat3 *dFs){
 
 }
 
-//__global__ void computeAp(Particle *particles, Grid *grid, vec3 *du, mat3 *dFs, mat3 *Aps){
-//    int particleIdx = blockIdx.y*gridDim.x*blockDim.x + blockIdx.x*blockDim.x + threadIdx.x;
+__device__ void computedR(mat3 &df, mat3 &Se, mat3 &Re, mat3 &dR){
+    mat3 V = mat3::multiplyAtB(Re, dF) - mat3::multiplyAtB(dF, Re);
 
-//    Particle &particle = particles[particleIdx];
-//    mat3 &dF = dFs[particleIdx];
-//    mat3 &Ap = Aps[particleIdx];
+    // Solve for compontents of R^T * dR
+    mat3 S = mat3(S[0]+S[4], S[5], -S[2], //remember, column major
+                  S[5], S[0]+S[8], S[1],
+                  -S[2], S[1], S[4]+S[8]);
 
-//    mat3 &Fp = particle.plasticF; //for the sake of making the code look like the math
-//    mat3 &Fe = particle.elasticF;
 
-//    float Jpp = mat3::determinant(Fp);
-//    float Jep = mat3::determinant(Fe);
+    vec3 b(V[3], V[6], V[7]);
 
-//    mat3 Re;
-//    computePD(Fe, Re);
+    vec3 x = mat3::inverse(S) * b; // Should replace this with a linear system solver function
 
-//    float muFp = material->mu*__expf(material->xi*(1-Jpp));
-//    float lambdaFp = material->lambda*__expf(material->xi*(1-Jpp));
+    // Fill R^T * dR
+    mat3 RTdR = mat3( 0, -x.x, -x.y, //remember, column major
+                      x.x, 0, -x.z,
+                      x.y, x.z, 0);
 
-//    mat3 dRe = Re; // Need to actually compute dRe
+    dR = Re*RTdR;
+}
 
-//    mat3 jFe_invTrans = Jep*mat3::transpose(mat3::inverse(Fe));
+// We will want to cache Re and Se since we will use it many times per time step
+__global__ void computeAp(Particle *particles, Grid *grid, vec3 *du, mat3 *dFs, mat3 *Aps){
+    int particleIdx = blockIdx.y*gridDim.x*blockDim.x + blockIdx.x*blockDim.x + threadIdx.x;
 
-//    Ap = (2*muFp*(dF - dRe) +lambdaFp*jFe_invTrans*mat3::innerProduct(jFe_invTrans, dF) + lambdaFp*(Jep - 1));
+    Particle &particle = particles[particleIdx];
+    mat3 &dF = dFs[particleIdx];
+    mat3 &Ap = Aps[particleIdx];
 
-////    sigma = (2*muFp*(Fe-Re)*mat3::transpose(Fe)+lambdaFp*(Jep-1)*Jep*mat3(1.0f)) * (particle.volume);
-////    sigma = (2*muFp*mat3::multiplyABt(Fe-Re, Fe) + mat3(lambdaFp*(Jep-1)*Jep)) * -particle.volume;
-//}
+    mat3 &Fp = particle.plasticF; //for the sake of making the code look like the math
+    mat3 &Fe = particle.elasticF;
+
+    float Jpp = mat3::determinant(Fp);
+    float Jep = mat3::determinant(Fe);
+
+    mat3 Re, Se;
+    computePD(Fe, Re, Se);
+
+    float muFp = material->mu*__expf(material->xi*(1-Jpp));
+    float lambdaFp = material->lambda*__expf(material->xi*(1-Jpp));
+
+    mat3 dRe = Re; // Need to actually compute dRe
+
+    mat3 jFe_invTrans = Jep*mat3::transpose(mat3::inverse(Fe));
+
+
+    Ap = (2*muFp*(dF - dRe) +lambdaFp*jFe_invTrans*mat3::innerProduct(jFe_invTrans, dF) + lambdaFp*(Jep - 1));
+
+//    sigma = (2*muFp*(Fe-Re)*mat3::transpose(Fe)+lambdaFp*(Jep-1)*Jep*mat3(1.0f)) * (particle.volume);
+//    sigma = (2*muFp*mat3::multiplyABt(Fe-Re, Fe) + mat3(lambdaFp*(Jep-1)*Jep)) * -particle.volume;
+}
 
 void updateParticles( const SimulationParameters &parameters,
                       Particle *particles, int numParticles,
