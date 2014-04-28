@@ -23,6 +23,7 @@
 
 #include "common/math.h"
 
+#include "cuda/atomic.cu"
 #include "cuda/collider.cu"
 #include "cuda/decomposition.cu"
 #include "cuda/weighting.cu"
@@ -187,28 +188,6 @@ __global__ void computeParticleGridTempData ( Particle *particleData, Grid *grid
 
     pgtd.particleGridPos = (particle.position - grid->pos)/grid->h;
     computeSigma(particle, material, pgtd.sigma);
-}
-
-__device__ __forceinline__
-void atomicAdd( vec3 *add, vec3 toAdd )
-{
-    atomicAdd(&(add->x), toAdd.x);
-    atomicAdd(&(add->y), toAdd.y);
-    atomicAdd(&(add->z), toAdd.z);
-}
-
-__device__ __forceinline__
-void atomicAdd( mat3 *add, mat3 toAdd )
-{
-    atomicAdd(&(add->data[0]), toAdd[0]);
-    atomicAdd(&(add->data[1]), toAdd[1]);
-    atomicAdd(&(add->data[2]), toAdd[2]);
-    atomicAdd(&(add->data[3]), toAdd[3]);
-    atomicAdd(&(add->data[4]), toAdd[4]);
-    atomicAdd(&(add->data[5]), toAdd[5]);
-    atomicAdd(&(add->data[6]), toAdd[6]);
-    atomicAdd(&(add->data[7]), toAdd[7]);
-    atomicAdd(&(add->data[8]), toAdd[8]);
 }
 
 /**
@@ -453,90 +432,6 @@ __global__ void updateParticleNormals(Particle *particles, Grid *grid, const Par
 
 
     particle.normal = n;
-}
-
-/**
- * Called over particles over nodes the particle affects. (numParticles * 64)
- *
- * Recommended:
- *  dim3 blockDim = dim3(numParticles / threadCount, 64);
- *  dim3 threadDim = dim3(threadCount/64, 64);
- *
- **/
-__global__ void computedF(Particle *particles, Grid *grid, vec3 *du, mat3 *dFs){
-    int particleIdx = blockIdx.y*gridDim.x*blockDim.x + blockIdx.x*blockDim.x + threadIdx.x;
-
-    Particle &particle = particles[particleIdx];
-    mat3 &dF = dFs[particleIdx];
-
-    vec3 particleGridPos = (particle.position - grid->pos)/grid->h;
-    glm::ivec3 currIJK;
-    gridIndexToIJK(threadIdx.y, glm::ivec3(4,4,4), currIJK);
-    currIJK.x += (int) particleGridPos.x - 1; currIJK.y += (int) particleGridPos.y - 1; currIJK.z += (int) particleGridPos.z - 1;
-
-    if (withinBoundsInclusive(currIJK, glm::ivec3(0,0,0), grid->dim)){
-        vec3 du_j = du[getGridIndex(currIJK, grid->dim+1)];
-
-        float w;
-        vec3 wg;
-        vec3 nodePosition(currIJK.x, currIJK.y, currIJK.z);
-        weightAndGradient(particleGridPos-nodePosition, w, wg);
-
-        atomicAdd(&dF, mat3::outerProduct(du_j, wg) * particle.elasticF);
-     }
-
-}
-
-__device__ void computedR(mat3 &df, mat3 &Se, mat3 &Re, mat3 &dR){
-    mat3 V = mat3::multiplyAtB(Re, dF) - mat3::multiplyAtB(dF, Re);
-
-    // Solve for compontents of R^T * dR
-    mat3 S = mat3(S[0]+S[4], S[5], -S[2], //remember, column major
-                  S[5], S[0]+S[8], S[1],
-                  -S[2], S[1], S[4]+S[8]);
-
-
-    vec3 b(V[3], V[6], V[7]);
-
-    vec3 x = mat3::inverse(S) * b; // Should replace this with a linear system solver function
-
-    // Fill R^T * dR
-    mat3 RTdR = mat3( 0, -x.x, -x.y, //remember, column major
-                      x.x, 0, -x.z,
-                      x.y, x.z, 0);
-
-    dR = Re*RTdR;
-}
-
-// We will want to cache Re and Se since we will use it many times per time step
-__global__ void computeAp(Particle *particles, Grid *grid, vec3 *du, mat3 *dFs, mat3 *Aps){
-    int particleIdx = blockIdx.y*gridDim.x*blockDim.x + blockIdx.x*blockDim.x + threadIdx.x;
-
-    Particle &particle = particles[particleIdx];
-    mat3 &dF = dFs[particleIdx];
-    mat3 &Ap = Aps[particleIdx];
-
-    mat3 &Fp = particle.plasticF; //for the sake of making the code look like the math
-    mat3 &Fe = particle.elasticF;
-
-    float Jpp = mat3::determinant(Fp);
-    float Jep = mat3::determinant(Fe);
-
-    mat3 Re, Se;
-    computePD(Fe, Re, Se);
-
-    float muFp = material->mu*__expf(material->xi*(1-Jpp));
-    float lambdaFp = material->lambda*__expf(material->xi*(1-Jpp));
-
-    mat3 dRe = Re; // Need to actually compute dRe
-
-    mat3 jFe_invTrans = Jep*mat3::transpose(mat3::inverse(Fe));
-
-
-    Ap = (2*muFp*(dF - dRe) +lambdaFp*jFe_invTrans*mat3::innerProduct(jFe_invTrans, dF) + lambdaFp*(Jep - 1));
-
-//    sigma = (2*muFp*(Fe-Re)*mat3::transpose(Fe)+lambdaFp*(Jep-1)*Jep*mat3(1.0f)) * (particle.volume);
-//    sigma = (2*muFp*mat3::multiplyABt(Fe-Re, Fe) + mat3(lambdaFp*(Jep-1)*Jep)) * -particle.volume;
 }
 
 void updateParticles( const SimulationParameters &parameters,
