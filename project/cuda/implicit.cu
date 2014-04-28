@@ -284,9 +284,28 @@ __host__ void computeEu( Particle *particles, int numParticles,
     checkCudaErrors( cudaDeviceSynchronize() );
 }
 
-__host__ void conjugateResidual( Particle *particles, int numParticles,
-                                 Grid *grid, ParticleGridNode *nodes, int numNodes,
-                                 float dt, vec3 *u, mat3 *dFs, mat3 *Aps, vec3 *dfs, vec3 *result )
+__global__ void initializeVelocities( ParticleGridNode *nodes, int numNodes, Implicit::CRCache *crCache )
+{
+    int tid = blockDim.x*blockIdx.x + threadIdx.x;
+    if ( tid >= numNodes ) return;
+    crCache->u[tid] = nodes[tid].velocity;
+}
+
+__host__ void initializeCR( Particle *particles, int numParticles,
+                            Grid *grid, ParticleGridNode *nodes, int numNodes,
+                            float dt, Implicit::CRCache *crCache )
+{
+    static const int threadCount = 128;
+    initializeVelocities<<< numNodes / threadCount, threadCount >>>( nodes, numNodes, crCache );
+    checkCudaErrors( cudaDeviceSynchronize() );
+
+    computeEu(  );
+
+}
+
+__host__ void computeNodeVelocitiesImplicit( Particle *particles, int numParticles,
+                                             Grid *grid, ParticleGridNode *nodes, int numNodes,
+                                             float dt, Implicit::CRCache *crCache, mat3 *dFs, mat3 *Aps, vec3 *dfs, vec3 *result )
 {
 
 }
