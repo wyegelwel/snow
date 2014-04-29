@@ -101,7 +101,7 @@ private:
     ParticleTempData *m_devPGTD;
 
     ImplicitCollider *m_devColliders;
-    MaterialConstants *m_devMaterial;
+   // MaterialConstants *m_devMaterial;
 
     SimulationParameters m_params;
     float m_time;

@@ -65,9 +65,9 @@
        <property name="geometry">
         <rect>
          <x>0</x>
-         <y>-139</y>
-         <width>280</width>
-         <height>886</height>
+         <y>-424</y>
+         <width>284</width>
+         <height>930</height>
         </rect>
        </property>
        <layout class="QGridLayout" name="gridLayout_2">
@@ -812,6 +812,11 @@
                <string>Shaded</string>
               </property>
              </item>
+             <item>
+              <property name="text">
+               <string>Stiffness</string>
+              </property>
+             </item>
             </widget>
            </item>
            <item row="1" column="1">
@@ -1079,6 +1084,27 @@
                 </property>
                </widget>
               </item>
+              <item row="1" column="1">
+               <widget class="QComboBox" name="snowMaterialCombo">
+                <item>
+                 <property name="text">
+                  <string>Default</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>Chunky</string>
+                 </property>
+                </item>
+               </widget>
+              </item>
+              <item row="1" column="0" alignment="Qt::AlignRight">
+               <widget class="QLabel" name="materialLabel">
+                <property name="text">
+                 <string>Snow Material</string>
+                </property>
+               </widget>
+              </item>
              </layout>
             </widget>
            </item>
@@ -1121,7 +1147,7 @@
              </property>
             </widget>
            </item>
-           <item row="4" column="0" colspan="2">
+           <item row="5" column="0" colspan="2">
             <widget class="CollapsibleBox" name="exportGroupBox">
              <property name="autoFillBackground">
               <bool>true</bool>
@@ -1210,6 +1236,19 @@
       <property name="autoFillBackground">
        <bool>true</bool>
       </property>
+      <widget class="QGroupBox" name="groupBox">
+       <property name="geometry">
+        <rect>
+         <x>640</x>
+         <y>80</y>
+         <width>120</width>
+         <height>80</height>
+        </rect>
+       </property>
+       <property name="title">
+        <string>GroupBox</string>
+       </property>
+      </widget>
      </widget>
     </item>
    </layout>
@@ -1220,7 +1259,7 @@
      <x>0</x>
      <y>0</y>
      <width>1000</width>
-     <height>26</height>
+     <height>29</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">

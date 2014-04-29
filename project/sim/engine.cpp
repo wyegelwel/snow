@@ -177,7 +177,7 @@ void Engine::update()
 
         bool doShading = UiSettings::showParticlesMode() == UiSettings::PARTICLE_SHADED;
         updateParticles( m_params, devParticles, m_particleSystem->size(), m_devGrid,
-                         devNodes, m_grid.nodeCount(), m_devPGTD, m_devColliders, m_colliders.size(), m_devMaterial, doShading);
+                         devNodes, m_grid.nodeCount(), m_devPGTD, m_devColliders, m_colliders.size(), doShading);
 
         if (m_export && (m_time - m_exporter->getLastUpdateTime() >= m_exporter->getspf()))
         {
@@ -239,8 +239,8 @@ void Engine::initializeCudaResources()
     LOG( "Allocating %.2f MB for particle grid temp data.", tempSize );
 
     // Material Constants
-    checkCudaErrors(cudaMalloc( (void**)&m_devMaterial, sizeof(MaterialConstants) ));
-    checkCudaErrors(cudaMemcpy( m_devMaterial, &m_materialConstants, sizeof(MaterialConstants), cudaMemcpyHostToDevice ));
+  //  checkCudaErrors(cudaMalloc( (void**)&m_devMaterial, sizeof(MaterialConstants) ));
+  //  checkCudaErrors(cudaMemcpy( m_devMaterial, &m_materialConstants, sizeof(MaterialConstants), cudaMemcpyHostToDevice ));
 
     LOG( "Allocated %.2f MB in total", particlesSize + nodesSize + tempSize );
 
@@ -273,7 +273,7 @@ void Engine::freeCudaResources()
     cudaFree( m_devGrid );
     cudaFree( m_devColliders );
     cudaFree( m_devPGTD );
-    cudaFree( m_devMaterial );
+    //cudaFree( m_devMaterial );
 }
 
 void Engine::render()

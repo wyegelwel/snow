@@ -20,7 +20,6 @@ struct Particle;
 struct ParticleGridNode;
 struct ParticleTempData;
 struct ImplicitCollider;
-struct MaterialConstants;
 struct SimulationParameters;
 
 extern "C"
@@ -35,7 +34,6 @@ void updateParticles( const SimulationParameters &parameters,
                       Particle *particles, int numParticles,
                       Grid *grid, ParticleGridNode *nodes, int numNodes, ParticleTempData *particleGridTempData,
                       ImplicitCollider *colliders, int numColliders,
-                      MaterialConstants *mat,
                       bool doShading);
 
 // normal approximation for shading

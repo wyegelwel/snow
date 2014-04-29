@@ -160,7 +160,7 @@ __host__ void initializeParticleVolumes( Particle *particles, int numParticles, 
 
 
 
-__device__ void computeSigma( Particle &particle, MaterialConstants *material, mat3 &sigma )
+__device__ void computeSigma( Particle &particle, mat3 &sigma )
 {
     mat3 &Fp = particle.plasticF; //for the sake of making the code look like the math
     mat3 &Fe = particle.elasticF;
@@ -171,15 +171,17 @@ __device__ void computeSigma( Particle &particle, MaterialConstants *material, m
     mat3 Re;
     computePD(Fe, Re);
 
-    float muFp = material->mu*__expf(material->xi*(1-Jpp));
-    float lambdaFp = material->lambda*__expf(material->xi*(1-Jpp));
+    MaterialConstants mat = particle.material;
+
+    float muFp = mat.mu * __expf(mat.xi*(1-Jpp));
+    float lambdaFp = mat.lambda *__expf(mat.xi*(1-Jpp));
 
 //    sigma = (2*muFp*(Fe-Re)*mat3::transpose(Fe)+lambdaFp*(Jep-1)*Jep*mat3(1.0f)) * (particle.volume);
     sigma = (2*muFp*mat3::multiplyABt(Fe-Re, Fe) + mat3(lambdaFp*(Jep-1)*Jep)) * particle.volume;
 }
 
 
-__global__ void computeParticleGridTempData ( Particle *particleData, Grid *grid, MaterialConstants *material, ParticleTempData *particleGridTempData )
+__global__ void computeParticleGridTempData ( Particle *particleData, Grid *grid, ParticleTempData *particleGridTempData )
 {
     int particleIdx = blockIdx.x*blockDim.x + threadIdx.x;
 
@@ -187,7 +189,7 @@ __global__ void computeParticleGridTempData ( Particle *particleData, Grid *grid
     ParticleTempData &pgtd = particleGridTempData[particleIdx];
 
     pgtd.particleGridPos = (particle.position - grid->pos)/grid->h;
-    computeSigma(particle, material, pgtd.sigma);
+    computeSigma(particle, pgtd.sigma);
 }
 
 __device__ __forceinline__
@@ -254,7 +256,7 @@ __global__ void computeCellMassVelocityAndForceFast( Particle *particleData, Gri
  * nodes -- updated velocity and velocityChange
  *
  */
-__global__ void updateNodeVelocities( ParticleGridNode *nodes, float dt, ImplicitCollider* colliders, int numColliders, MaterialConstants *material, Grid *grid )
+__global__ void updateNodeVelocities( ParticleGridNode *nodes, float dt, ImplicitCollider* colliders, int numColliders, Grid *grid )
 {
     int nodeIdx = blockIdx.x*blockDim.x + threadIdx.x;
     int gridI, gridJ, gridK;
@@ -269,7 +271,7 @@ __global__ void updateNodeVelocities( ParticleGridNode *nodes, float dt, Implici
     // Update velocity with node force
     vec3 tmpVelocity = node.velocity + dt*node.force*scale;
 
-    checkForAndHandleCollisions( colliders, numColliders, material->coeffFriction, nodePosition, tmpVelocity );
+    checkForAndHandleCollisions( colliders, numColliders, MaterialConstants().coeffFriction, nodePosition, tmpVelocity );
     node.velocityChange = tmpVelocity - node.velocity;
     node.velocity = tmpVelocity;
 }
@@ -325,7 +327,7 @@ __device__ void processGridVelocities( Particle &particle, Grid *grid, const Par
     particle.velocity = (1.f-alpha)*v_PIC + alpha*(particle.velocity+dv_FLIP);
 }
 
-__device__ void updateParticleDeformationGradients( Particle &particle, const mat3 &velocityGradient, float timeStep, MaterialConstants *mat )
+__device__ void updateParticleDeformationGradients( Particle &particle, const mat3 &velocityGradient, float timeStep )
 {
     // Temporarily assign all deformation to elastic portion
     particle.elasticF = mat3::addIdentity( timeStep*velocityGradient ) * particle.elasticF;
@@ -335,10 +337,10 @@ __device__ void updateParticleDeformationGradients( Particle &particle, const ma
     computeSVD( particle.elasticF, W, S, V );
 
     // FAST COMPUTATION:
-
-    S = mat3( CLAMP( S[0], mat->criticalCompression, mat->criticalStretch ), 0.f, 0.f,
-              0.f, CLAMP( S[4], mat->criticalCompression, mat->criticalStretch ), 0.f,
-              0.f, 0.f, CLAMP( S[8], mat->criticalCompression, mat->criticalStretch ) );
+    MaterialConstants mat = particle.material;
+    S = mat3( CLAMP( S[0], mat.criticalCompression, mat.criticalStretch ), 0.f, 0.f,
+              0.f, CLAMP( S[4], mat.criticalCompression, mat.criticalStretch ), 0.f,
+              0.f, 0.f, CLAMP( S[8], mat.criticalCompression, mat.criticalStretch ) );
 
     Sinv = mat3( 1.f/S[0], 0.f, 0.f,
                  0.f, 1.f/S[4], 0.f,
@@ -362,7 +364,11 @@ __device__ void updateParticleDeformationGradients( Particle &particle, const ma
 // NOTE: assumes particleCount % blockDim.x = 0, so tid is never out of range!
 // criticalCompression = 1 - theta_c
 // criticalStretch = 1 + theta_s
-__global__ void updateParticlesFromGrid( Particle *particles, Grid *grid, const ParticleGridNode *nodes, float timeStep, ImplicitCollider *colliders, int numColliders, MaterialConstants *mat, vec3 gravity )
+__global__ void updateParticlesFromGrid( Particle *particles,
+                                         Grid *grid, const ParticleGridNode *nodes,
+                                         float timeStep,
+                                         ImplicitCollider *colliders, int numColliders,
+                                         vec3 gravity )
 {
     int tid = threadIdx.x + blockIdx.x * blockDim.x;
 
@@ -372,12 +378,12 @@ __global__ void updateParticlesFromGrid( Particle *particles, Grid *grid, const 
     mat3 velocityGradient = mat3( 0.f );
     processGridVelocities( particle, grid, nodes, velocityGradient, 0.95f );
 
-    updateParticleDeformationGradients( particle, velocityGradient, timeStep, mat );
+    updateParticleDeformationGradients( particle, velocityGradient, timeStep );
 
     // Do this before collision test!
     particle.velocity += timeStep * gravity;
 
-    checkForAndHandleCollisions( colliders, numColliders, mat->coeffFriction, particle.position, particle.velocity );
+    checkForAndHandleCollisions( colliders, numColliders, MaterialConstants().coeffFriction, particle.position, particle.velocity );
 
     particle.position += timeStep * ( particle.velocity );
 }
@@ -438,14 +444,13 @@ void updateParticles( const SimulationParameters &parameters,
                       Particle *particles, int numParticles,
                       Grid *grid, ParticleGridNode *nodes, int numNodes, ParticleTempData *particleGridTempData,
                       ImplicitCollider *colliders, int numColliders,
-                      MaterialConstants *mat,
                       bool doShading)
 {
     cudaDeviceSetCacheConfig( cudaFuncCachePreferL1 );
 
     static const int threadCount = 128;
 
-    computeParticleGridTempData<<< numParticles / threadCount , threadCount >>>( particles, grid, mat, particleGridTempData );
+    computeParticleGridTempData<<< numParticles / threadCount , threadCount >>>( particles, grid, particleGridTempData );
     checkCudaErrors( cudaDeviceSynchronize() );
 
     // Clear grid data before update
@@ -462,9 +467,9 @@ void updateParticles( const SimulationParameters &parameters,
         checkCudaErrors( cudaDeviceSynchronize() );
     }
 
-    updateNodeVelocities<<< numNodes / threadCount, threadCount >>>( nodes, parameters.timeStep, colliders, numColliders, mat, grid );
+    updateNodeVelocities<<< numNodes / threadCount, threadCount >>>( nodes, parameters.timeStep, colliders, numColliders, grid );
     checkCudaErrors( cudaDeviceSynchronize() );
 
-    updateParticlesFromGrid<<< numParticles / threadCount, threadCount >>>( particles, grid, nodes, parameters.timeStep, colliders, numColliders, mat, parameters.gravity );
+    updateParticlesFromGrid<<< numParticles / threadCount, threadCount >>>( particles, grid, nodes, parameters.timeStep, colliders, numColliders, parameters.gravity );
     checkCudaErrors( cudaDeviceSynchronize() );
 }

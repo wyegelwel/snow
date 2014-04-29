@@ -29,7 +29,7 @@ struct Particle
     float volume;
     mat3 elasticF;
     mat3 plasticF;
-    vec3 normal;
+    vec3 normal; // used only for shading
     MaterialConstants material;
     DECL Particle()
     {
@@ -40,7 +40,7 @@ struct Particle
         elasticF = mat3( 1.f );
         plasticF = mat3( 1.f );
         normal = vec3(1,0,0);
-        material = MaterialConstants();
+        material = MaterialConstants(); // default
     }
 };
 
