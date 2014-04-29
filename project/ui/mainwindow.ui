@@ -65,7 +65,7 @@
        <property name="geometry">
         <rect>
          <x>0</x>
-         <y>-424</y>
+         <y>0</y>
          <width>284</width>
          <height>930</height>
         </rect>
@@ -1236,19 +1236,6 @@
       <property name="autoFillBackground">
        <bool>true</bool>
       </property>
-      <widget class="QGroupBox" name="groupBox">
-       <property name="geometry">
-        <rect>
-         <x>640</x>
-         <y>80</y>
-         <width>120</width>
-         <height>80</height>
-        </rect>
-       </property>
-       <property name="title">
-        <string>GroupBox</string>
-       </property>
-      </widget>
      </widget>
     </item>
    </layout>
@@ -1268,6 +1255,8 @@
     </property>
     <addaction name="actionScreenshot"/>
     <addaction name="actionSave_Mesh"/>
+    <addaction name="actionLoad_Scene"/>
+    <addaction name="actionSave_Scene"/>
    </widget>
    <widget class="QMenu" name="menuDemo">
     <property name="title">
@@ -1308,6 +1297,16 @@
   <action name="actionSave_Mesh">
    <property name="text">
     <string>Save Mesh</string>
+   </property>
+  </action>
+  <action name="actionLoad_Scene">
+   <property name="text">
+    <string>Load Scene</string>
+   </property>
+  </action>
+  <action name="actionSave_Scene">
+   <property name="text">
+    <string>Save Scene</string>
    </property>
   </action>
  </widget>

@@ -144,6 +144,8 @@ void MainWindow::takeScreenshot()
 void MainWindow::setupUI()
 {
     assert( connect(ui->actionSave_Mesh, SIGNAL(triggered()), ui->viewPanel, SLOT(saveSelectedMesh())) );
+    assert( connect(ui->actionLoad_Scene, SIGNAL(triggered()), ui->viewPanel, SLOT(loadScene())));
+    assert( connect(ui->actionSave_Scene, SIGNAL(triggered()), ui->viewPanel, SLOT(saveScene())));
 
     // Mesh Filling
     assert( connect(ui->importButton, SIGNAL(clicked()), this, SLOT(importMesh())) );

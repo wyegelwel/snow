@@ -2,26 +2,27 @@
 **
 **   SNOW - CS224 BROWN UNIVERSITY
 **
-**   sceneparser.cpp
+**   sceneio.cpp
 **   Authors: evjang, mliberma, taparson, wyegelwe
 **   Created: 14 Apr 2014
 **
 **************************************************************************/
 
-#include "sceneparser.h"
+#include "sceneio.h"
 #include <QtXml>
 
-
-SceneParser::SceneParser()
-{
-}
-
-void SceneParser::read(QString fname, Scene *scene)
+SceneIO::SceneIO()
 {
 
 }
 
-void SceneParser::write(QString fname, Scene *scene)
+void SceneIO::read(QString fname, Scene *scene, Engine *engine)
+{
+    // given path to
+}
+
+void SceneIO::write(QString fname, Scene *scene, Engine *engine)
 {
 
 }
+

@@ -19,6 +19,7 @@
 #include "ui/userinput.h"
 #include "viewport/viewport.h"
 #include "io/objparser.h"
+#include "io/sceneio.h"
 #include "geometry/mesh.h"
 #include "geometry/bbox.h"
 #include "scene/scene.h"
@@ -58,6 +59,8 @@ ViewPanel::ViewPanel( QWidget *parent )
     m_draw = true;
     m_fps = FPS;
 
+    m_sceneIO = new SceneIO;
+
     m_scene = new Scene;
     m_engine = new Engine;
 
@@ -74,6 +77,7 @@ ViewPanel::~ViewPanel()
     SAFE_DELETE( m_tool );
     SAFE_DELETE( m_infoPanel );
     SAFE_DELETE( m_scene );
+    SAFE_DELETE( m_sceneIO );
 }
 
 void
@@ -292,6 +296,7 @@ void ViewPanel::loadMesh( const QString &filename )
     // single obj file is associated with multiple renderables and a single
     // scene node.
     QList<Mesh*> meshes;
+
     OBJParser::load( filename, meshes );
 
     clearSelection();
@@ -540,3 +545,20 @@ ViewPanel::applyMaterials()
     // re-apply particleSystem
     m_engine->initParticleMaterials(UiSettings::materialPreset());
 }
+
+void
+ViewPanel::loadScene()
+{
+    // call file dialog
+    QString str;
+    m_sceneIO->read(str, m_scene, m_engine);
+}
+
+void
+ViewPanel::saveScene()
+{
+    // this is also called when exporting.
+    QString str;
+    m_sceneIO->write(str, m_scene, m_engine);
+}
+

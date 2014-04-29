@@ -219,15 +219,15 @@ __device__ bool isInMesh(vec3 pos, int seed, Tri *tris, int triCount)
     // so in that case we want to sample 2 random rays
     //vec3 d1(0,1,0);
     vec3 d1(0.110432, 0.993884, 0.);
-    //vec3 d2(0,-1,0);
+    vec3 d2(0,-1,0);
     int c = 1; // number of intersections. start with one so the parity check will work when no intersections happen.
     float t;
     for ( int i = 0; i < triCount; ++i ) {
         const Tri &tri = tris[i];
         int test1 =intersectTri(tri.v0, tri.v1, tri.v2, pos, d1,t);
-        //int test2 = intersectTri(tri.v0, tri.v1, tri.v2, pos, d2, t);
-//        c += int(test1 && test2);
-        c += test1;
+        int test2 = intersectTri(tri.v0, tri.v1, tri.v2, pos, d2, t);
+        c += int(test1 && test2);
+       //c += test1;
     }
     return (c+1)%2;
 }
@@ -251,14 +251,18 @@ __global__ void fillMeshKernel2( Tri *tris, int triCount, vec3 bbox_min, vec3 bb
         pos = bbox_min + u * bbox_size; // sample random point within bounding box
         accept = isInMesh(pos, tid+ii, tris, triCount);
     }
-    //printf("%d\n", rejected);
+    printf("%d\n", rejected);
     Particle particle;
     particle.mass = particleMass;
     particle.position = pos;
     particles[tid] = particle;
 }
 
-
+/**
+ * alternative mesh filling scheme - rejection sampling the bounding box.
+ * works really well if mesh occupies majority of bounding box but really slow otherwise.
+ * CUDA ends up timing out
+ */
 void fillMesh2( cudaGraphicsResource **resource, int triCount, const Grid &grid, Particle *particles, int particleCount, float targetDensity)
 {
     // Get mesh data    
@@ -272,6 +276,7 @@ void fillMesh2( cudaGraphicsResource **resource, int triCount, const Grid &grid,
     float volume = particleCount*grid.h*grid.h*grid.h;
     float particleMass = targetDensity * volume / particleCount;
     BBox box(grid);
+
     fillMeshKernel2<<< (particleCount+511)/512, 512 >>>( devTris, triCount, box.min(), box.size(), devParticles, particleMass, particleCount );
 
     checkCudaErrors( cudaDeviceSynchronize() );
