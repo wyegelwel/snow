@@ -41,6 +41,11 @@ __global__ void applyChunky(Particle *particles, int particleCount)
     int tid = threadIdx.x + blockIdx.x * blockDim.x;
     if ( tid >= particleCount ) return;
 
+    MaterialConstants mat = MaterialConstants();
+    mat.lambda *= fbm3(particles[tid].position);
+    particles[tid].material = mat;
+    printf("%f\n",mat.lambda);
+
     //Particle particle = particles[tid];
     //fbm3(particle.position);
 }
@@ -51,7 +56,7 @@ void applyMaterialPreset(Particle *particles, int particleCount, int preset)
     static const int threadCount = 128;
 
     if (preset == 1) // chunky
-        //applyChunky<<< numParticles/threadCount, threadCount >>>(particles,particleCount);
+        applyChunky<<< numParticles/threadCount, threadCount >>>(particles,particleCount);
     else if (preset == 2) // hard/packed exterior, soft interior
         //applyChunky<<< numParticles/threadCount, threadCount >>>(particles,particleCount);
         int foo = 1; // do nothing for now

@@ -158,8 +158,6 @@ __host__ void initializeParticleVolumes( Particle *particles, int numParticles, 
 }
 
 
-
-
 __device__ void computeSigma( Particle &particle, mat3 &sigma )
 {
     mat3 &Fp = particle.plasticF; //for the sake of making the code look like the math

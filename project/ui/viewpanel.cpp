@@ -533,21 +533,10 @@ ViewPanel::saveSelectedMesh()
 
 
 }
-<<<<<<< Updated upstream
-=======
-<<<<<<< Updated upstream
-=======
->>>>>>> Stashed changes
 
 void
 ViewPanel::applyMaterials()
 {
     // re-apply particleSystem
-<<<<<<< Updated upstream
-    m_engine->particleSystem()->applyMaterials(UiSettings::materialPreset());
-}
-=======
     m_engine->initParticleMaterials(UiSettings::materialPreset());
 }
->>>>>>> Stashed changes
->>>>>>> Stashed changes

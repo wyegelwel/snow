@@ -297,7 +297,7 @@ Engine::initParticleMaterials(int preset)
 {
     m_busy = true;
 
-    cudaGraphicsMapResources( 1, &m_particlesResource, 0 );
+    //cudaGraphicsMapResources( 1, &m_particlesResource, 0 );
     Particle *devParticles;
     size_t size;
     checkCudaErrors( cudaGraphicsResourceGetMappedPointer( (void**)&devParticles, &size, m_particlesResource ) );
