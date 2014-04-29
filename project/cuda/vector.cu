@@ -54,7 +54,7 @@ struct vec3
     operator glm::vec3() const { return glm::vec3( x, y, z ); }
 
     __host__ __device__ __forceinline__
-    operator glm::ivec3() const { return glm::ivec3( x, y, z ); }
+    operator glm::ivec3() const { return glm::ivec3( (int)x, (int)y, (int)z ); }
 
     __host__ __device__ __forceinline__
     vec3& operator = ( const vec3 &rhs ) { x = rhs.x; y = rhs.y; z = rhs.z; return *this; }
@@ -164,6 +164,18 @@ struct vec3
 
     __host__ __device__ __forceinline__
     vec3 operator / ( float f ) const { float fi = 1.f/f; return vec3( x*fi, y*fi, z*fi ); }
+
+    __host__ __device__ __forceinline__
+    vec3& operator += ( float f ) { x += f; y += f; z += f; return *this; }
+
+    __host__ __device__ __forceinline__
+    vec3 operator + ( float f ) const { return vec3( x+f, y+f, z+f ); }
+
+    __host__ __device__ __forceinline__
+    vec3& operator -= ( float f ) { x -= f; y -= f; z -= f; return *this; }
+
+    __host__ __device__ __forceinline__
+    vec3 operator - ( float f ) const { return vec3( x-f, y-f, z-f ); }
 
     __host__ __device__ __forceinline__
     bool valid( bool *nan = NULL ) const

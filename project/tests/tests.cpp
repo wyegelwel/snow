@@ -86,6 +86,6 @@ void Tests::runWilTests() {
 
 void Tests::runMaxTests() {
     printf("\nRunning Max Tests...\n");
-    implicitTests();
+//    implicitTests();
     printf("Done running Max Tests.\n");
 }

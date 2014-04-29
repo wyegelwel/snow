@@ -87,7 +87,7 @@ HEADERS  += \
     ui/tools/rotatetool.h \
     ui/tools/scaletool.h \
     ui/collapsiblebox.h \
-    cuda/caches.h
+    sim/caches.h
 
 FORMS    += ui/mainwindow.ui
 
@@ -99,7 +99,7 @@ QMAKE_CXXFLAGS += -std=c++11
 CUDA_SOURCES += cuda/snow.cu \
     cuda/mesh.cu \
 #    cuda/wil.cu \
-    cuda/max.cu \
+#    cuda/max.cu \
 #    cuda/tim.cu \
 #    cuda/eric.cu \
     cuda/simulation.cu

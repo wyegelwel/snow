@@ -378,6 +378,7 @@ struct mat3
         return A;
     }
 
+    // Note: adjugate = transpose(cofactor)
 
     __host__ __device__ __forceinline__
     static mat3 adjugate( const mat3 &M )
@@ -386,6 +387,16 @@ struct mat3
         A[0] = (M[4]*M[8]-M[5]*M[7]); A[3] = (M[5]*M[6]-M[3]*M[8]); A[6] = (M[3]*M[7]-M[4]*M[6]);
         A[1] = (M[2]*M[7]-M[1]*M[8]); A[4] = (M[0]*M[8]-M[2]*M[6]); A[7] = (M[1]*M[6]-M[0]*M[7]);
         A[2] = (M[1]*M[5]-M[2]*M[4]); A[5] = (M[2]*M[3]-M[0]*M[5]); A[8] = (M[0]*M[4]-M[1]*M[3]);
+        return A;
+    }
+
+    __host__ __device__ __forceinline__
+    static mat3 cofactor( const mat3 &M )
+    {
+        mat3 A;
+        A[0] = (M[4]*M[8]-M[5]*M[7]); A[3] = (M[2]*M[7]-M[1]*M[8]); A[6] = (M[1]*M[5]-M[2]*M[4]);
+        A[1] = (M[5]*M[6]-M[3]*M[8]); A[4] = (M[0]*M[8]-M[2]*M[6]); A[7] = (M[2]*M[3]-M[0]*M[5]);
+        A[2] = (M[3]*M[7]-M[4]*M[6]); A[5] = (M[1]*M[6]-M[0]*M[7]); A[8] = (M[0]*M[4]-M[1]*M[3]);
         return A;
     }
 

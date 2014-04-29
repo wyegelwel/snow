@@ -86,9 +86,9 @@ __device__ void colliderNormal(const ImplicitCollider &collider, const vec3 &pos
     colliderNormalFunctions[collider.type](collider, position, normal);
 }
 
-__device__ void checkForAndHandleCollisions(ImplicitCollider *colliders, int numColliders, float coeffFriction, const vec3 &position, vec3 &velocity ){
+__device__ void checkForAndHandleCollisions( const ImplicitCollider *colliders, int numColliders, float coeffFriction, const vec3 &position, vec3 &velocity ){
     for (int i = 0; i < numColliders; i++){
-        ImplicitCollider &collider = colliders[i];
+        const ImplicitCollider &collider = colliders[i];
         if (isColliding(collider, position)){
             vec3 vRel = velocity - collider.velocity;
             vec3 normal;

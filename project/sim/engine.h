@@ -27,12 +27,13 @@
 #include "geometry/grid.h"
 #include "io/mitsubaexporter.h"
 
-
 struct cudaGraphicsResource;
 struct Particle;
 struct ParticleGrid;
-struct ParticleGridNode;
-struct ParticleTempData;
+struct Node;
+
+struct NodeCache;
+struct ParticleCache;
 
 class Engine : public QObject, public Renderable
 {
@@ -98,7 +99,8 @@ private:
     cudaGraphicsResource *m_nodesResource; // Particle grid nodes
     Grid *m_devGrid;
 
-    ParticleTempData *m_devPGTD;
+    NodeCache *m_devNodeCache;
+    ParticleCache *m_devParticleCaches;
 
     ImplicitCollider *m_devColliders;
     MaterialConstants *m_devMaterial;

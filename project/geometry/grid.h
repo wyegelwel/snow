@@ -16,12 +16,12 @@
 #endif
 #include "glm/vec3.hpp"
 
-#ifdef CUDA_INCLUDE
-    #include <cuda.h>
-    #include <cuda_runtime.h>
-    #define FUNC __device__ __host__ __forceinline__
-#else
-    #define FUNC inline
+#ifndef FUNC
+    #ifdef CUDA_INCLUDE
+        #define FUNC __device__ __host__ __forceinline__
+    #else
+        #define FUNC inline
+    #endif
 #endif
 
 #include "cuda/vector.cu"

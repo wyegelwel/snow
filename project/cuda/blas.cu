@@ -58,7 +58,7 @@ __global__ void scaleAndAddKernel( int length, float sa, const vec3 *a, float sb
 {
     int tid = blockDim.x*blockIdx.x + threadIdx.x;
     if ( tid >= length ) return;
-    c[tid] = sa*a + sb*b;
+    c[tid] = sa*a[tid] + sb*b[tid];
 }
 
 __host__ void scaleAndAdd( int length, float sa, const vec3 *a, float sb, const vec3 *b, vec3 *c )

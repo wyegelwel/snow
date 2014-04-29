@@ -42,7 +42,7 @@ public:
     float getspf();
     float getLastUpdateTime();
     void reset(Grid grid);
-    ParticleGridNode * getNodesPtr();
+    Node * getNodesPtr();
     void runExportThread(float t);
     void exportScene(float t);
 
@@ -88,7 +88,7 @@ private:
     int m_fps; // number of frames to export every second of simulation
     float m_spf; // seconds per frame
 
-    ParticleGridNode * m_nodes;
+    Node * m_nodes;
 
     // scattering albedo of each grid node
     // http://en.wikipedia.org/wiki/Single-scattering_albedo
