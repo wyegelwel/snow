@@ -44,7 +44,7 @@ SOURCES += \
     ui/tools/rotatetool.cpp \
     ui/tools/scaletool.cpp \
     ui/tools/tool.cpp \
-    ui/collapsiblebox.cpp \
+    ui/collapsiblebox.cpp
 
 HEADERS  += \
     ui/mainwindow.h \
@@ -99,7 +99,7 @@ QMAKE_CXXFLAGS += -std=c++11
 CUDA_SOURCES += cuda/snow.cu \
     cuda/mesh.cu \
 #    cuda/wil.cu \
-#    cuda/max.cu \
+    cuda/max.cu \
 #    cuda/tim.cu \
 #    cuda/eric.cu \
     cuda/simulation.cu
@@ -128,6 +128,7 @@ OTHER_FILES += \
     cuda/collider.cu \
     cuda/implicit.cu \
     cuda/atomic.cu \
+    cuda/blas.cu \
     resources/shaders/particlesystem.vert \
     resources/shaders/particlesystem.frag \
     resources/shaders/particlegrid.frag \

@@ -26,7 +26,7 @@
 #include "cuda/atomic.cu"
 #include "cuda/collider.cu"
 #include "cuda/decomposition.cu"
-#include "cuda/implicit.cu"
+//#include "cuda/implicit.cu"
 #include "cuda/weighting.cu"
 
 #include "cuda/functions.h"

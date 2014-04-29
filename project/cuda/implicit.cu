@@ -24,12 +24,14 @@
 #include "cuda/vector.cu"
 
 #include "cuda/atomic.cu"
+#include "cuda/blas.cu"
 #include "cuda/caches.h"
 #include "cuda/decomposition.cu"
 #include "cuda/weighting.cu"
 
 #define BETA 0.5
-
+#define MAX_ITERATIONS 30
+#define STOPPING_EPSILON 1e-8
 
 /**
  * Called over particles
@@ -244,9 +246,9 @@ __global__ void computeEuResult( ParticleGridNode *nodes, int numNodes, float dt
  * Computes the matrix-vector product Eu. All the pointer arguments are assumed to be
  * device pointers.
  */
-__host__ void computeEu( Particle *particles, int numParticles,
-                         Grid *grid, ParticleGridNode *nodes, int numNodes,
-                         float dt, vec3 *u, vec3 *df, vec3 *result, Implicit::ParticleCache *pCache )
+__host__ void computeEu( const Particle *particles, int numParticles,
+                         const Grid *grid, const ParticleGridNode *nodes, int numNodes,
+                         float dt, const vec3 *u, const vec3 *df, vec3 *result, Implicit::ParticleCache *pCache )
 {
     static const int threadCount = 128;
 
@@ -266,7 +268,7 @@ __global__ void initializeVelocities( ParticleGridNode *nodes, int numNodes, vec
     v[tid] = nodes[tid].velocity;
 }
 
-__global__ void initializeRP( int numNodes, vec3 *vstar, vec3 *Ev0, vec3 *r0, vec3 *p0 )
+__global__ void initializeRP( int numNodes, const vec3 *vstar, const vec3 *Ev0, vec3 *r0, vec3 *p0 )
 {
     int tid = blockDim.x*blockIdx.x + threadIdx.x;
     if ( tid >= numNodes ) return;
@@ -281,46 +283,11 @@ __global__ void initializeQ( int numNodes, vec3 *s0, vec3 *q0 )
     q0[tid] = s0[tid];
 }
 
-__global__ void innerProductDotKernel( int length, vec3 *u, vec3 *v, float *dots )
-{
-    int tid = blockDim.x*blockIdx.x + threadIdx.x;
-    if ( tid >= length ) return;
-    dots[tid] = vec3::dot( u[tid], v[tid] );
-}
 
-__global__ void innerProductReduceKernel( int length, int reductionSize, float *dots )
-{
-    int tid = blockDim.x*blockIdx.x + threadIdx.x;
-    if ( tid >= length || tid+reductionSize >= length ) return;
-    dots[tid] += dots[tid+reductionSize];
-}
-
-__host__ float innerProduct( int length, vec3 *u, vec3 *v, float *dots )
-{
-    static const int threadCount = 100;
-    static const dim3 blocks( (length+threadCount-1)/threadCount );
-    static const dim3 threads( threadCount );
-
-    innerProductDotKernel<<< blocks, threads >>>( length, u, v, dots );
-    checkCudaErrors( cudaDeviceSynchronize() );
-
-    int steps = (int)(ceilf(log2f(length)));
-    int reductionSize = 1 << (steps-1);
-    for ( int i = 0; i < steps; i++ ) {
-        innerProductReduceKernel<<< blocks, threads >>>( length, reductionSize, dots );
-        reductionSize /= 2;
-        checkCudaErrors( cudaDeviceSynchronize() );
-    }
-
-    float result;
-    cudaMemcpy( &result, dots, sizeof(float), cudaMemcpyDeviceToHost );
-    return result;
-
-}
 
 __host__ void initializeConjugateResidual( Particle *particles, int numParticles,
                                            Grid *grid, ParticleGridNode *nodes, int numNodes,
-                                           float dt, Implicit::NodeCache *nodeCache, Implicit::ParticleCache *pCache )
+                                           float dt, Implicit::NodeCache *nodeCache, float &gamma, float &alpha, Implicit::ParticleCache *pCache )
 {
     static const int threadCount = 128;
     static const dim3 blocks( numNodes/threadCount );
@@ -337,15 +304,46 @@ __host__ void initializeConjugateResidual( Particle *particles, int numParticles
     initializeQ<<< blocks, threads >>>( numNodes, nodeCache->s, nodeCache->q );
     checkCudaErrors( cudaDeviceSynchronize() );
 
-
+    gamma = innerProduct( numNodes, nodeCache->r, nodeCache->s, nodeCache->innerProduct );
+    alpha = gamma / innerProduct( numNodes, nodeCache->q, nodeCache->q, nodeCache->innerProduct );
 }
 
-//__host__ void computeNodeVelocitiesImplicit( Particle *particles, int numParticles,
-//                                             Grid *grid, ParticleGridNode *nodes, int numNodes,
-//                                             float dt, Implicit::CRCache *crCache, mat3 *dFs, mat3 *Aps, vec3 *dfs, vec3 *result )
-//{
+__global__ void finishConjugateResidualKernel( ParticleGridNode *nodes, int numNodes, const vec3 *v )
+{
+    int tid = blockDim.x*blockIdx.x + threadIdx.x;
+    if ( tid >= numNodes ) return;
+    nodes[tid].velocity = v[tid];
+}
 
-//}
+__host__ void finishConjugateResidual( ParticleGridNode *nodes, int numNodes, const vec3 *v )
+{
+    finishConjugateResidualKernel<<< (numNodes+255)/256, 256 >>>( nodes, numNodes, v );
+    cudaDeviceSynchronize();
+}
+
+__host__ void computeNodeVelocitiesImplicit( Particle *particles, int numParticles,
+                                             Grid *grid, ParticleGridNode *nodes, int numNodes,
+                                             float dt, Implicit::NodeCache *nodeCache, Implicit::ParticleCache *pCache )
+{
+    float gamma, alpha, beta;
+    initializeConjugateResidual( particles, numParticles, grid, nodes, numNodes, dt, nodeCache, gamma, alpha, pCache );
+
+    int k = 0;
+    float d;
+    do {
+        scaleAndAdd( numNodes, 1.f, nodeCache->v, alpha, nodeCache->p, nodeCache->v );
+        scaleAndAdd( numNodes, 1.f, nodeCache->r, -alpha, nodeCache->q, nodeCache->r );
+        computeEu( particles, numParticles, grid, nodes, numNodes, dt, nodeCache->r, nodeCache->df, nodeCache->s, pCache );
+        beta = innerProduct( numNodes, nodeCache->r, nodeCache->s, nodeCache->innerProduct ) / gamma;
+        gamma = beta * gamma;
+        scaleAndAdd( numNodes, 1.f, nodeCache->r, beta, nodeCache->p, nodeCache->p );
+        scaleAndAdd( numNodes, 1.f, nodeCache->s, beta, nodeCache->q, nodeCache->q );
+        alpha = gamma / innerProduct( numNodes, nodeCache->q, nodeCache->q, nodeCache->innerProduct );
+        d = alpha * alpha * innerProduct( numNodes, nodeCache->p, nodeCache->p, nodeCache->innerProduct ) / numNodes;
+    } while ( k < MAX_ITERATIONS && d > STOPPING_EPSILON );
+
+    finishConjugateResidual( nodes, numNodes, nodeCache->v );
+}
 
 
 

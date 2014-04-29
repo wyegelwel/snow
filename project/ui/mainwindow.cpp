@@ -90,12 +90,6 @@ void MainWindow::startSimulation()
         ui->viewPanel->clearSelection();
         ui->selectionToolButton->click();
         ui->startButton->setEnabled( false );
-        ui->snowContainersGroupBox->setEnabled( false );
-        ui->collidersGroupBox->setEnabled( false );
-        ui->toolGroupBox->setEnabled( false );
-        ui->gridGroupBox->setEnabled( false );
-        ui->parametersGroupBox->setEnabled( false );
-        ui->exportGroupBox->setEnabled( false );
         ui->stopButton->setEnabled( true );
         ui->pauseButton->setEnabled( true );
         ui->resetButton->setEnabled( false );
@@ -106,12 +100,6 @@ void MainWindow::stopSimulation()
 {
     ui->viewPanel->stopSimulation();
     ui->startButton->setEnabled( true );
-    ui->snowContainersGroupBox->setEnabled( true );
-    ui->collidersGroupBox->setEnabled( true );
-    ui->toolGroupBox->setEnabled( true );
-    ui->gridGroupBox->setEnabled( true );
-    ui->parametersGroupBox->setEnabled( true );
-    ui->exportGroupBox->setEnabled( true );
     ui->stopButton->setEnabled( false );
     if ( ui->pauseButton->isChecked() ) {
         ui->pauseButton->click();

@@ -27,6 +27,7 @@ extern "C"
     void timingTests();
     void testFillParticleVolume();
     void testcomputeCellMasses();
+    void implicitTests();
 }
 
 void Tests::runTests(char *argv[])  {
@@ -47,7 +48,7 @@ void Tests::runTests(char *argv[])  {
         runMaxTests();
     }
     else if (!strcmp(argv[2], "all")){
-        runTimTests();
+//        runTimTests();
 //        runEricTests();
         //runWilTests();
         runMaxTests();
@@ -85,6 +86,6 @@ void Tests::runWilTests() {
 
 void Tests::runMaxTests() {
     printf("\nRunning Max Tests...\n");
-//    grid2ParticlesTests();
+    implicitTests();
     printf("Done running Max Tests.\n");
 }
