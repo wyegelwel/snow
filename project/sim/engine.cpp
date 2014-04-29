@@ -31,7 +31,6 @@
 Engine::Engine()
     : m_particleSystem(NULL),
       m_particleGrid(NULL),
-      m_devNodeCache(NULL),
       m_time(0.f),
       m_running(false),
       m_paused(false)
@@ -54,7 +53,6 @@ Engine::~Engine()
     if ( m_running ) stop();
     SAFE_DELETE( m_particleSystem );
     SAFE_DELETE( m_particleGrid );
-    SAFE_DELETE( m_devNodeCache );
     if ( m_export )
         SAFE_DELETE( m_exporter );
 }
@@ -135,6 +133,10 @@ bool Engine::start( bool exportScene )
 
         return true;
 
+//        update();
+//        stop();
+//        return false;
+
     } else {
 
         if ( m_particleSystem->size() == 0 ) {
@@ -214,7 +216,7 @@ void Engine::update()
 
         bool doShading = UiSettings::showParticlesMode() == UiSettings::PARTICLE_SHADED;
         updateParticles( m_params, devParticles, m_devParticleCaches, m_particleSystem->size(), m_devGrid,
-                         devNodes, m_devNodeCache, m_grid.nodeCount(), m_devColliders, m_colliders.size(), m_devMaterial, doShading );
+                         devNodes, m_devNodeCaches, m_grid.nodeCount(), m_devColliders, m_colliders.size(), m_devMaterial, doShading );
 
         if (m_export && (m_time - m_exporter->getLastUpdateTime() >= m_exporter->getspf()))
         {
@@ -266,19 +268,13 @@ void Engine::initializeCudaResources()
     checkCudaErrors(cudaMemcpy( m_devColliders, m_colliders.data(), m_colliders.size()*sizeof(ImplicitCollider), cudaMemcpyHostToDevice ));
 
     // Caches
-    SAFE_DELETE( m_devNodeCache );
-    m_devNodeCache = new NodeCache;
-    checkCudaErrors( cudaMalloc((void**)&(m_devNodeCache->r), numNodes*sizeof(vec3)) );
-    checkCudaErrors( cudaMalloc((void**)&(m_devNodeCache->s), numNodes*sizeof(vec3)) );
-    checkCudaErrors( cudaMalloc((void**)&(m_devNodeCache->p), numNodes*sizeof(vec3)) );
-    checkCudaErrors( cudaMalloc((void**)&(m_devNodeCache->q), numNodes*sizeof(vec3)) );
-    checkCudaErrors( cudaMalloc((void**)&(m_devNodeCache->v), numNodes*sizeof(vec3)) );
-    checkCudaErrors( cudaMalloc((void**)&(m_devNodeCache->df), numNodes*sizeof(vec3)) );
-    checkCudaErrors( cudaMalloc((void**)&(m_devNodeCache->scratch), numNodes*sizeof(float)) );
-    float nodeCacheSize = numNodes*(6*sizeof(vec3)+sizeof(float)) / 1e6;
-    LOG( "Allocating %.2f MB for implicit update node cache.", nodeCacheSize );
+    checkCudaErrors(cudaMalloc( (void**)&m_devNodeCaches, numNodes*sizeof(NodeCache)) );
+    checkCudaErrors(cudaMemset( m_devNodeCaches, 0, numNodes*sizeof(NodeCache)) );
+    float nodeCachesSize = numNodes*sizeof(NodeCache) / 1e6;
+    LOG( "Allocating %.2f MB for implicit update node cache.", nodeCachesSize );
 
     checkCudaErrors(cudaMalloc( (void**)&m_devParticleCaches, m_particleSystem->size()*sizeof(ParticleCache) ));
+    checkCudaErrors(cudaMemset( m_devParticleCaches, 0, m_particleSystem->size()*sizeof(ParticleCache)));
     float particleCachesSize = m_particleSystem->size()*sizeof(ParticleCache) / 1e6;
     LOG( "Allocating %.2f MB for implicit update particle caches.", particleCachesSize );
 
@@ -286,7 +282,7 @@ void Engine::initializeCudaResources()
     checkCudaErrors(cudaMalloc( (void**)&m_devMaterial, sizeof(MaterialConstants) ));
     checkCudaErrors(cudaMemcpy( m_devMaterial, &m_materialConstants, sizeof(MaterialConstants), cudaMemcpyHostToDevice ));
 
-    LOG( "Allocated %.2f MB in total", particlesSize + nodesSize + nodeCacheSize + particleCachesSize );
+    LOG( "Allocated %.2f MB in total", particlesSize + nodesSize + nodeCachesSize + particleCachesSize );
 
     LOG( "Computing particle volumes..." );
 
@@ -310,13 +306,7 @@ void Engine::freeCudaResources()
     unregisterVBO( m_nodesResource );
     cudaFree( m_devGrid );
     cudaFree( m_devColliders );
-    cudaFree( m_devNodeCache->r );
-    cudaFree( m_devNodeCache->s );
-    cudaFree( m_devNodeCache->p );
-    cudaFree( m_devNodeCache->q );
-    cudaFree( m_devNodeCache->v );
-    cudaFree( m_devNodeCache->df );
-    cudaFree( m_devNodeCache->scratch );
+    cudaFree( m_devNodeCaches );
     cudaFree( m_devParticleCaches );
     cudaFree( m_devMaterial );
 }

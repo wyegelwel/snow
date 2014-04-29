@@ -11,19 +11,21 @@
 #ifndef VECTOR_H
 #define VECTOR_H
 
+#include <stdio.h>
+
 #include <cuda.h>
 #include <cuda_runtime.h>
+
+#ifdef __CUDACC_
+    #include "math.h"
+#endif
+
+#include "common/math.h"
 
 #ifndef GLM_FORCE_RADIANS
     #define GLM_FORCE_RADIANS
 #endif
 #include "glm/vec3.hpp"
-
-#include "common/math.h"
-
-#ifdef CUDA_INCLUDE
-    #include "math.h"
-#endif
 
 struct vec3
 {
@@ -180,14 +182,32 @@ struct vec3
     __host__ __device__ __forceinline__
     bool valid( bool *nan = NULL ) const
     {
-        if ( isnan(x) || isnan(y) || isnan(z) ) {
+        if ( __isnanf(x) || __isnanf(y) || __isnanf(z) ) {
             if ( nan ) *nan = true;
             return false;
-        } else if ( isinf(x) || isinf(y) || isinf(z) ) {
+        } else if ( __isinff(x) || __isinff(y) || __isinff(z) ) {
             if ( nan ) *nan = false;
             return false;
         }
         return true;
+    }
+
+    __host__ __device__ __forceinline__
+    static void print( const vec3 &v )
+    {
+        printf( "[%10f %10f %10f]\n", v.x, v.y, v.z );
+    }
+
+    __host__ __device__ __forceinline__
+    bool operator == ( const vec3 &v ) const
+    {
+        return EQF( x, v.x ) && EQF( y, v.y ) && EQF( z, v.z );
+    }
+
+    __host__ __device__ __forceinline__
+    bool operator != ( const vec3 &v ) const
+    {
+        return NEQF( x, v.x ) || NEQF( y, v.y ) || NEQF( z, v.z );
     }
 
 };

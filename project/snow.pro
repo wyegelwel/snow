@@ -90,7 +90,6 @@ HEADERS  += \
     sim/caches.h \
     cuda/implicit.h \
     cuda/atomic.h \
-    cuda/blas.h \
     cuda/collider.h \
     cuda/decomposition.h \
     cuda/vector.h \

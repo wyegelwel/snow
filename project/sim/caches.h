@@ -11,23 +11,49 @@
 #ifndef CACHES_H
 #define CACHES_H
 
+#include <cuda.h>
+#include <cuda_runtime.h>
+
 #include "cuda/matrix.h"
 
 struct NodeCache
 {
+    enum Offset { R, AR, P, AP, V, DF };
+
     // Data used by Conjugate Residual Method
-    vec3 *r;
-    vec3 *s;
-    vec3 *p;
-    vec3 *q;
-    vec3 *v;
-    vec3 *df;
-    float *scratch;
-    NodeCache()
+    vec3 r;
+    vec3 Ar;
+    vec3 p;
+    vec3 Ap;
+    vec3 v;
+    vec3 df;
+    float scratch;
+    __host__ __device__ vec3& operator [] ( Offset i )
     {
-        r = s = p = q = v = df = NULL;
-        scratch = NULL;
+        switch ( i ) {
+        case R: return r;
+        case AR: return Ar;
+        case P: return p;
+        case AP: return Ap;
+        case V: return v;
+        case DF: return df;
+        }
+        return r;
     }
+
+    __host__ __device__ vec3 operator [] ( Offset i ) const
+    {
+        switch ( i ) {
+        case R: return r;
+        case AR: return Ar;
+        case P: return p;
+        case AP: return Ap;
+        case V: return v;
+        case DF: return df;
+        }
+        return r;
+    }
+
 };
 
 struct ParticleCache
