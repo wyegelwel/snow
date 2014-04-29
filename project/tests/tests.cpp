@@ -28,6 +28,7 @@ extern "C"
     void testFillParticleVolume();
     void testcomputeCellMasses();
     void implicitTests();
+    void testcompute_dJF_invTrans();
 }
 
 void Tests::runTests(char *argv[])  {
@@ -81,6 +82,8 @@ void Tests::runWilTests() {
 //    timingTests();
 //    testFillParticleVolume();
 //    testcomputeCellMasses();
+//    testComputedF();
+    testcompute_dJF_invTrans();
     printf("done running Wil Tests\n");
 }
 
