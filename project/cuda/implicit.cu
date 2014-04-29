@@ -76,7 +76,6 @@ __global__ void computedF(Particle *particles, Grid *grid, float dt, ParticleGri
                 vec3 du_j = dt * dus[rowOffset+k];
                 dF += mat3::outerProduct(du_j, wg);
 
-
                 vGradient += mat3::outerProduct(dt*nodes[rowOffset+k].velocity, wg);
 
             }
@@ -127,12 +126,12 @@ __device__ void computedR(mat3 &dF, mat3 &Se, mat3 &Re, mat3 &dR){
     mat3 V = mat3::multiplyAtB(Re, dF) - mat3::multiplyAtB(dF, Re);
 
     // Solve for compontents of R^T * dR
-    mat3 S = mat3(S[0]+S[4], S[5], -S[2], //remember, column major
+    mat3 A = mat3(S[0]+S[4], S[5], -S[2], //remember, column major
                   S[5], S[0]+S[8], S[1],
                   -S[2], S[1], S[4]+S[8]);
 
     vec3 b(V[3], V[6], V[7]);
-    vec3 x = mat3::inverse(S) * b; // Should replace this with a linear system solver function
+    vec3 x = mat3::solve(A, b);// Should replace this with a linear system solver function
 
     // Fill R^T * dR
     mat3 RTdR = mat3( 0, -x.x, -x.y, //remember, column major
@@ -142,61 +141,39 @@ __device__ void computedR(mat3 &dF, mat3 &Se, mat3 &Re, mat3 &dR){
     dR = Re*RTdR;
 }
 
+/**
+ * This function involves taking the partial derivative of the adjugate of F
+ * with respect to each element of F. This process results in a 3x3 block matrix
+ * where each block is the 3x3 partial derivative for an element of F
+ *
+ * Let F = [ a b c
+ *           d e f
+ *           g h i ]
+ *
+ * Let adjugate(F) = [ ei-hf  hc-bi  bf-ec
+ *                     gf-di  ai-gc  dc-af
+ *                     dh-ge  gb-ah  ae-db ]
+ *
+ * Then d/da (adjugate(F) = [ 0   0   0
+ *                            0   i  -f
+ *                            0  -h   e ]
+ *
+ * The other 8 partials will have similar form. See (and run) the code in
+ * matlab/derivateAdjugateF.m for the full computation as well as to see where
+ * these seemingly magic values came from.
+ *
+ *
+ */
 __device__ void compute_dJF_invTrans(mat3 &F, mat3 &dF, mat3 &dJF_invTrans){
-    mat3 tmp;
-    // considering F[0]
-    tmp[0] = 0; tmp[3] =  0;    tmp[6] =  0;
-    tmp[1] = 0; tmp[4] =  F[8]; tmp[7] = -F[7];
-    tmp[2] = 0; tmp[5] = -F[5]; tmp[8] =  F[4];
-    dJF_invTrans[0] = mat3::innerProduct(tmp, dF);
-
-    // considering F[1]
-    tmp[0] =  0;    tmp[3] = 0; tmp[6] =  0;
-    tmp[1] = -F[8]; tmp[4] = 0; tmp[7] =  F[6];
-    tmp[2] =  F[5]; tmp[5] = 0; tmp[8] = -F[3];
-    dJF_invTrans[1] = mat3::innerProduct(tmp, dF);
-
-    // considering F[2]
-    tmp[0] =  0;    tmp[3] = 0;     tmp[6] = 0;
-    tmp[1] =  F[7]; tmp[4] = -F[6]; tmp[7] = 0;
-    tmp[2] = -F[4]; tmp[5] =  F[3]; tmp[8] = 0;
-    dJF_invTrans[2] = mat3::innerProduct(tmp, dF);
-
-    // considering F[3]
-    tmp[0] =  0; tmp[3] = -F[8]; tmp[6] = F[7];
-    tmp[1] =  0; tmp[4] =  0;    tmp[7] = 0;
-    tmp[2] =  0; tmp[5] =  F[2]; tmp[8] = -F[1];
-    dJF_invTrans[3] = mat3::innerProduct(tmp, dF);
-
-    // considering F[4]
-    tmp[0] =  F[8]; tmp[3] = 0; tmp[6] = -F[6];
-    tmp[1] =  0;    tmp[4] = 0; tmp[7] =  0;
-    tmp[2] = -F[2]; tmp[5] = 0; tmp[8] =  F[0];
-    dJF_invTrans[4] = mat3::innerProduct(tmp, dF);
-
-    // considering F[5]
-    tmp[0] =  -F[7]; tmp[3] =  F[6]; tmp[6] = 0;
-    tmp[1] =   0;    tmp[4] =  0;    tmp[7] = 0;
-    tmp[2] =   F[1]; tmp[5] = -F[0]; tmp[8] = 0;
-    dJF_invTrans[5] = mat3::innerProduct(tmp, dF);
-
-    // considering F[6]
-    tmp[0] =   0; tmp[3] =  F[5]; tmp[6] = -F[4];
-    tmp[1] =   0; tmp[4] = -F[2]; tmp[7] = F[1];
-    tmp[2] =   0; tmp[5] =  0;    tmp[8] = 0;
-    dJF_invTrans[6] = mat3::innerProduct(tmp, dF);
-
-    // considering F[7]
-    tmp[0] = -F[5]; tmp[3] = 0; tmp[6] =  F[3];
-    tmp[1] =  F[2]; tmp[4] = 0; tmp[7] = -F[0];
-    tmp[2] =  0;    tmp[5] = 0; tmp[8] =  0;
-    dJF_invTrans[7] = mat3::innerProduct(tmp, dF);
-
-    // considering F[8]
-    tmp[0] =  F[4]; tmp[3] = -F[3]; tmp[6] =  0;
-    tmp[1] = -F[1]; tmp[4] =  F[0]; tmp[7] =  0;
-    tmp[2] =  0;    tmp[5] =  0;    tmp[8] =  0;
-    dJF_invTrans[8] = mat3::innerProduct(tmp, dF);
+    dJF_invTrans[0] = F[4]*dF[8] - F[5]*dF[5] + F[8]*dF[4] - F[7]*dF[7];
+    dJF_invTrans[1] = F[5]*dF[2] - F[8]*dF[1] - F[3]*dF[8] + F[6]*dF[7];
+    dJF_invTrans[2] = F[3]*dF[5] - F[4]*dF[2] + F[7]*dF[1] - F[6]*dF[4];
+    dJF_invTrans[3] = F[2]*dF[5] - F[1]*dF[8] - F[8]*dF[3] + F[7]*dF[6];
+    dJF_invTrans[4] = F[0]*dF[8] - F[2]*dF[2] + F[8]*dF[0] - F[6]*dF[6];
+    dJF_invTrans[5] = F[1]*dF[2] - F[0]*dF[5] - F[7]*dF[0] + F[6]*dF[3];
+    dJF_invTrans[6] = F[1]*dF[7] - F[2]*dF[4] + F[5]*dF[3] - F[4]*dF[6];
+    dJF_invTrans[7] = F[2]*dF[1] - F[5]*dF[0] - F[0]*dF[7] + F[3]*dF[6];
+    dJF_invTrans[8] = F[0]*dF[4] - F[1]*dF[1] + F[4]*dF[0] - F[3]*dF[3];
 }
 
 /**

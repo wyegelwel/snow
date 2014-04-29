@@ -388,6 +388,13 @@ struct mat3
         A[2] = (M[1]*M[5]-M[2]*M[4]); A[5] = (M[2]*M[3]-M[0]*M[5]); A[8] = (M[0]*M[4]-M[1]*M[3]);
         return A;
     }
+
+    // Should be written with a more robust solver, but this will do for now
+    __host__ __device__ __forceinline__
+    static vec3 solve( const mat3 &A, const vec3 &b )
+    {
+       return mat3::inverse(A) * b;
+    }
 };
 
 __host__ __device__ __forceinline__
