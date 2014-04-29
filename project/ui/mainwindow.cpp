@@ -71,10 +71,7 @@ void MainWindow::addCollider()
     if(colliderType == "Sphere") {
         c = SPHERE;
     }
-    else if(colliderType == "Vertical Plane")  {
-        c = HALF_PLANE;
-    }
-    else if(colliderType == "Horizontal Plane")  {
+    else if(colliderType == "Half-Plane")  {
         c = HALF_PLANE;
     }
     else {isType = false;}
