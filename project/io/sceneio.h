@@ -46,7 +46,7 @@ public:
      * // now add root, params to your scene.
      *
      */
-    static void read(QString fname, Scene * scene, Engine * engine);
+    bool read(QString fname, Scene * scene, Engine * engine);
 
     /**
      * writes the data to XML format. Use case: we set up a simulation in the GUI
@@ -58,8 +58,13 @@ public:
      * SceneParser::write("myscene.xml", SceneNode * node);
      *
      */
-    static void write(QString fname, Scene * scene, Engine * engine);
+    bool write(QString fname, Scene * scene, Engine * engine);
 
+    QString sceneFile() { return m_scenefile; }
+    void setSceneFile(QString filename) { m_scenefile = filename; }
+
+private:
+    QString m_scenefile;
 };
 
 #endif // SCENEIO_H

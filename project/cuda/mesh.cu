@@ -29,6 +29,7 @@
 #include "geometry/grid.h"
 #include "geometry/bbox.h"
 #include "cuda/noise.h"
+#include "cuda/material.h"
 
 #include "glm/gtc/random.hpp"
 
@@ -155,7 +156,7 @@ __global__ void fillMeshVoxelsKernel( curandState *states, unsigned int seed, Gr
     particles[tid] = particle;
 }
 
-void fillMesh( cudaGraphicsResource **resource, int triCount, const Grid &grid, Particle *particles, int particleCount, float targetDensity )
+void fillMesh( cudaGraphicsResource **resource, int triCount, const Grid &grid, Particle *particles, int particleCount, float targetDensity, int materialPreset)
 {
     // Get mesh data
     cudaGraphicsMapResources( 1, resource, 0 );
@@ -200,6 +201,18 @@ void fillMesh( cudaGraphicsResource **resource, int triCount, const Grid &grid, 
     checkCudaErrors( cudaMalloc((void**)&devParticles, particleCount*sizeof(Particle)) );
     fillMeshVoxelsKernel<<< (particleCount+511)/512, 512 >>>( devStates, time(NULL), grid, devFlags, devParticles, particleMass, particleCount );
     checkCudaErrors( cudaDeviceSynchronize() );
+
+    switch (materialPreset)
+    {
+    case 0:
+        break;
+    case 1: applyChunky<<<(particleCount+511)/512, 512>>>(devParticles, particleCount); // TODO - we could use the uisettings materialstiffness here
+        break;
+    default:
+        break;
+    }
+    printf("material preset %d applied \n", materialPreset);
+
     checkCudaErrors( cudaMemcpy(particles, devParticles, particleCount*sizeof(Particle), cudaMemcpyDeviceToHost) );
 
     checkCudaErrors( cudaFree(devFlags) );
@@ -208,7 +221,7 @@ void fillMesh( cudaGraphicsResource **resource, int triCount, const Grid &grid, 
 }
 
 
-/// mesh filling algorithm #2
+#if 0 // mesh filling algorithm #2
 
 __device__ bool isInMesh(vec3 pos, int seed, Tri *tris, int triCount)
 {
@@ -231,6 +244,8 @@ __device__ bool isInMesh(vec3 pos, int seed, Tri *tris, int triCount)
     }
     return (c+1)%2;
 }
+
+
 
 __global__ void fillMeshKernel2( Tri *tris, int triCount, vec3 bbox_min, vec3 bbox_size, Particle *particles, float particleMass, int particleCount)
 {
@@ -284,8 +299,7 @@ void fillMesh2( cudaGraphicsResource **resource, int triCount, const Grid &grid,
     checkCudaErrors( cudaGraphicsUnmapResources(1, resource, 0) );
 }
 
-
-
+#endif
 
 
 #endif // MESH_CU

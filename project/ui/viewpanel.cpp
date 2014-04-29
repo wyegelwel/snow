@@ -243,19 +243,19 @@ bool ViewPanel::startSimulation()
             }
         }
 
-        if ( UiSettings::exportVolume() ) {
-            fprefix = QFileDialog::getSaveFileName(this, QString("Choose Export Name"), QString());
-            if ( fprefix.isEmpty() ) {
-                // cancel
-                QMessageBox msgBox;
-                msgBox.setText("Error : Invalid Volume Export Path");
-                msgBox.exec();
-                return false;
+        const bool exportVol = UiSettings::exportDensity() || UiSettings::exportVelocity();
+        if ( exportVol ) {
+            bool ok = !m_sceneIO->sceneFile().isNull();
+            if (!ok) // have not saved yet
+                ok = saveScene();
+            if (ok)
+            {
+                QFileInfo sceneFileInfo(m_sceneIO->sceneFile());
+                m_engine->initExporter(sceneFileInfo.path());
             }
-            m_engine->initExporter(fprefix);
         }
 
-        return m_engine->start( UiSettings::exportVolume() );
+        return m_engine->start(exportVol);
     }
 
     return false;
@@ -547,14 +547,7 @@ ViewPanel::saveSelectedMesh()
 
 }
 
-void
-ViewPanel::applyMaterials()
-{
-    // re-apply particleSystem
-    m_engine->initParticleMaterials(UiSettings::materialPreset());
-}
-
-void
+bool
 ViewPanel::loadScene()
 {
     // call file dialog
@@ -562,11 +555,31 @@ ViewPanel::loadScene()
     m_sceneIO->read(str, m_scene, m_engine);
 }
 
-void
+bool
 ViewPanel::saveScene()
 {
-    // this is also called when exporting.
-    QString str;
-    m_sceneIO->write(str, m_scene, m_engine);
+    // this is enforced if engine->start is called and export is not checked
+    if (m_sceneIO->sceneFile().isNull())
+    {
+        // filename not initialized yet
+        QString filename = QFileDialog::getSaveFileName( this, "Choose Simulation File Path", PROJECT_PATH "/data/scenes/" );
+        if (!filename.isNull())
+        {
+            m_sceneIO->setSceneFile(filename);
+            m_sceneIO->write(m_sceneIO->sceneFile(), m_scene, m_engine);
+        }
+        else
+        {
+            // cancelled
+            QMessageBox msgBox;
+            msgBox.setText("Error : Invalid Save Path");
+            msgBox.exec();
+            return false;
+        }
+    }
+    else
+    {
+        m_sceneIO->write(m_sceneIO->sceneFile(),m_scene, m_engine);
+    }
 }
 

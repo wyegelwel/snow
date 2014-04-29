@@ -46,7 +46,7 @@ public:
     virtual ~Engine();
 
     // Returns whether it actually did start
-    bool start( bool exportScene );
+    bool start( bool exportVolume );
     void pause();
     void resume();
     void stop();

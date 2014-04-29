@@ -53,8 +53,9 @@ UiSettings::loadSettings()
     fillResolution() = s.value( "fillResolution", 0.05f ).toFloat();
     fillDensity() = s.value( "fillDensity", 150.f ).toFloat();
 
-    exportVolume() = s.value( "exportVolume", false ).toBool();
-    exportColliders() = s.value("exportColliders", false).toBool();
+    exportDensity() = s.value("exportDensity", false).toBool();
+    exportVelocity() = s.value("exportVelocity", false).toBool();
+
     exportFPS() = s.value("exportFPS", 24).toInt();
     maxTime() = s.value("maxTime", 3).toFloat();
 
@@ -98,8 +99,8 @@ UiSettings::saveSettings()
     s.setValue( "fillResolution", fillResolution() );
     s.setValue( "fillDensity", fillDensity() );
 
-    s.setValue( "exportVolume", exportVolume() );
-    s.setValue( "exportColliders", exportColliders());
+    s.setValue("exportDensity", exportDensity());
+    s.setValue("exportVelocity",exportVelocity());
     s.setValue( "exportFPS", exportFPS());
     s.setValue( "maxTime", maxTime());
 

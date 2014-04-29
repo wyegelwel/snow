@@ -77,14 +77,11 @@ public slots:
     void fillSelectedMesh();
     void saveSelectedMesh();
 
-    void loadScene();
-    void saveScene();
+    bool loadScene();
+    bool saveScene();
 
     // Demo Scenes
     void teapotDemo();
-
-    void applyMaterials(); // applies snow material per particle
-
 signals:
 
     void showMeshes();

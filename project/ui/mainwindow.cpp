@@ -126,12 +126,12 @@ void MainWindow::takeScreenshot()
     ui->viewPanel->resumeSimulation();
 }
 
-void MainWindow::roundFillParticles()
+void MainWindow::fillNumParticleFinishedEditing()
 {
     // rounds number of particles to nearest multiple of 512
     const int n = ui->fillNumParticlesSpinbox->value();
     int numParticles = (n/512) * 512;
-    numParticles += 512*(numParticles < 512);
+    numParticles += 512*(n < 512);
     if (numParticles != n)
         ui->fillNumParticlesSpinbox->setValue(numParticles);
 }
@@ -147,9 +147,9 @@ void MainWindow::setupUI()
     assert( connect(ui->fillButton, SIGNAL(clicked()), ui->viewPanel, SLOT(fillSelectedMesh())) );
     FloatBinding::bindSpinBox( ui->fillResolutionSpinbox, UiSettings::fillResolution(), this );
     IntBinding::bindSpinBox( ui->fillNumParticlesSpinbox, UiSettings::fillNumParticles(), this );
-    ui->fillNumParticlesSpinbox->setSingleStep(512);
-    assert( connect(ui->fillNumParticlesSpinbox, SIGNAL(editingFinished()), this, SLOT(roundFillParticles())) );
+    assert( connect(ui->fillNumParticlesSpinbox, SIGNAL(editingFinished()), this, SLOT(fillNumParticleFinishedEditing())) );
     FloatBinding::bindSpinBox( ui->densitySpinbox, UiSettings::fillDensity(), this );
+    ComboIntAttribute::bindInt(ui->snowMaterialCombo, &UiSettings::materialPreset(), this);
 
     // Simulation
     assert( connect(ui->startButton, SIGNAL(clicked()), this, SLOT(startSimulation())) );
@@ -165,12 +165,11 @@ void MainWindow::setupUI()
     assert( connect(ui->gridZSpinbox, SIGNAL(valueChanged(int)), ui->viewPanel, SLOT(updateSceneGrid())) );
     assert( connect(ui->gridResolutionSpinbox, SIGNAL(valueChanged(double)), ui->viewPanel, SLOT(updateSceneGrid())) );
     FloatBinding::bindSpinBox( ui->timeStepSpinbox, UiSettings::timeStep(), this );
-    ComboIntAttribute::bindInt(ui->snowMaterialCombo, &UiSettings::materialPreset(), this);
-    assert( connect(ui->snowMaterialCombo, SIGNAL(currentIndexChanged(int)), ui->viewPanel, SLOT(applyMaterials())) );
+    //assert( connect(ui->snowMaterialCombo, SIGNAL(currentIndexChanged(int)), ui->viewPanel, SLOT(applyMaterials())) );
 
     // exporting
-    BoolBinding::bindCheckBox( ui->volumeCheckbox, UiSettings::exportVolume(), this );
-    BoolBinding::bindCheckBox(ui->colliderCheckbox, UiSettings::exportColliders(), this);
+    BoolBinding::bindCheckBox( ui->exportDensityCheckbox, UiSettings::exportDensity(), this );
+    BoolBinding::bindCheckBox(ui->exportVelocityCheckbox, UiSettings::exportVelocity(), this);
     IntBinding::bindSpinBox(ui->exportFPSSpinBox, UiSettings::exportFPS(), this);
     FloatBinding::bindSpinBox(ui->maxTimeSpinBox, UiSettings::maxTime(),this);
 

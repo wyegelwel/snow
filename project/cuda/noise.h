@@ -19,8 +19,8 @@
 #include "cuda/vector.h"
 
 // fractional component of a number
-//__host__ __device__ __forceinline__
-//float fract(float x) {return x - floor(x);}
+__device__ __forceinline__
+float fract(float x) {return x - floor(x);}
 
 // Noise functions from IQ.
 // https://www.shadertoy.com/view/lsj3zy

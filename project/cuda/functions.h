@@ -45,15 +45,14 @@ void updateParticleNormals( Particle *particles, int numParticles,
                             Grid *grid, Node *nodes, int numNodes );
 
 // Mesh filling
-void fillMesh( cudaGraphicsResource **resource, int triCount, const Grid &grid, Particle *particles, int particleCount, float targetDensity );
+void fillMesh( cudaGraphicsResource **resource, int triCount, const Grid &grid, Particle *particles, int particleCount, float targetDensity, int materialPreset);
 
+#if 0
 void fillMesh2( cudaGraphicsResource **resource, int triCount, const Grid &grid, Particle *particles, int particleCount, float targetDensity);
+#endif
 
 // One time computation to get particle volumes
 void initializeParticleVolumes( Particle *particles, int numParticles, const Grid *grid, int numNodes );
-
-// material applying (set before starting sim, after filling procedure)
-void applyMaterialPreset(Particle *particles, int particleCount, int preset);
 
 }
 

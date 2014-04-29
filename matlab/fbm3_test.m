@@ -1,7 +1,7 @@
 % fractal brownian motion testing
 function fbm3_test
     % plot scatter grid of points
-    gv = 0.1:.01:.3;
+    gv = 0.1:1:20;
     [X,Y,Z] = meshgrid(gv,gv,gv);
     %[X,Y,Z] = sphere(10);
     X = X(:); Y = Y(:); Z = Z(:);
@@ -13,9 +13,11 @@ function fbm3_test
         C(i) = fbm3(p);
     end
     C = (C+.3)*1.6667;
-    scatter3(X,Y,Z,3,C);
-    title('Spatially Varying Stiffness');
-    axis square;
+    %scatter3(X,Y,Z,3,C);
+    %title('Spatially Varying Stiffness');
+    %axis square;
+    min(C)
+    max(C)
 end
 
 function [out] = fract(x)

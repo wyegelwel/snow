@@ -100,12 +100,14 @@ private:
     DEFINE_SETTING( QPoint, windowPosition )
     DEFINE_SETTING( QSize, windowSize )
 
+    // filling
     DEFINE_SETTING( int, fillNumParticles )
     DEFINE_SETTING( float, fillDensity )
     DEFINE_SETTING( float, fillResolution )
 
-    DEFINE_SETTING( bool, exportVolume )
-    DEFINE_SETTING( bool, exportColliders)
+    // exporting
+    DEFINE_SETTING( bool, exportDensity )
+    DEFINE_SETTING( bool, exportVelocity )
     DEFINE_SETTING( int, exportFPS)
     DEFINE_SETTING( float, maxTime)
 

@@ -119,11 +119,11 @@ void Engine::initExporter( QString fprefix )
     m_exporter = new MitsubaExporter( fprefix, UiSettings::exportFPS() );
 }
 
-bool Engine::start( bool exportScene )
+bool Engine::start( bool exportVolume )
 {
     if ( m_particleSystem->size() > 0 && !m_grid.empty() && !m_running ) {
 
-        if ( (m_export = exportScene) ) m_exporter->reset( m_grid );
+        if ( (m_export = exportVolume) ) m_exporter->reset( m_grid );
 
         LOG( "STARTING SIMULATION" );
 
@@ -345,29 +345,3 @@ vec3 Engine::getCentroid( const glm::mat4 &ctm )
 {
     return m_particleGrid->getCentroid( ctm );
 }
-
-void
-Engine::initParticleMaterials(int preset)
-{
-    m_busy = true;
-
-    // if user interface implements single material editing of material, we can use that as a 'base' material
-//    checkCudaErrors(cudaMalloc( (void**)&m_devMaterial, sizeof(MaterialConstants) ));
-//    checkCudaErrors(cudaMemcpy( m_devMaterial, &m_materialConstants, sizeof(MaterialConstants), cudaMemcpyHostToDevice ));
-
-    //cudaGraphicsMapResources( 1, &m_particlesResource, 0 );
-    Particle *devParticles;
-    size_t size;
-    checkCudaErrors( cudaGraphicsResourceGetMappedPointer( (void**)&devParticles, &size, m_particlesResource ) );
-    checkCudaErrors( cudaDeviceSynchronize() );
-
-    if ( (int)(size/sizeof(Particle)) != m_particleSystem->size() ) {
-        LOG( "Particle resource error : %lu bytes (%lu expected)", size, m_particleSystem->size()*sizeof(Particle) );
-    }
-
-    void applyMaterialPreset(Particle *particles, int particleCount, int preset);
-
-
-    m_busy = false;
-}
-
