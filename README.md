@@ -1,7 +1,7 @@
 snow
 ====
 
-Take a look at the project site: www.wyegelwel.github.io/snow
+Take a look at the project site: wyegelwel.github.io/snow
 
 Project dependencies:
 
