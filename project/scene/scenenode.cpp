@@ -19,6 +19,8 @@
 #include "common/renderable.h"
 #include "scene/scenenode.h"
 
+#include "sim/collider.h"
+
 SceneNode::SceneNode( Type type )
     : m_parent(NULL),
       m_ctm(1.f),
@@ -75,6 +77,19 @@ void
 SceneNode::renderOpaque()
 {
     glMatrixMode( GL_MODELVIEW );
+
+// debugging collider stuff
+//    if (m_type == IMPLICIT_COLLIDER)  {
+//        ImplicitCollider *col = dynamic_cast<Collider*>(getRenderable())->getImplicitCollider();
+//        if (col->type == HALF_PLANE) {
+//            glLineWidth(5.0f);
+//            glBegin(GL_LINES);
+//                glVertex3f(col->center.x,col->center.y,col->center.z);
+//                glVertex3f(col->center.x+col->param.x,col->center.y+col->param.y,col->center.z+col->param.z);
+//            glEnd();
+//            glLineWidth(1.0f);
+//        }
+//    }
     glPushMatrix();
     glMultMatrixf( glm::value_ptr(getCTM()) );
     if ( m_renderable && !isTransparent() ) m_renderable->render();

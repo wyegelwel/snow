@@ -16,7 +16,7 @@
 #include <helper_cuda.h>
 #include "math.h"
 #include "common/math.h"
-#include "cuda/vector.cu"
+#include "cuda/vector.h"
 
 // fractional component of a number
 //__host__ __device__ __forceinline__

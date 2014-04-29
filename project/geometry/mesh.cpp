@@ -277,7 +277,7 @@ Mesh::fill( ParticleSystem &particles, int particleCount, float h, float targetD
     particles.resize( particleCount );
     fillMesh( &m_cudaVBO, getNumTris(), grid, particles.data(), particleCount, targetDensity );
 
-    /// alternative mesh filling algorithm:
+    /// alternative mesh filling algorithm. does poorly for lots of particles.
     //fillMesh2(&m_cudaVBO, getNumTris(), grid, particles.data(), particleCount, targetDensity);
 
     LOG( "Mesh filled with %s particles in %lld ms.", STR(QLocale().toString(particleCount)), timer.restart() );

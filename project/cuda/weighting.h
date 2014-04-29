@@ -2,7 +2,7 @@
 **
 **   SNOW - CS224 BROWN UNIVERSITY
 **
-**   weighting.cu
+**   weighting.h
 **   Authors: evjang, mliberma, taparson, wyegelwe
 **   Created: 14 Apr 2014
 **
@@ -14,7 +14,7 @@
 #include <cuda.h>
 #include <cuda_runtime.h>
 
-#include "vector.cu"
+#include "cuda/vector.h"
 
 /*
  * 1D B-spline falloff

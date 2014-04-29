@@ -17,10 +17,12 @@ typedef unsigned int GLuint;
 struct cudaGraphicsResource;
 struct Grid;
 struct Particle;
-struct ParticleGridNode;
-struct ParticleTempData;
+struct ParticleCache;
+struct Node;
+struct NodeCache;
 struct ImplicitCollider;
 struct SimulationParameters;
+struct MaterialConstants;
 
 extern "C"
 {
@@ -31,14 +33,16 @@ void unregisterVBO( cudaGraphicsResource *resource );
 
 // Particle simulation
 void updateParticles( const SimulationParameters &parameters,
-                      Particle *particles, int numParticles,
-                      Grid *grid, ParticleGridNode *nodes, int numNodes, ParticleTempData *particleGridTempData,
+                      Particle *particles, ParticleCache *pCaches, int numParticles,
+                      Grid *grid, Node *nodes, NodeCache *nodeCache, int numNodes,
                       ImplicitCollider *colliders, int numColliders,
+                      MaterialConstants *mat,
                       bool doShading);
 
+
 // normal approximation for shading
-void updateParticleNormals(Particle *particles, int numParticles,
-                           Grid *grid, ParticleGridNode *nodes, int numNodes);
+void updateParticleNormals( Particle *particles, int numParticles,
+                            Grid *grid, Node *nodes, int numNodes );
 
 // Mesh filling
 void fillMesh( cudaGraphicsResource **resource, int triCount, const Grid &grid, Particle *particles, int particleCount, float targetDensity );
@@ -46,7 +50,7 @@ void fillMesh( cudaGraphicsResource **resource, int triCount, const Grid &grid, 
 void fillMesh2( cudaGraphicsResource **resource, int triCount, const Grid &grid, Particle *particles, int particleCount, float targetDensity);
 
 // One time computation to get particle volumes
-void initializeParticleVolumes( Particle *particles, int numParticles, Grid *grid, int numNodes );
+void initializeParticleVolumes( Particle *particles, int numParticles, const Grid *grid, int numNodes );
 
 // material applying (set before starting sim, after filling procedure)
 void applyMaterialPreset(Particle *particles, int particleCount, int preset);

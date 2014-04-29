@@ -36,7 +36,7 @@ extern "C"  {
 #include "weighting.cu"
 #include "sim/particlegridnode.h"
 #include "sim/material.h"
-#include "cuda/collider.cu"
+#include "cuda/collider.h"
 #include "sim/particle.h"
 //#include "matrix.cu"
 //#include "vector.cu"

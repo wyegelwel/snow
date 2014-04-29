@@ -11,14 +11,15 @@
 #ifndef PARTICLE_H
 #define PARTICLE_H
 
-#include "cuda/vector.cu"
-#include "cuda/matrix.cu"
 #include "material.h"
+#include "cuda/matrix.h"
 
-#ifdef CUDA_INCLUDE
-    #define DECL __host__ __device__
-#else
-    #define DECL
+#ifndef FUNC
+    #ifdef CUDA_INCLUDE
+        #define FUNC __host__ __device__
+    #else
+        #define FUNC
+    #endif
 #endif
 
 struct Particle
@@ -31,7 +32,7 @@ struct Particle
     mat3 plasticF;
     vec3 normal; // used only for shading
     MaterialConstants material;
-    DECL Particle()
+    FUNC Particle()
     {
         position = vec3( 0.f, 0.f, 0.f );
         velocity = vec3( 0.f, 0.f, 0.f );
@@ -42,12 +43,6 @@ struct Particle
         normal = vec3(1,0,0);
         material = MaterialConstants(); // default
     }
-};
-
-struct ParticleTempData
-{
-    mat3 sigma;
-    vec3 particleGridPos;
 };
 
 #endif // PARTICLE_H

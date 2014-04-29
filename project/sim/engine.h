@@ -27,12 +27,13 @@
 #include "geometry/grid.h"
 #include "io/mitsubaexporter.h"
 
-
 struct cudaGraphicsResource;
 struct Particle;
 struct ParticleGrid;
-struct ParticleGridNode;
-struct ParticleTempData;
+struct Node;
+
+struct NodeCache;
+struct ParticleCache;
 
 class Engine : public QObject, public Renderable
 {
@@ -65,7 +66,8 @@ public:
 //    MaterialConstants& materialConstants() { return m_materialConstants; }
     void initParticleMaterials(int preset);
 
-    void addCollider( const ImplicitCollider &collider ) { m_colliders += collider; }
+//    void addCollider( const ImplicitCollider &collider ) { m_colliders += collider; }
+    void addCollider(Collider &collider, const glm::mat4 &ctm);
     void clearColliders() { m_colliders.clear(); }
     QVector<ImplicitCollider>& colliders() { return m_colliders; }
 
@@ -91,17 +93,18 @@ private:
     ParticleGrid *m_particleGrid;
     Grid m_grid;
     QVector<ImplicitCollider> m_colliders;
-//    MaterialConstants m_materialConstants;
+    MaterialConstants m_materialConstants;
 
     // CUDA pointers
     cudaGraphicsResource *m_particlesResource; // Particles
     cudaGraphicsResource *m_nodesResource; // Particle grid nodes
     Grid *m_devGrid;
 
-    ParticleTempData *m_devPGTD;
+    NodeCache *m_devNodeCache;
+    ParticleCache *m_devParticleCaches;
 
     ImplicitCollider *m_devColliders;
-   // MaterialConstants *m_devMaterial;
+    MaterialConstants *m_devMaterial;
 
     SimulationParameters m_params;
     float m_time;

@@ -2,7 +2,7 @@
 **
 **   SNOW - CS224 BROWN UNIVERSITY
 **
-**   decomposition.cu
+**   decomposition.h
 **   Authors: evjang, mliberma, taparson, wyegelwe
 **   Created: 13 Apr 2014
 **
@@ -13,11 +13,10 @@
 
 #include <cuda.h>
 #include <cuda_runtime.h>
-
 #include "math.h"
-#include "common/math.h"
 
-#include "cuda/matrix.cu"
+#include "common/math.h"
+#include "cuda/matrix.h"
 
 #define GAMMA 5.828427124 // FOUR_GAMMA_SQUARED = sqrt(8)+3;
 #define CSTAR 0.923879532 // cos(pi/8)
@@ -243,6 +242,24 @@ __host__ __device__ void computePD( const mat3 &A, mat3 &R )
     computeSVD( A, W, S, V );
     R = mat3::multiplyABt( W, V );
 }
+
+/*
+ * Returns polar decomposition of 3x3 matrix M where
+ * M = Fe = Re * Se = U * P
+ * U is an orthonormal matrix
+ * S is symmetric positive semidefinite
+ * Can get Polar Decomposition from SVD, see first section of http://en.wikipedia.org/wiki/Polar_decomposition
+ */
+__host__ __device__ void computePD( const mat3 &A, mat3 &R, mat3 &P )
+{
+    // U is unitary matrix (i.e. orthogonal/orthonormal)
+    // P is positive semidefinite Hermitian matrix
+    mat3 W, S, V;
+    computeSVD( A, W, S, V );
+    R = mat3::multiplyABt( W, V );
+    P = mat3::multiplyADBt(V, S, V);
+}
+
 
 /*
  * In snow we desire both SVD and polar decompositions simultaneously without

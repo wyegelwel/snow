@@ -71,10 +71,7 @@ void MainWindow::addCollider()
     if(colliderType == "Sphere") {
         c = SPHERE;
     }
-    else if(colliderType == "Vertical Plane")  {
-        c = HALF_PLANE;
-    }
-    else if(colliderType == "Horizontal Plane")  {
+    else if(colliderType == "Half-Plane")  {
         c = HALF_PLANE;
     }
     else {isType = false;}
@@ -90,12 +87,6 @@ void MainWindow::startSimulation()
         ui->viewPanel->clearSelection();
         ui->selectionToolButton->click();
         ui->startButton->setEnabled( false );
-        ui->snowContainersGroupBox->setEnabled( false );
-        ui->collidersGroupBox->setEnabled( false );
-        ui->toolGroupBox->setEnabled( false );
-        ui->gridGroupBox->setEnabled( false );
-        ui->parametersGroupBox->setEnabled( false );
-        ui->exportGroupBox->setEnabled( false );
         ui->stopButton->setEnabled( true );
         ui->pauseButton->setEnabled( true );
         ui->resetButton->setEnabled( false );
@@ -106,12 +97,6 @@ void MainWindow::stopSimulation()
 {
     ui->viewPanel->stopSimulation();
     ui->startButton->setEnabled( true );
-    ui->snowContainersGroupBox->setEnabled( true );
-    ui->collidersGroupBox->setEnabled( true );
-    ui->toolGroupBox->setEnabled( true );
-    ui->gridGroupBox->setEnabled( true );
-    ui->parametersGroupBox->setEnabled( true );
-    ui->exportGroupBox->setEnabled( true );
     ui->stopButton->setEnabled( false );
     if ( ui->pauseButton->isChecked() ) {
         ui->pauseButton->click();
@@ -141,6 +126,16 @@ void MainWindow::takeScreenshot()
     ui->viewPanel->resumeSimulation();
 }
 
+void MainWindow::roundFillParticles()
+{
+    // rounds number of particles to nearest multiple of 512
+    const int n = ui->fillNumParticlesSpinbox->value();
+    int numParticles = (n/512) * 512;
+    numParticles += 512*(numParticles < 512);
+    if (numParticles != n)
+        ui->fillNumParticlesSpinbox->setValue(numParticles);
+}
+
 void MainWindow::setupUI()
 {
     assert( connect(ui->actionSave_Mesh, SIGNAL(triggered()), ui->viewPanel, SLOT(saveSelectedMesh())) );
@@ -152,6 +147,8 @@ void MainWindow::setupUI()
     assert( connect(ui->fillButton, SIGNAL(clicked()), ui->viewPanel, SLOT(fillSelectedMesh())) );
     FloatBinding::bindSpinBox( ui->fillResolutionSpinbox, UiSettings::fillResolution(), this );
     IntBinding::bindSpinBox( ui->fillNumParticlesSpinbox, UiSettings::fillNumParticles(), this );
+    ui->fillNumParticlesSpinbox->setSingleStep(512);
+    assert( connect(ui->fillNumParticlesSpinbox, SIGNAL(editingFinished()), this, SLOT(roundFillParticles())) );
     FloatBinding::bindSpinBox( ui->densitySpinbox, UiSettings::fillDensity(), this );
 
     // Simulation

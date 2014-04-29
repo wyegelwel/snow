@@ -59,7 +59,7 @@ void MitsubaExporter::reset(Grid grid)
     SAFE_DELETE_ARRAY(m_nodes);
 //    SAFE_DELETE_ARRAY(m_albedo);
     m_grid = grid;
-    m_nodes = new ParticleGridNode[m_grid.nodeCount()];
+    m_nodes = new Node[m_grid.nodeCount()];
 
     //m_albedo = new float[m_grid.nodeCount()];
 }
@@ -147,7 +147,7 @@ void MitsubaExporter::exportVolumeData(float t)
 }
 
 
-ParticleGridNode * MitsubaExporter::getNodesPtr()
+Node * MitsubaExporter::getNodesPtr()
 {
     return m_nodes;
 }

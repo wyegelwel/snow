@@ -67,10 +67,6 @@ public:
 
     void fill( ParticleSystem &particles, int particleCount, float h, float targetDensity );
 
-    // cpu implementation of alternative mesh filling algorithm
-    //void fill2( ParticleSystem &particles, int particleCount, float h, float targetDensity );
-
-
     inline bool isEmpty() const { return m_vertices.empty() || m_tris.empty(); }
     inline void clear() { m_vertices.clear(); m_tris.clear(); m_normals.clear(); deleteVBO(); }
 

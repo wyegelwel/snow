@@ -17,7 +17,7 @@
 #include "common/renderable.h"
 
 #include "geometry/grid.h"
-#include "cuda/vector.cu"
+#include "cuda/vector.h"
 
 /**
  * @brief Axis-aligned bounding box

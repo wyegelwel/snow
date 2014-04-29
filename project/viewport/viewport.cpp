@@ -22,7 +22,7 @@
 #endif
 #include "glm/gtc/type_ptr.hpp"
 
-#include "cuda/vector.cu"
+#include "cuda/vector.h"
 
 #define ZOOM_SCALE 1.f
 

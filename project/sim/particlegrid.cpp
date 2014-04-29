@@ -107,13 +107,13 @@ ParticleGrid::buildBuffers()
 {
     deleteBuffers();
 
-    ParticleGridNode *data = new ParticleGridNode[m_size];
-    memset( data, 0, m_size*sizeof(ParticleGridNode) );
+    Node *data = new Node[m_size];
+    memset( data, 0, m_size*sizeof(Node) );
 
     // Build VBO
     glGenBuffers( 1, &m_glVBO );
     glBindBuffer( GL_ARRAY_BUFFER, m_glVBO );
-    glBufferData( GL_ARRAY_BUFFER, m_size*sizeof(ParticleGridNode), data, GL_DYNAMIC_DRAW );
+    glBufferData( GL_ARRAY_BUFFER, m_size*sizeof(Node), data, GL_DYNAMIC_DRAW );
 
     delete [] data;
 
@@ -123,15 +123,15 @@ ParticleGrid::buildBuffers()
 
     // Mass attribute
     glEnableVertexAttribArray( 0 );
-    glVertexAttribPointer( 0, 1, GL_FLOAT, GL_FALSE, sizeof(ParticleGridNode), (void*)(0) );
+    glVertexAttribPointer( 0, 1, GL_FLOAT, GL_FALSE, sizeof(Node), (void*)(0) );
 
     // Velocity attribute
     glEnableVertexAttribArray( 1 );
-    glVertexAttribPointer( 1, 3, GL_FLOAT, GL_FALSE, sizeof(ParticleGridNode), (void*)(sizeof(GLfloat)) );
+    glVertexAttribPointer( 1, 3, GL_FLOAT, GL_FALSE, sizeof(Node), (void*)(sizeof(GLfloat)) );
 
     // Force attribute
     glEnableVertexAttribArray( 2 );
-    glVertexAttribPointer( 2, 3, GL_FLOAT, GL_FALSE, sizeof(ParticleGridNode), (void*)(sizeof(GLfloat)+2*sizeof(vec3)) );
+    glVertexAttribPointer( 2, 3, GL_FLOAT, GL_FALSE, sizeof(Node), (void*)(sizeof(GLfloat)+2*sizeof(vec3)) );
 
     glBindVertexArray( 0 );
     glBindBuffer( GL_ARRAY_BUFFER, 0 );

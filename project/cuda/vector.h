@@ -2,14 +2,14 @@
 **
 **   SNOW - CS224 BROWN UNIVERSITY
 **
-**   vector.cu
+**   vector.h
 **   Authors: evjang, mliberma, taparson, wyegelwe
 **   Created: 15 Apr 2014
 **
 **************************************************************************/
 
-#ifndef VECTOR_CU
-#define VECTOR_CU
+#ifndef VECTOR_H
+#define VECTOR_H
 
 #include <cuda.h>
 #include <cuda_runtime.h>
@@ -48,13 +48,22 @@ struct vec3
     vec3( const glm::vec3 &v ) { x = v.x; y = v.y; z = v.z; }
 
     __host__ __device__ __forceinline__
+    vec3( const glm::ivec3 &v ) { x = (float)v.x; y = (float)v.y; z = (float)v.z; }
+
+    __host__ __device__ __forceinline__
     operator glm::vec3() const { return glm::vec3( x, y, z ); }
+
+    __host__ __device__ __forceinline__
+    operator glm::ivec3() const { return glm::ivec3( (int)x, (int)y, (int)z ); }
 
     __host__ __device__ __forceinline__
     vec3& operator = ( const vec3 &rhs ) { x = rhs.x; y = rhs.y; z = rhs.z; return *this; }
 
     __host__ __device__ __forceinline__
     vec3& operator = ( const glm::vec3 &rhs ) { x = rhs.x; y = rhs.y; z = rhs.z; return *this; }
+
+    __host__ __device__ __forceinline__
+    vec3& operator = ( const glm::ivec3 &rhs ) { x = (float)rhs.x; y = (float)rhs.y; z = (float)rhs.z; return *this; }
 
     __host__ __device__ __forceinline__
     int majorAxis() { return ( (fabsf(x)>fabsf(y)) ? ((fabsf(x)>fabsf(z)) ? 0 : 2) : ((fabsf(y)>fabsf(z)) ? 1 : 2) ); }
@@ -163,6 +172,18 @@ struct vec3
     vec3 operator / ( float f ) const { float fi = 1.f/f; return vec3( x*fi, y*fi, z*fi ); }
 
     __host__ __device__ __forceinline__
+    vec3& operator += ( float f ) { x += f; y += f; z += f; return *this; }
+
+    __host__ __device__ __forceinline__
+    vec3 operator + ( float f ) const { return vec3( x+f, y+f, z+f ); }
+
+    __host__ __device__ __forceinline__
+    vec3& operator -= ( float f ) { x -= f; y -= f; z -= f; return *this; }
+
+    __host__ __device__ __forceinline__
+    vec3 operator - ( float f ) const { return vec3( x-f, y-f, z-f ); }
+
+    __host__ __device__ __forceinline__
     bool valid( bool *nan = NULL ) const
     {
         if ( isnan(x) || isnan(y) || isnan(z) ) {
@@ -183,4 +204,4 @@ vec3 operator - ( const vec3 &v ) { return vec3( -v.x, -v.y, -v.z ); }
 __host__ __device__ __forceinline__
 vec3 operator * ( float f, const vec3 &v ) { return vec3( f*v.x, f*v.y, f*v.z ); }
 
-#endif // VECTOR_CU
+#endif // VECTOR_H

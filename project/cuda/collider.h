@@ -2,25 +2,27 @@
 **
 **   SNOW - CS224 BROWN UNIVERSITY
 **
-**   collider.cu
+**   collider.h
 **   Authors: evjang, mliberma, taparson, wyegelwe
 **   Created: 17 Apr 2014
 **
 **************************************************************************/
 
+#ifndef CUDACOLLIDER_H
+#define CUDACOLLIDER_H
 
 #include <cuda.h>
 #include <cuda_runtime.h>
+#include "math.h"   // this imports the CUDA math library
 
 #ifndef GLM_FORCE_RADIANS
     #define GLM_FORCE_RADIANS
 #endif
 #include <glm/geometric.hpp>
 
-#include "math.h"   // this imports the CUDA math library
 #include "sim/collider.h"
-#include "matrix.cu"
-#include "vector.cu"
+#include "cuda/matrix.h"
+#include "cuda/vector.h"
 
 // isColliding functions
 typedef bool (*isCollidingFunc) (const ImplicitCollider &collider, const vec3 &position);
@@ -86,9 +88,9 @@ __device__ void colliderNormal(const ImplicitCollider &collider, const vec3 &pos
     colliderNormalFunctions[collider.type](collider, position, normal);
 }
 
-__device__ void checkForAndHandleCollisions(ImplicitCollider *colliders, int numColliders, float coeffFriction, const vec3 &position, vec3 &velocity ){
+__device__ void checkForAndHandleCollisions( const ImplicitCollider *colliders, int numColliders, float coeffFriction, const vec3 &position, vec3 &velocity ){
     for (int i = 0; i < numColliders; i++){
-        ImplicitCollider &collider = colliders[i];
+        const ImplicitCollider &collider = colliders[i];
         if (isColliding(collider, position)){
             vec3 vRel = velocity - collider.velocity;
             vec3 normal;
@@ -107,3 +109,5 @@ __device__ void checkForAndHandleCollisions(ImplicitCollider *colliders, int num
         }
     }
 }
+
+#endif // CUDACOLLIDER_H

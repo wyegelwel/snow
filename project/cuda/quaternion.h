@@ -2,14 +2,14 @@
 **
 **   SNOW - CS224 BROWN UNIVERSITY
 **
-**   quaternion.cu
+**   quaternion.h
 **   Authors: evjang, mliberma, taparson, wyegelwe
 **   Created: 15 Apr 2014
 **
 **************************************************************************/
 
-#ifndef QUATERNION_CU
-#define QUATERNION_CU
+#ifndef QUATERNION_H
+#define QUATERNION_H
 
 #include <cuda.h>
 #include <cuda_runtime.h>
@@ -71,4 +71,4 @@ struct quat
 
 };
 
-#endif // QUATERNION_CU
+#endif // QUATERNION_H

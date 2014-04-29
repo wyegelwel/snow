@@ -4,7 +4,6 @@
 #include <iostream>
 
 #define PLANE_CONSTANT 10.0
-
 //float const PLANE_CONSTANT = 10.0f;
 
 Collider::Collider( ImplicitCollider &collider, ColliderType t, vec3 p, vec3 c, vec3 v)
@@ -24,7 +23,7 @@ ImplicitCollider* Collider::getImplicitCollider()  {
 void Collider::render()
 {
     glPushMatrix();
-    glTranslatef( m_collider.center.x, m_collider.center.y, m_collider.center.z );
+//    glTranslatef( m_collider.center.x, m_collider.center.y, m_collider.center.z );
     switch( m_collider.type )  {
     case(SPHERE):
         renderSphere();
@@ -41,20 +40,20 @@ void Collider::render()
 
 void Collider::renderForPicker()
 {
-    glPushMatrix();
-    glTranslatef( m_collider.center.x, m_collider.center.y, m_collider.center.z );
-    switch( m_collider.type )  {
-    case(SPHERE):
-        renderSphere();
-        break;
-    case(HALF_PLANE):
-        renderPlane();
-        break;
-    default:
-        break;
-    }
+//    glPushMatrix();
+//    glTranslatef( m_collider.center.x, m_collider.center.y, m_collider.center.z );
+//    switch( m_collider.type )  {
+//    case(SPHERE):
+//        renderSphere();
+//        break;
+//    case(HALF_PLANE):
+//        renderPlane();
+//        break;
+//    default:
+//        break;
+//    }
     m_mesh->renderForPicker();
-    glPopMatrix();
+//    glPopMatrix();
 }
 
 BBox
@@ -71,17 +70,23 @@ Collider::getCentroid( const glm::mat4 &ctm )
 
 void Collider::renderSphere()
 {
-    glScalef( m_collider.param.x, m_collider.param.x, m_collider.param.x );
+//    glScalef( m_collider.param.x, m_collider.param.x, m_collider.param.x );
 }
 
 void Collider::renderPlane()
 {
-    vec3 oldNormal = vec3(0,1,0);
-    vec3 rotationAxis = vec3::cross( oldNormal, m_collider.param );
-    float rotationAngle = acos(vec3::dot(m_collider.param,oldNormal));
-    rotationAngle *= (180.0/M_PI);
-    glRotatef(rotationAngle,rotationAxis.x,rotationAxis.y,rotationAxis.z);
-    glScalef(PLANE_CONSTANT,PLANE_CONSTANT,PLANE_CONSTANT);
+//    vec3 oldNormal = vec3(0,1,0);
+//    vec3 rotationAxis = vec3::cross( oldNormal, m_collider.param );
+//    float rotationAngle = acos(vec3::dot(m_collider.param,oldNormal));
+//    rotationAngle *= (180.0/M_PI);
+//    glRotatef(rotationAngle,rotationAxis.x,rotationAxis.y,rotationAxis.z);
+//    glLineWidth(5.0f);
+//    glBegin(GL_LINES);
+//        glVertex3f(0,0,0);
+//        glVertex3f(m_collider.param.x,m_collider.param.y,m_collider.param.z);
+//    glEnd();
+//    glLineWidth(1.0f);
+//    glScalef(PLANE_CONSTANT,PLANE_CONSTANT,PLANE_CONSTANT);
 }
 
 void Collider::initializeMesh()
@@ -89,7 +94,7 @@ void Collider::initializeMesh()
     QList<Mesh*> colliderMeshes;
     switch( m_collider.type ) {
     case SPHERE:
-        OBJParser::load( PROJECT_PATH "/data/models/sphere.obj", colliderMeshes );
+        OBJParser::load( PROJECT_PATH "/data/models/sphereCol.obj", colliderMeshes );
         break;
     case HALF_PLANE:
         OBJParser::load( PROJECT_PATH "/data/models/plane.obj", colliderMeshes );

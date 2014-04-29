@@ -2,14 +2,14 @@
 **
 **   SNOW - CS224 BROWN UNIVERSITY
 **
-**   matrix.cu
+**   matrix.h
 **   Authors: evjang, mliberma, taparson, wyegelwe
 **   Created: 15 Apr 2014
 **
 **************************************************************************/
 
-#ifndef MATRIX_CU
-#define MATRIX_CU
+#ifndef MATRIX_H
+#define MATRIX_H
 
 #include <cuda.h>
 #include <cuda_runtime.h>
@@ -22,8 +22,8 @@
 #include "glm/mat3x3.hpp"
 #include "glm/gtc/type_ptr.hpp"
 
-#include "cuda/vector.cu"
-#include "cuda/quaternion.cu"
+#include "cuda/vector.h"
+#include "cuda/quaternion.h"
 
 struct mat3
 {
@@ -254,6 +254,27 @@ struct mat3
                      A[6], A[7], A[8]+1.f );
     }
 
+    __host__ __device__ __forceinline__
+    static mat3 emult(const mat3 &A, const mat3 &B){
+        mat3 tmp;
+        tmp[0] = A[0]*B[0];
+        tmp[1] = A[1]*B[1];
+        tmp[2] = A[2]*B[2];
+        tmp[3] = A[3]*B[3];
+        tmp[4] = A[4]*B[4];
+        tmp[5] = A[5]*B[5];
+        tmp[6] = A[6]*B[6];
+        tmp[7] = A[7]*B[7];
+        tmp[8] = A[8]*B[8];
+        return tmp;
+    }
+
+    __host__ __device__ __forceinline__
+    static float innerProduct(const mat3 &A, const mat3 &B){
+        return A[0]*B[0] + A[1]*B[1] + A[2]*B[2] + A[3]*B[3] + A[4]*B[4]
+                + A[5]*B[5] + A[6]*B[6] + A[7]*B[7] + A[8]*B[8];
+    }
+
     // Optimize transpose(A) * B;
     __host__ __device__ __forceinline__
     static mat3 multiplyAtB( const mat3 &A, const mat3 &B )
@@ -357,10 +378,38 @@ struct mat3
         return A;
     }
 
+    // Note: adjugate = transpose(cofactor)
+
+    __host__ __device__ __forceinline__
+    static mat3 adjugate( const mat3 &M )
+    {
+        mat3 A;
+        A[0] = (M[4]*M[8]-M[5]*M[7]); A[3] = (M[5]*M[6]-M[3]*M[8]); A[6] = (M[3]*M[7]-M[4]*M[6]);
+        A[1] = (M[2]*M[7]-M[1]*M[8]); A[4] = (M[0]*M[8]-M[2]*M[6]); A[7] = (M[1]*M[6]-M[0]*M[7]);
+        A[2] = (M[1]*M[5]-M[2]*M[4]); A[5] = (M[2]*M[3]-M[0]*M[5]); A[8] = (M[0]*M[4]-M[1]*M[3]);
+        return A;
+    }
+
+    __host__ __device__ __forceinline__
+    static mat3 cofactor( const mat3 &M )
+    {
+        mat3 A;
+        A[0] = (M[4]*M[8]-M[5]*M[7]); A[3] = (M[2]*M[7]-M[1]*M[8]); A[6] = (M[1]*M[5]-M[2]*M[4]);
+        A[1] = (M[5]*M[6]-M[3]*M[8]); A[4] = (M[0]*M[8]-M[2]*M[6]); A[7] = (M[2]*M[3]-M[0]*M[5]);
+        A[2] = (M[3]*M[7]-M[4]*M[6]); A[5] = (M[1]*M[6]-M[0]*M[7]); A[8] = (M[0]*M[4]-M[1]*M[3]);
+        return A;
+    }
+
+    // Should be written with a more robust solver, but this will do for now
+    __host__ __device__ __forceinline__
+    static vec3 solve( const mat3 &A, const vec3 &b )
+    {
+       return mat3::inverse(A) * b;
+    }
 };
 
 __host__ __device__ __forceinline__
 mat3 operator * ( float f, const mat3 &m ) { return m*f; }
 
 
-#endif // MATRIX_CU
+#endif // MATRIX_H

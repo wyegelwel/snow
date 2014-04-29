@@ -17,7 +17,7 @@
 #include "glm/gtc/type_ptr.hpp"
 
 #include "common/renderable.h"
-#include "cuda/vector.cu"
+#include "cuda/vector.h"
 #include "geometry/bbox.h"
 #include "scene/scene.h"
 #include "scene/scenenode.h"

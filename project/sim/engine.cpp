@@ -11,6 +11,7 @@
 #include <GL/gl.h>
 
 #include "common/common.h"
+#include "sim/caches.h"
 #include "sim/collider.h"
 #include "sim/engine.h"
 #include "sim/particlesystem.h"
@@ -30,6 +31,7 @@
 Engine::Engine()
     : m_particleSystem(NULL),
       m_particleGrid(NULL),
+      m_devNodeCache(NULL),
       m_time(0.f),
       m_running(false),
       m_paused(false)
@@ -52,7 +54,8 @@ Engine::~Engine()
     if ( m_running ) stop();
     SAFE_DELETE( m_particleSystem );
     SAFE_DELETE( m_particleGrid );
-    if ( m_export )    
+    SAFE_DELETE( m_devNodeCache );
+    if ( m_export )
         SAFE_DELETE( m_exporter );
 }
 
@@ -60,6 +63,40 @@ void Engine::setGrid(const Grid &grid)
 {
     m_grid = grid;
     m_particleGrid->setGrid( grid );
+}
+
+void Engine::addCollider(Collider &collider, const glm::mat4 &ctm)  {
+    ImplicitCollider &col = *(collider.getImplicitCollider());
+//    glm::vec4 centerTemp = glm::vec4(col.center.x,col.center.y,col.center.z,1);
+//    //transform center
+//    centerTemp = ctm*centerTemp;
+//    col.center = glm::vec3(centerTemp.x,centerTemp.y,centerTemp.z);
+
+    //transform center
+    std::cout << "ctm: " << std::endl << ctm[0][0] << "," << ctm[0][1] << "," << ctm[0][2] << "," << ctm[0][3] << std::endl
+                         << std::endl << ctm[1][0] << "," << ctm[1][1] << "," << ctm[1][2] << "," << ctm[1][3] << std::endl
+                         << std::endl << ctm[2][0] << "," << ctm[2][1] << "," << ctm[2][2] << "," << ctm[2][3] << std::endl
+                         << std::endl << ctm[3][0] << "," << ctm[3][1] << "," << ctm[3][2] << "," << ctm[3][3] << std::endl << std::endl;
+    col.center = glm::vec3(ctm[3][0],ctm[3][1],ctm[3][2]);
+    std::cout << "center: " << col.center.x << "," << col.center.y << "," << col.center.z << std::endl;
+    //transform scale for sphere
+    glm::vec3 scale(glm::length(glm::vec4(ctm[0][0],ctm[0][1],ctm[0][2],ctm[0][3])),glm::length(glm::vec4(ctm[1][0],ctm[1][1],ctm[1][2],ctm[1][3])),glm::length(glm::vec4(ctm[2][0],ctm[2][1],ctm[2][2],ctm[2][3])));
+    if(col.type == SPHERE)  {
+        col.param.x = scale.x;
+        std::cout << "param: " << col.param.x << std::endl;
+    }
+
+    if(col.type == HALF_PLANE)  {
+        glm::vec4 basisOne(glm::vec4(ctm[0][0],ctm[0][1],ctm[0][2],ctm[0][3])/scale.x);
+        glm::vec4 basisTwo(glm::vec4(ctm[1][0],ctm[1][1],ctm[1][2],ctm[1][3])/scale.x);
+        glm::vec4 basisThree(glm::vec4(ctm[2][0],ctm[2][1],ctm[2][2],ctm[2][3])/scale.x);
+        glm::mat3 rotation(basisOne.x,basisTwo.x,basisThree.x,
+                           basisOne.y,basisTwo.y,basisThree.y,
+                           basisOne.z,basisTwo.z,basisThree.z);
+        col.param = glm::vec3(0,1,0)*rotation;
+        std::cout << "param: " << col.param.x << "," << col.param.y << "," << col.param.z << std::endl;
+    }
+    m_colliders.append(col);
 }
 
 void Engine::addParticleSystem( const ParticleSystem &particles )
@@ -167,21 +204,22 @@ void Engine::update()
         }
 
         cudaGraphicsMapResources( 1, &m_nodesResource, 0 );
-        ParticleGridNode *devNodes;
+        Node *devNodes;
         checkCudaErrors( cudaGraphicsResourceGetMappedPointer( (void**)&devNodes, &size, m_nodesResource ) );
         checkCudaErrors( cudaDeviceSynchronize() );
 
-        if ( (int)(size/sizeof(ParticleGridNode)) != m_particleGrid->size() ) {
-            LOG( "Grid nodes resource error : %lu bytes (%lu expected)", size, m_particleGrid->size()*sizeof(ParticleGridNode) );
+        if ( (int)(size/sizeof(Node)) != m_particleGrid->size() ) {
+            LOG( "Grid nodes resource error : %lu bytes (%lu expected)", size, m_particleGrid->size()*sizeof(Node) );
         }
 
         bool doShading = UiSettings::showParticlesMode() == UiSettings::PARTICLE_SHADED;
-        updateParticles( m_params, devParticles, m_particleSystem->size(), m_devGrid,
-                         devNodes, m_grid.nodeCount(), m_devPGTD, m_devColliders, m_colliders.size(), doShading);
+
+        updateParticles( m_params, devParticles, m_devParticleCaches, m_particleSystem->size(), m_devGrid,
+                         devNodes, m_devNodeCache, m_grid.nodeCount(), m_devColliders, m_colliders.size(), m_devMaterial, doShading );
 
         if (m_export && (m_time - m_exporter->getLastUpdateTime() >= m_exporter->getspf()))
         {
-            cudaMemcpy(m_exporter->getNodesPtr(), devNodes, m_grid.nodeCount() * sizeof(ParticleGridNode), cudaMemcpyDeviceToHost);
+            cudaMemcpy(m_exporter->getNodesPtr(), devNodes, m_grid.nodeCount() * sizeof(Node), cudaMemcpyDeviceToHost);
             m_exporter->runExportThread(m_time);
         }
 
@@ -220,9 +258,11 @@ void Engine::initializeCudaResources()
     float particlesSize = m_particleSystem->size()*sizeof(Particle) / 1e6;
     LOG( "Allocated %.2f MB for particle system.", particlesSize );
 
+    int numNodes = m_grid.nodeCount();
+
     // Grid Nodes
     registerVBO( &m_nodesResource, m_particleGrid->vbo() );
-    float nodesSize =  m_grid.nodeCount()*sizeof(ParticleGridNode) / 1e6;
+    float nodesSize =  numNodes*sizeof(Node) / 1e6;
     LOG( "Allocating %.2f MB for grid nodes.", nodesSize );
 
     // Grid
@@ -233,16 +273,28 @@ void Engine::initializeCudaResources()
     checkCudaErrors(cudaMalloc( (void**)&m_devColliders, m_colliders.size()*sizeof(ImplicitCollider) ));
     checkCudaErrors(cudaMemcpy( m_devColliders, m_colliders.data(), m_colliders.size()*sizeof(ImplicitCollider), cudaMemcpyHostToDevice ));
 
-    // Particle Grid Temp Data
-    checkCudaErrors(cudaMalloc( (void**)&m_devPGTD, m_particleSystem->size()*sizeof(ParticleTempData) ));
-    float tempSize = m_particleSystem->size()*sizeof(ParticleTempData) / 1e6;
-    LOG( "Allocating %.2f MB for particle grid temp data.", tempSize );
+    // Caches
+    SAFE_DELETE( m_devNodeCache );
+    m_devNodeCache = new NodeCache;
+    checkCudaErrors( cudaMalloc((void**)&(m_devNodeCache->r), numNodes*sizeof(vec3)) );
+    checkCudaErrors( cudaMalloc((void**)&(m_devNodeCache->s), numNodes*sizeof(vec3)) );
+    checkCudaErrors( cudaMalloc((void**)&(m_devNodeCache->p), numNodes*sizeof(vec3)) );
+    checkCudaErrors( cudaMalloc((void**)&(m_devNodeCache->q), numNodes*sizeof(vec3)) );
+    checkCudaErrors( cudaMalloc((void**)&(m_devNodeCache->v), numNodes*sizeof(vec3)) );
+    checkCudaErrors( cudaMalloc((void**)&(m_devNodeCache->df), numNodes*sizeof(vec3)) );
+    checkCudaErrors( cudaMalloc((void**)&(m_devNodeCache->scratch), numNodes*sizeof(float)) );
+    float nodeCacheSize = numNodes*(6*sizeof(vec3)+sizeof(float)) / 1e6;
+    LOG( "Allocating %.2f MB for implicit update node cache.", nodeCacheSize );
+
+    checkCudaErrors(cudaMalloc( (void**)&m_devParticleCaches, m_particleSystem->size()*sizeof(ParticleCache) ));
+    float particleCachesSize = m_particleSystem->size()*sizeof(ParticleCache) / 1e6;
+    LOG( "Allocating %.2f MB for implicit update particle caches.", particleCachesSize );
 
     // Material Constants
-  //  checkCudaErrors(cudaMalloc( (void**)&m_devMaterial, sizeof(MaterialConstants) ));
-  //  checkCudaErrors(cudaMemcpy( m_devMaterial, &m_materialConstants, sizeof(MaterialConstants), cudaMemcpyHostToDevice ));
+    checkCudaErrors(cudaMalloc( (void**)&m_devMaterial, sizeof(MaterialConstants) ));
+    checkCudaErrors(cudaMemcpy( m_devMaterial, &m_materialConstants, sizeof(MaterialConstants), cudaMemcpyHostToDevice ));
 
-    LOG( "Allocated %.2f MB in total", particlesSize + nodesSize + tempSize );
+    LOG( "Allocated %.2f MB in total", particlesSize + nodesSize + nodeCacheSize + particleCachesSize );
 
     LOG( "Computing particle volumes..." );
 
@@ -250,19 +302,13 @@ void Engine::initializeCudaResources()
     Particle *devParticles;
     size_t size;
     checkCudaErrors( cudaGraphicsResourceGetMappedPointer( (void**)&devParticles, &size, m_particlesResource ) );
-
     if ( (int)(size/sizeof(Particle)) != m_particleSystem->size() ) {
         LOG( "Particle resource error : %lu bytes (%lu expected)", size, m_particleSystem->size()*sizeof(Particle) );
     }
-
-    initializeParticleVolumes( devParticles, m_particleSystem->size(), m_devGrid, m_grid.nodeCount() );
-
-//    checkCudaErrors(cudaMemcpy( m_particleSystem->particles().data(), devParticles, m_particleSystem->size()*sizeof(Particle), cudaMemcpyDeviceToHost ));
-//    for ( int i = 0; i < 10; ++i ) {
-//        LOG( "Volume: %g", m_particleSystem->particles().at(i).volume );
-//    }
-
+    initializeParticleVolumes( devParticles, m_particleSystem->size(), m_devGrid, numNodes );
     checkCudaErrors( cudaGraphicsUnmapResources(1, &m_particlesResource, 0) );
+
+    LOG( "Initialization complete." );
 }
 
 void Engine::freeCudaResources()
@@ -272,8 +318,15 @@ void Engine::freeCudaResources()
     unregisterVBO( m_nodesResource );
     cudaFree( m_devGrid );
     cudaFree( m_devColliders );
-    cudaFree( m_devPGTD );
-    //cudaFree( m_devMaterial );
+    cudaFree( m_devNodeCache->r );
+    cudaFree( m_devNodeCache->s );
+    cudaFree( m_devNodeCache->p );
+    cudaFree( m_devNodeCache->q );
+    cudaFree( m_devNodeCache->v );
+    cudaFree( m_devNodeCache->df );
+    cudaFree( m_devNodeCache->scratch );
+    cudaFree( m_devParticleCaches );
+    cudaFree( m_devMaterial );
 }
 
 void Engine::render()

@@ -19,7 +19,7 @@
 #include <helper_cuda.h>
 #include <helper_cuda_gl.h>
 
-#include "cuda/vector.cu"
+#include "cuda/vector.h"
 
 #define CUDA_INCLUDE
 #include "common/common.h"
@@ -28,7 +28,7 @@
 #include "sim/particle.h"
 #include "geometry/grid.h"
 #include "geometry/bbox.h"
-#include "cuda/noise.cu"
+#include "cuda/noise.h"
 
 #include "glm/gtc/random.hpp"
 

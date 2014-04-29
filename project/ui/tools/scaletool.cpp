@@ -185,16 +185,19 @@ ScaleTool::mouseMoved()
     if ( m_scaling ) {
         const glm::ivec2 &p0 = UserInput::mousePos() - UserInput::mouseMove();
         const glm::ivec2 &p1 = UserInput::mousePos();
+        bool sphereTrans = false;
+        float t0,t1;
         glm::mat4 transform = glm::mat4(1.f);
         if ( m_axisSelection < 3 ) {
-            float t0 = intersectAxis( p0 );
-            float t1 = intersectAxis( p1 );
+            t0 = intersectAxis( p0 );
+            t1 = intersectAxis( p1 );
             if ( fabsf(t1) > 1e-6 ) {
                 float t = t1/t0;
                 glm::vec3 scale = glm::vec3(1,1,1); scale[m_axisSelection] = t;
                 transform = glm::scale( glm::mat4(1.f), scale );
             }
         } else {
+            sphereTrans = true;
             float d = 1.f + SCALE * ( p1.x - m_mouseDownPos.x );
             if ( fabsf(d) > 1e-6 ) {
                 m_transform = glm::scale( glm::mat4(1.f), glm::vec3(d,d,d) );
@@ -211,9 +214,31 @@ ScaleTool::mouseMoved()
                     glm::translate( glm::mat4(1.f), glm::vec3(-m_center.x,-m_center.y,-m_center.z) );
         for ( SceneNodeIterator it = m_panel->m_scene->begin(); it.isValid(); ++it ) {
             if ( (*it)->hasRenderable() && (*it)->getRenderable()->isSelected() &&
-                 (*it)->getType() != SceneNode::SIMULATION_GRID ) {
+                 (*it)->getType() != SceneNode::SIMULATION_GRID && (*it)->getType() != SceneNode::IMPLICIT_COLLIDER) {
                 (*it)->applyTransformation( transform );
             }
+            else if((*it)->getType() == SceneNode::IMPLICIT_COLLIDER && (*it)->hasRenderable() && (*it)->getRenderable()->isSelected()) {
+                switch(dynamic_cast<Collider*>((*it)->getRenderable())->getImplicitCollider()->type)  {
+                case HALF_PLANE:
+                    break;
+                case SPHERE:
+                    if(sphereTrans) (*it)->applyTransformation( transform );
+                    else  {
+                        glm::mat4 transformSphere(1.f);
+                        float t = t1/t0;
+                        glm::vec3 scale = glm::vec3(t,t,t);
+                        transformSphere = glm::scale( glm::mat4(1.f), scale );
+                        transformSphere = glm::translate( glm::mat4(1.f), glm::vec3(m_center.x,m_center.y,m_center.z) ) *
+                                transformSphere *
+                                glm::translate( glm::mat4(1.f), glm::vec3(-m_center.x,-m_center.y,-m_center.z) );
+                        (*it)->applyTransformation( transformSphere );
+                    }
+                    break;
+                default:
+                    break;
+                }
+            }
+            else  {}
         }
     }
     update();

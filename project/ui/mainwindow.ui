@@ -65,9 +65,9 @@
        <property name="geometry">
         <rect>
          <x>0</x>
-         <y>0</y>
+         <y>-259</y>
          <width>284</width>
-         <height>930</height>
+         <height>873</height>
         </rect>
        </property>
        <layout class="QGridLayout" name="gridLayout_2">
@@ -367,12 +367,7 @@
              </item>
              <item>
               <property name="text">
-               <string>Vertical Plane</string>
-              </property>
-             </item>
-             <item>
-              <property name="text">
-               <string>Horizontal Plane</string>
+               <string>Half-Plane</string>
               </property>
              </item>
             </widget>

@@ -29,7 +29,7 @@
 #include "glm/vec4.hpp"
 #include "glm/mat4x4.hpp"
 
-#include "cuda/vector.cu"
+#include "cuda/vector.h"
 
 struct Grid;
 

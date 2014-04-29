@@ -1,7 +1,7 @@
 #ifndef COLLIDER_H
 #define COLLIDER_H
 
-#include "cuda/vector.cu"
+#include "cuda/vector.h"
 
 /**
  * For the sake of supporting multiple implicit colliders in cuda, we define an enum for the type of collider
@@ -34,7 +34,7 @@ public:
 
     Collider( ImplicitCollider &collider, ColliderType t, vec3 p, vec3 c = vec3(0,0,0), vec3 v = vec3(0,0,0));
     virtual void render();//{mesh->render();}
-
+    static constexpr float SphereRadius(){return .05f;}
 //    virtual void init() = 0;
 
     virtual void renderForPicker();
