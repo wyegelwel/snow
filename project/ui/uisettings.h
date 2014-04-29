@@ -68,6 +68,12 @@ public:
         PARTICLE_SHADED
     };
 
+    enum SnowMaterialPreset
+    {
+        MAT_DEFAULT,
+        MAT_CHUNKY
+    };
+
 public:
 
     static UiSettings* instance();
@@ -107,6 +113,7 @@ private:
     DEFINE_SETTING( float, gridResolution )
 
     DEFINE_SETTING( float, timeStep )
+    DEFINE_SETTING( int, materialPreset )
 
     DEFINE_SETTING( bool, showContainers )
     DEFINE_SETTING( int, showContainersMode )

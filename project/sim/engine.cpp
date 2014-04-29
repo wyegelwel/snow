@@ -41,7 +41,7 @@ Engine::Engine()
 
     m_params.timeStep = 5e-5;
     m_params.startTime = 0.f;
-    m_params.endTime = 60.f;
+    m_params.endTime = 60.f; // not being used...
     m_params.gravity = vec3( 0.f, -9.8f, 0.f );
 
     assert( connect(&m_ticker, SIGNAL(timeout()), this, SLOT(update())) );
@@ -191,7 +191,7 @@ void Engine::update()
 
         m_time += m_params.timeStep;
 
-        if (m_time > UiSettings::maxTime())
+        if (m_time >= UiSettings::maxTime()) // user can adjust max export time dynamically
         {
             stop();
             LOG( "Simulation Completed" );
@@ -291,3 +291,25 @@ vec3 Engine::getCentroid( const glm::mat4 &ctm )
 {
     return m_particleGrid->getCentroid( ctm );
 }
+
+void
+Engine::initParticleMaterials(int preset)
+{
+    m_busy = true;
+
+    cudaGraphicsMapResources( 1, &m_particlesResource, 0 );
+    Particle *devParticles;
+    size_t size;
+    checkCudaErrors( cudaGraphicsResourceGetMappedPointer( (void**)&devParticles, &size, m_particlesResource ) );
+    checkCudaErrors( cudaDeviceSynchronize() );
+
+    if ( (int)(size/sizeof(Particle)) != m_particleSystem->size() ) {
+        LOG( "Particle resource error : %lu bytes (%lu expected)", size, m_particleSystem->size()*sizeof(Particle) );
+    }
+
+    void applyMaterialPreset(Particle *particles, int particleCount, int preset);
+
+
+    m_busy = false;
+}
+

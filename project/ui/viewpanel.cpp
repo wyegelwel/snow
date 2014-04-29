@@ -533,3 +533,10 @@ ViewPanel::saveSelectedMesh()
 
 
 }
+
+void
+ViewPanel::applyMaterials()
+{
+    // re-apply particleSystem
+    m_engine->particleSystem()->applyMaterials(UiSettings::materialPreset());
+}

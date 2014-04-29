@@ -122,6 +122,7 @@ void MainWindow::stopSimulation()
 
 void MainWindow::takeScreenshot()
 {
+    // this has issues rasterizing particles...
     ui->viewPanel->pauseDrawing();
     ui->viewPanel->pauseSimulation();
 
@@ -165,6 +166,8 @@ void MainWindow::setupUI()
     assert( connect(ui->gridZSpinbox, SIGNAL(valueChanged(int)), ui->viewPanel, SLOT(updateSceneGrid())) );
     assert( connect(ui->gridResolutionSpinbox, SIGNAL(valueChanged(double)), ui->viewPanel, SLOT(updateSceneGrid())) );
     FloatBinding::bindSpinBox( ui->timeStepSpinbox, UiSettings::timeStep(), this );
+    ComboIntAttribute::bindInt(ui->snowMaterialCombo, &UiSettings::materialPreset(), this);
+    assert( connect(ui->snowMaterialCombo, SIGNAL(currentIndexChanged(int)), ui->viewPanel, SLOT(applyMaterials())) );
 
     // exporting
     BoolBinding::bindCheckBox( ui->volumeCheckbox, UiSettings::exportVolume(), this );

@@ -62,7 +62,8 @@ public:
     void setGrid( const Grid &grid );
     void clearParticleGrid();
 
-    MaterialConstants& materialConstants() { return m_materialConstants; }
+//    MaterialConstants& materialConstants() { return m_materialConstants; }
+    void initParticleMaterials(int preset);
 
     void addCollider( const ImplicitCollider &collider ) { m_colliders += collider; }
     void clearColliders() { m_colliders.clear(); }
@@ -90,7 +91,7 @@ private:
     ParticleGrid *m_particleGrid;
     Grid m_grid;
     QVector<ImplicitCollider> m_colliders;
-    MaterialConstants m_materialConstants;
+//    MaterialConstants m_materialConstants;
 
     // CUDA pointers
     cudaGraphicsResource *m_particlesResource; // Particles

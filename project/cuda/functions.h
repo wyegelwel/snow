@@ -50,6 +50,9 @@ void fillMesh2( cudaGraphicsResource **resource, int triCount, const Grid &grid,
 // One time computation to get particle volumes
 void initializeParticleVolumes( Particle *particles, int numParticles, Grid *grid, int numNodes );
 
+// material applying (set before starting sim, after filling procedure)
+void applyMaterialPreset(Particle *particles, int particleCount, int preset);
+
 }
 
 #endif // FUNCTIONS_H

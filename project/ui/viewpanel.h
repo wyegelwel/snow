@@ -79,6 +79,8 @@ public slots:
     // Demo Scenes
     void teapotDemo();
 
+    void applyMaterials(); // applies snow material per particle
+
 signals:
 
     void showMeshes();
