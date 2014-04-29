@@ -35,11 +35,11 @@
  * Called over particles
  **/
 #define VEC2IVEC( V ) ( glm::ivec3((int)V.x, (int)V.y, (int)V.z) )
-__global__ void computedF(Particle *particles, Grid *grid, float dt, ParticleGridNode *nodes, vec3 *dus, Implicit::ACache *ACaches){
+__global__ void computedF(Particle *particles, Grid *grid, float dt, ParticleGridNode *nodes, vec3 *dus, Implicit::ParticleCache *pCaches ){
     int particleIdx = blockIdx.y*gridDim.x*blockDim.x + blockIdx.x*blockDim.x + threadIdx.x;
 
     Particle &particle = particles[particleIdx];
-    Implicit::ACache &ACache = ACaches[particleIdx];
+    Implicit::ParticleCache &pCache = pCaches[particleIdx];
     mat3 dF(0.0f);
 
     const vec3 &pos = particle.position;
@@ -83,10 +83,10 @@ __global__ void computedF(Particle *particles, Grid *grid, float dt, ParticleGri
         }
     }
 
-    ACache.dF = dF * particle.elasticF;
+    pCache.dF = dF * particle.elasticF;
 
-    ACache.FeHat = mat3::addIdentity(vGradient) * particle.elasticF;
-    computePD(ACache.FeHat, ACache.ReHat, ACache.SeHat);
+    pCache.FeHat = mat3::addIdentity(vGradient) * particle.elasticF;
+    computePD( pCache.FeHat, pCache.ReHat, pCache.SeHat );
 }
 
 /** Currently computed in computedF, we could parallelize this and computedF but not sure what the time benefit would be*/
@@ -203,15 +203,15 @@ __device__ void compute_dJF_invTrans(mat3 &F, mat3 &dF, mat3 &dJF_invTrans){
  * Called over particles
  **/
 // TODO: Replace JFe_invTrans with the trans of adjugate
-__global__ void computeAp(Particle *particles, MaterialConstants *material, Implicit::ACache *ACaches)
+__global__ void computeAp( Particle *particles, MaterialConstants *material, Implicit::ParticleCache *pCaches )
 {
     int particleIdx = blockIdx.y*gridDim.x*blockDim.x + blockIdx.x*blockDim.x + threadIdx.x;
     Particle &particle = particles[particleIdx];
-    Implicit::ACache &ACache = ACaches[particleIdx];
-    mat3 dF = ACache.dF;
+    Implicit::ParticleCache &pCache = pCaches[particleIdx];
+    mat3 dF = pCache.dF;
 
     mat3 &Fp = particle.plasticF; //for the sake of making the code look like the math
-    mat3 &Fe = ACache.FeHat;
+    mat3 &Fe = pCache.FeHat;
 
     float Jpp = mat3::determinant(Fp);
     float Jep = mat3::determinant(Fe);
@@ -219,8 +219,8 @@ __global__ void computeAp(Particle *particles, MaterialConstants *material, Impl
     float muFp = material->mu*__expf(material->xi*(1-Jpp));
     float lambdaFp = material->lambda*__expf(material->xi*(1-Jpp));
 
-    mat3 &Re = ACache.ReHat;
-    mat3 &Se = ACache.SeHat;
+    mat3 &Re = pCache.ReHat;
+    mat3 &Se = pCache.SeHat;
 
     mat3 dR;
     computedR(dF, Se, Re, dR);
@@ -230,11 +230,11 @@ __global__ void computeAp(Particle *particles, MaterialConstants *material, Impl
 
     mat3 jFe_invTrans = Jep * mat3::transpose(mat3::inverse(Fe));
 
-    ACache.Ap = (2*muFp*(dF - dR) + lambdaFp*jFe_invTrans*mat3::innerProduct(jFe_invTrans, dF) + lambdaFp*(Jep - 1)*dJFe_invTrans);
+    pCache.Ap = (2*muFp*(dF - dR) + lambdaFp*jFe_invTrans*mat3::innerProduct(jFe_invTrans, dF) + lambdaFp*(Jep - 1)*dJFe_invTrans);
 }
 
 
-__global__ void computedf( Particle *particles, Grid *grid, mat3 *Aps, vec3 *dfs )
+__global__ void computedf( Particle *particles, Grid *grid, Implicit::ParticleCache *pCache, vec3 *df )
 {
     int particleIdx = blockIdx.y*gridDim.x*blockDim.x + blockIdx.x*blockDim.x + threadIdx.x;
 
@@ -250,69 +250,126 @@ __global__ void computedf( Particle *particles, Grid *grid, mat3 *Aps, vec3 *dfs
         vec3 wg;
         vec3 nodePos(ijk);
         weightGradient( gridPos-nodePos, wg );
+        vec3 df_j = -particle.volume * mat3::multiplyABt( pCache[particleIdx].Ap, particle.elasticF ) * wg;
 
-        const mat3 &Ap = Aps[particleIdx];
-        vec3 df = -particle.volume * mat3::multiplyABt( Ap, particle.elasticF ) * wg;
-
-        atomicAdd( &dfs[Grid::getGridIndex(ijk,grid->nodeDim())], df );
+        atomicAdd( &df[Grid::getGridIndex(ijk,grid->nodeDim())], df_j );
     }
 }
 
-__global__ void computeResult( ParticleGridNode *nodes, int numNodes, float dt, const vec3 *u, const vec3 *dfs, vec3 *result )
+__global__ void computeEuResult( ParticleGridNode *nodes, int numNodes, float dt, vec3 *u, vec3 *df, vec3 *result )
 {
     int tid = blockDim.x*blockIdx.x + threadIdx.x;
     if ( tid >= numNodes ) return;
-    result[tid] = u[tid] - (BETA*dt/nodes[tid].mass)*dfs[tid];
+    result[tid] = u[tid] - (BETA*dt/nodes[tid].mass)*df[tid];
 }
 
 /**
  * Computes the matrix-vector product Eu. All the pointer arguments are assumed to be
  * device pointers.
- *
- *      u:  device pointer to vector to multiply
- *    dFs:  device pointer to storage for per-particle dF matrices
- *    Aps:  device pointer to storage for per-particle Ap matrices
- * result:  device pointer to array store the values of Eu
  */
 __host__ void computeEu( Particle *particles, int numParticles,
                          Grid *grid, ParticleGridNode *nodes, int numNodes,
-                         float dt, vec3 *u, mat3 *dFs, mat3 *Aps, vec3 *dfs, vec3 *result )
+                         float dt, vec3 *u, vec3 *df, vec3 *result, Implicit::ParticleCache *pCache )
 {
     static const int threadCount = 128;
 
     dim3 blocks = dim3( numParticles/threadCount, 64 );
     dim3 threads = dim3( threadCount/64, 64 );
-    computedf<<< blocks, threads >>>( particles, grid, Aps, dfs );
-    checkCudaErrors( cudaDeviceSynchronize() );
 
-    computeResult<<< numNodes/threadCount, threadCount >>>( nodes, numNodes, dt, u, dfs, result );
+    computedf<<< blocks, threads >>>( particles, grid, pCache, df );
+    checkCudaErrors( cudaDeviceSynchronize() );
+    computeEuResult<<< numNodes/threadCount, threadCount >>>( nodes, numNodes, dt, u, df, result );
     checkCudaErrors( cudaDeviceSynchronize() );
 }
 
-__global__ void initializeVelocities( ParticleGridNode *nodes, int numNodes, Implicit::CRCache *crCache )
+__global__ void initializeVelocities( ParticleGridNode *nodes, int numNodes, vec3 *v )
 {
     int tid = blockDim.x*blockIdx.x + threadIdx.x;
     if ( tid >= numNodes ) return;
-    crCache->u[tid] = nodes[tid].velocity;
+    v[tid] = nodes[tid].velocity;
 }
 
-__host__ void initializeCR( Particle *particles, int numParticles,
-                            Grid *grid, ParticleGridNode *nodes, int numNodes,
-                            float dt, Implicit::CRCache *crCache )
+__global__ void initializeRP( int numNodes, vec3 *vstar, vec3 *Ev0, vec3 *r0, vec3 *p0 )
 {
-    static const int threadCount = 128;
-    initializeVelocities<<< numNodes / threadCount, threadCount >>>( nodes, numNodes, crCache );
+    int tid = blockDim.x*blockIdx.x + threadIdx.x;
+    if ( tid >= numNodes ) return;
+    r0[tid] = vstar[tid] - Ev0[tid];
+    p0[tid] = r0[tid];
+}
+
+__global__ void initializeQ( int numNodes, vec3 *s0, vec3 *q0 )
+{
+    int tid = blockDim.x*blockIdx.x + threadIdx.x;
+    if ( tid >= numNodes ) return;
+    q0[tid] = s0[tid];
+}
+
+__global__ void innerProductDotKernel( int length, vec3 *u, vec3 *v, float *dots )
+{
+    int tid = blockDim.x*blockIdx.x + threadIdx.x;
+    if ( tid >= length ) return;
+    dots[tid] = vec3::dot( u[tid], v[tid] );
+}
+
+__global__ void innerProductReduceKernel( int length, int reductionSize, float *dots )
+{
+    int tid = blockDim.x*blockIdx.x + threadIdx.x;
+    if ( tid >= length || tid+reductionSize >= length ) return;
+    dots[tid] += dots[tid+reductionSize];
+}
+
+__host__ float innerProduct( int length, vec3 *u, vec3 *v, float *dots )
+{
+    static const int threadCount = 100;
+    static const dim3 blocks( (length+threadCount-1)/threadCount );
+    static const dim3 threads( threadCount );
+
+    innerProductDotKernel<<< blocks, threads >>>( length, u, v, dots );
     checkCudaErrors( cudaDeviceSynchronize() );
 
-    computeEu(  );
+    int steps = (int)(ceilf(log2f(length)));
+    int reductionSize = 1 << (steps-1);
+    for ( int i = 0; i < steps; i++ ) {
+        innerProductReduceKernel<<< blocks, threads >>>( length, reductionSize, dots );
+        reductionSize /= 2;
+        checkCudaErrors( cudaDeviceSynchronize() );
+    }
+
+    float result;
+    cudaMemcpy( &result, dots, sizeof(float), cudaMemcpyDeviceToHost );
+    return result;
 
 }
 
-__host__ void computeNodeVelocitiesImplicit( Particle *particles, int numParticles,
-                                             Grid *grid, ParticleGridNode *nodes, int numNodes,
-                                             float dt, Implicit::CRCache *crCache, mat3 *dFs, mat3 *Aps, vec3 *dfs, vec3 *result )
+__host__ void initializeConjugateResidual( Particle *particles, int numParticles,
+                                           Grid *grid, ParticleGridNode *nodes, int numNodes,
+                                           float dt, Implicit::NodeCache *nodeCache, Implicit::ParticleCache *pCache )
 {
+    static const int threadCount = 128;
+    static const dim3 blocks( numNodes/threadCount );
+    static const dim3 threads( threadCount );
+
+    initializeVelocities<<< blocks, threads >>>( nodes, numNodes, nodeCache->v );
+    checkCudaErrors( cudaDeviceSynchronize() );
+
+    computeEu( particles, numParticles, grid, nodes, numNodes, dt, nodeCache->v, nodeCache->df, nodeCache->r, pCache );
+    initializeRP<<< blocks, threads >>>( numNodes, nodeCache->v, nodeCache->r, nodeCache->r, nodeCache->p );
+    checkCudaErrors( cudaDeviceSynchronize() );
+
+    computeEu( particles, numParticles, grid, nodes, numNodes, dt, nodeCache->r, nodeCache->df, nodeCache->s, pCache );
+    initializeQ<<< blocks, threads >>>( numNodes, nodeCache->s, nodeCache->q );
+    checkCudaErrors( cudaDeviceSynchronize() );
+
 
 }
+
+//__host__ void computeNodeVelocitiesImplicit( Particle *particles, int numParticles,
+//                                             Grid *grid, ParticleGridNode *nodes, int numNodes,
+//                                             float dt, Implicit::CRCache *crCache, mat3 *dFs, mat3 *Aps, vec3 *dfs, vec3 *result )
+//{
+
+//}
+
+
 
 #endif // IMPLICIT_H

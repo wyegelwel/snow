@@ -17,16 +17,18 @@ struct mat3;
 namespace Implicit {
 
 // Cache for data used by Conjugate Residual Method
-struct CRCache
+struct NodeCache
 {
     vec3 *r;
     vec3 *s;
     vec3 *p;
     vec3 *q;
-    vec3 *u;
+    vec3 *v;
+    vec3 *df;
+    float *innerProduct;
 };
 
-struct ACache
+struct ParticleCache
 {
     mat3 Ap;
     mat3 FeHat;
