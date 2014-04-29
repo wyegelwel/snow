@@ -70,12 +70,14 @@ __global__ void computedF( const Particle *particles, ParticleCache *pCaches,
     const Particle &particle = particles[particleIdx];
     ParticleCache &pCache = pCaches[particleIdx];
 
+    const glm::ivec3 &dim = grid->dim;
+
     // Compute neighborhood of particle in grid
     vec3 gridIndex = (particle.position - grid->pos) / grid->h,
          gridMax = vec3::floor( gridIndex + vec3(2,2,2) ),
          gridMin = vec3::ceil( gridIndex - vec3(2,2,2) );
-    glm::ivec3 maxIndex = glm::clamp( glm::ivec3(gridMax), glm::ivec3(0,0,0), grid->dim ),
-               minIndex = glm::clamp( glm::ivec3(gridMin), glm::ivec3(0,0,0), grid->dim );
+    glm::ivec3 maxIndex = glm::clamp( glm::ivec3(gridMax), glm::ivec3(0,0,0), dim ),
+               minIndex = glm::clamp( glm::ivec3(gridMin), glm::ivec3(0,0,0), dim );
 
     mat3 dF(0.0f);
     mat3 vGradient(0.0f);
