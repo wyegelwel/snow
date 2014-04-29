@@ -1,1 +1,79 @@
-<p> hello world </p>
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <link rel="shortcut icon" href="../../assets/ico/favicon.ico">
+
+    <title>CS224 Final: Disney snow</title>
+
+    <!-- Bootstrap core CSS -->
+    <link href="dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Custom styles for this template -->
+    <link href="dist/css/jumbotron-narrow.css" rel="stylesheet">
+
+    <!-- Just for debugging purposes. Don't actually copy this line! -->
+    <!--[if lt IE 9]><script src="../../assets/js/ie8-responsive-file-warning.js"></script><![endif]-->
+
+    <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+      <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+  </head>
+
+  <body>
+
+    <div class="container">
+
+      <div class="jumbotron videotron">
+        <iframe width="100%" height="400px" src="http://www.youtube.com/embed/4HpaB-kHMBo" frameborder="0" allowfullscreen></iframe>
+        <!-- <h1>Jumbotron heading</h1>
+        <p class="lead">Cras justo odio, dapibus ac facilisis in, egestas eget quam. Fusce dapibus, tellus ac cursus commodo, tortor mauris condimentum nibh, ut fermentum massa justo sit amet risus.</p>
+        <p><a class="btn btn-lg btn-success" href="#" role="button">Sign up today</a></p> -->
+      </div>
+
+      <div class="row">
+        <div class="col-lg-6">
+
+          <h4>The Project</h4>
+          <p> Using Disney's recent work, <a href="http://www.disneyanimation.com/technology/publications"> A Material Point Method For Snow Simulation (Stomakhin et al., Siggraph 2013) </a> we plan to implement our own snow simulator. Our extension to Disney's work is to bring most of the computation to the GPU so that we can achieve real time (or near real time) performance. </p>
+
+          <!-- 
+            We plan to implement Disney's material-point method for snow simulation. The MPM method combines Lagrangian particles with a Eulerian Cartesian grid. The grid allows for implicit handling of self-collision and fracture, while the particle-based representation has the benefit of more easily tracking mass and other conserved quantities.
+          Paper Link: http://www.disneyanimation.com/technology/publications
+          Disney's implementation was not done in real-time, and their computation was primarily done on the CPU. Our extension would be to push most of the computation onto the GPU using CUDA, allowing for a real-time simulation of our snow particle system. Another possible extension we are thinking of implementing would be to allow for some user interface where primitives (such as spheres) could be filled with our snow particles and given an initial state, at which point the simulation could be run in real-time.
+          </p> -->
+
+          <h4>The Team</h4>
+          <p>Max Liberman (mliberma), Wil Yegelwel (wyegelwe) and Tim Parsons (taparson)</p>
+
+          <h4>The Mission</h4>
+          <p>Build a snowman</p>
+        </div>
+<!-- 
+        <div class="col-lg-6">
+          <h4>Subheading</h4>
+          <p>Donec id elit non mi porta gravida at eget metus. Maecenas faucibus mollis interdum.</p>
+
+          <h4>Subheading</h4>
+          <p>Morbi leo risus, porta ac consectetur ac, vestibulum at eros. Cras mattis consectetur purus sit amet fermentum.</p>
+
+          <h4>Subheading</h4>
+          <p>Maecenas sed diam eget risus varius blandit sit amet non magna.</p>
+        </div>
+      </div> -->
+
+    </div> <!-- /container -->
+
+
+    <!-- Bootstrap core JavaScript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+  </body>
+</html>
