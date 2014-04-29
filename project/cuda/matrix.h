@@ -85,7 +85,8 @@ struct mat3
     static bool equals( const mat3 &A, const mat3 &B )
     {
         for ( int i = 0; i < 9; ++i ) {
-            if ( NEQF(A[0], B[0]) ) {
+            if ( NEQF(A[i], B[i]) ) {
+//                printf("neq! diff: %f\n", A[i]- B[i]);
                 return false;
             }
         }

@@ -23,6 +23,7 @@
 #include <iomanip>
 #include "common/common.h"
 #include <stdio.h>
+#include "ui/uisettings.h"
 
 MitsubaExporter::MitsubaExporter()
 {
@@ -57,11 +58,8 @@ float MitsubaExporter::getLastUpdateTime() {return m_lastUpdateTime;}
 void MitsubaExporter::reset(Grid grid)
 {
     SAFE_DELETE_ARRAY(m_nodes);
-//    SAFE_DELETE_ARRAY(m_albedo);
     m_grid = grid;
     m_nodes = new Node[m_grid.nodeCount()];
-
-    //m_albedo = new float[m_grid.nodeCount()];
 }
 
 void MitsubaExporter::runExportThread(float t)
@@ -75,14 +73,17 @@ void MitsubaExporter::exportScene(float t)
 {
     m_busy = true;
     // do work here
-    exportVolumeData(t);
-//  exportColliders(m_colliders);
+    if (UiSettings::exportDensity())
+        exportDensityData(t);
+    if (UiSettings::exportVelocity())
+        exportVelocityData(t);
+    // colliders are written to the scenefile from SceneIO because they only write once
     m_lastUpdateTime = t;
     m_frame += 1;
     m_busy = false;
 }
 
-void MitsubaExporter::exportVolumeData(float t)
+void MitsubaExporter::exportDensityData(float t)
 {
     QString fname = QString("%1_%2.vol").arg(m_fileprefix, QString("%1").arg(m_frame,4,'d',0,'0'));
     std::ofstream os(fname.toStdString().c_str());
@@ -146,6 +147,10 @@ void MitsubaExporter::exportVolumeData(float t)
     os.close();
 }
 
+void MitsubaExporter::exportVelocityData(float t)
+{
+    // TODO
+}
 
 Node * MitsubaExporter::getNodesPtr()
 {
@@ -164,48 +169,7 @@ Node * MitsubaExporter::getNodesPtr()
      * filled objects are loaded OBJs, and the snow is a heterogenous medium-type volume data
      *
      */
-    //QString fname = fprefix + QString("_") + QString::number(frame,);
-//    QString fprefix2 = QString("%1_%2").arg(fprefix1, QString("%1").arg(frame,4,'d',0,'0'));
-//    exportVolumeData(fprefix2);
-//    std::cout << "file written!" << std::endl;
 
-
-//    // xml header
-//    QDomProcessingInstruction pi = m_document.createProcessingInstruction("xml", "version=\"1.0\" encoding=\"utf-8\" ");
-//    m_document.appendChild(pi);
-//    // root element for the scene
-//    QDomElement sceneNode = m_document.createElement("scene");
-//    sceneNode.setAttribute("version", "0.5.0");
-//    m_document.appendChild(sceneNode);
-
-//    // we want a volumetric path tracer
-//    appendRenderer(sceneNode);
-//    // add the camera
-//    appendCamera(sceneNode, camera);
-
-//    // now traverse the scene graph for renderables.
-//    // renderables are either snow containers
-//    // or colliders.
-//    Scene * scene = engine->scene();
-//    QList<SceneNode *> nodes = scene->root()->allNodes();
-//    for (int i=0;i<nodes.size();++i)
-//    {
-//        appendShape(sceneNode,nodes[i]);
-//    }
-
-//    // write it to file
-//    QFile file(fname);
-//    if (!file.open(QIODevice::WriteOnly | QIODevice::Text))
-//    {
-//        std::cout << "write failed" << std::endl;
-//    }
-//    else
-//    {
-//        QTextStream stream(&file);
-//        stream << m_document.toString();
-//        file.close();
-//        std::cout << "file written" << std::endl;
-//    }
 
 //}
 
@@ -275,7 +239,7 @@ Node * MitsubaExporter::getNodesPtr()
 
 
 ////    <shape type="sphere">
-////		<point name="center" x="0" y="-2" z="-1"/>
+////
 ////		<float name="radius" value=".2"/>
 
 ////		<emitter type="area">

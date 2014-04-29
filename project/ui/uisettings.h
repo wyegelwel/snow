@@ -65,7 +65,14 @@ public:
         PARTICLE_MASS,
         PARTICLE_VELOCITY,
         PARTICLE_SPEED,
-        PARTICLE_SHADED
+        PARTICLE_SHADED,
+        PARTICLE_STIFFNESS
+    };
+
+    enum SnowMaterialPreset
+    {
+        MAT_DEFAULT,
+        MAT_CHUNKY
     };
 
 public:
@@ -93,19 +100,23 @@ private:
     DEFINE_SETTING( QPoint, windowPosition )
     DEFINE_SETTING( QSize, windowSize )
 
+    // filling
     DEFINE_SETTING( int, fillNumParticles )
     DEFINE_SETTING( float, fillDensity )
     DEFINE_SETTING( float, fillResolution )
 
-    DEFINE_SETTING( bool, exportVolume )
-    DEFINE_SETTING( bool, exportColliders)
+    // exporting
+    DEFINE_SETTING( bool, exportDensity )
+    DEFINE_SETTING( bool, exportVelocity )
     DEFINE_SETTING( int, exportFPS)
+    DEFINE_SETTING( float, maxTime)
 
     DEFINE_SETTING( vec3, gridPosition )
     DEFINE_SETTING( glm::ivec3, gridDimensions )
     DEFINE_SETTING( float, gridResolution )
 
     DEFINE_SETTING( float, timeStep )
+    DEFINE_SETTING( int, materialPreset )
 
     DEFINE_SETTING( bool, showContainers )
     DEFINE_SETTING( int, showContainersMode )

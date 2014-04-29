@@ -47,10 +47,10 @@ public:
     void exportScene(float t);
 
 private:
-    void exportVolumeData(float t);
+    void exportDensityData(float t);
+    void exportVelocityData(float t);
     void exportColliders(const QVector<ImplicitCollider> colliders);
     void init();
-
 
     /**
      * @brief exports particle system at a single time frame to a .vol file

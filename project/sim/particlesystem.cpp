@@ -89,25 +89,38 @@ ParticleSystem::buildBuffers()
     glGenVertexArrays( 1, &m_glVAO );
     glBindVertexArray( m_glVAO );
 
+    std::size_t offset = 0; // offset within particle struct
+
     // Position attribute
     glEnableVertexAttribArray( 0 );
-    glVertexAttribPointer( 0, 3, GL_FLOAT, GL_FALSE, sizeof(Particle), (void*)(0) );
+    glVertexAttribPointer( 0, 3, GL_FLOAT, GL_FALSE, sizeof(Particle), (void*)offset );
+    offset += sizeof(vec3);
 
     // Velocity attribute
     glEnableVertexAttribArray( 1 );
-    glVertexAttribPointer( 1, 3, GL_FLOAT, GL_FALSE, sizeof(Particle), (void*)(sizeof(vec3)) );
+    glVertexAttribPointer( 1, 3, GL_FLOAT, GL_FALSE, sizeof(Particle), (void*)offset );
+    offset += sizeof(vec3);
 
     // Mass attribute
     glEnableVertexAttribArray( 2 );
-    glVertexAttribPointer( 2, 1, GL_FLOAT, GL_FALSE, sizeof(Particle), (void*)(sizeof(vec3)+sizeof(vec3)) );
+    glVertexAttribPointer( 2, 1, GL_FLOAT, GL_FALSE, sizeof(Particle), (void*)offset );
+    offset += sizeof(GLfloat);
 
     // Volume attribute
     glEnableVertexAttribArray( 3 );
-    glVertexAttribPointer( 3, 1, GL_FLOAT, GL_FALSE, sizeof(Particle), (void*)(sizeof(vec3)+sizeof(vec3)+sizeof(GLfloat)) );
+    glVertexAttribPointer( 3, 1, GL_FLOAT, GL_FALSE, sizeof(Particle), (void*)offset );
+    offset += sizeof(vec3);
+    offset += 2*sizeof(mat3);
 
     // Normal attribute
     glEnableVertexAttribArray(4);
-    glVertexAttribPointer( 4, 3, GL_FLOAT, GL_FALSE, sizeof(Particle), (void*)(sizeof(vec3)+sizeof(vec3)+sizeof(GLfloat)+sizeof(GLfloat)+2*sizeof(mat3)));
+    glVertexAttribPointer( 4, 3, GL_FLOAT, GL_FALSE, sizeof(Particle), (void*)offset);
+    offset += sizeof(vec3);
+
+    // lambda (stiffness) attribute
+    glEnableVertexAttribArray(5);
+    glVertexAttribPointer(5,1,GL_FLOAT,GL_FALSE, sizeof(Particle), (void*)offset);
+    offset += sizeof(GLfloat);
 
     glBindVertexArray( 0 );
     glBindBuffer( GL_ARRAY_BUFFER, 0 );
@@ -178,3 +191,5 @@ ParticleSystem::shader()
     }
     return SHADER;
 }
+
+

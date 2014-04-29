@@ -27,6 +27,11 @@
 #include "cuda/functions.h"
 #include "sim/particle.h"
 #include "geometry/grid.h"
+#include "geometry/bbox.h"
+#include "cuda/noise.h"
+#include "cuda/material.h"
+
+#include "glm/gtc/random.hpp"
 
 struct Tri {
     vec3 v0, n0;
@@ -37,30 +42,34 @@ struct Tri {
 /*
  * Moller, T, and Trumbore, B. Fast, Minimum Storage Ray/Triangle Intersection.
  */
-__device__ bool intersectTri( const vec3 &rayO, const vec3 &rayD,
-                              const vec3 &v0, const vec3 &v1, const vec3 &v2,
-                              float &t )
+__device__ int intersectTri(const vec3 &v1, const vec3 &v2, const vec3 &v3,
+                                     const vec3 &O, const vec3 &D, float &t)
 {
-    vec3 e0 = v1 - v0;
-    vec3 e1 = v2 - v0;
-
-    vec3 pVec = vec3::cross( rayD, e1 );
-    float det = vec3::dot( e0, pVec );
-    if ( fabsf(det) < 1e-8 ) return false;
-
-    float invDet = 1.f / det;
-
-    vec3 tVec = rayO - v0;
-    float u = vec3::dot( tVec, pVec ) * invDet;
-    if ( u < 0.f || u > 1.f ) return false;
-
-    vec3 qVec = vec3::cross( tVec, e0 );
-    float v = vec3::dot( rayD, qVec ) * invDet;
-    if ( v < 0.f || v > 1.f ) return false;
-
-    t = vec3::dot( e1, qVec ) * invDet;
-    return t > 0.f;
+  vec3 e1, e2;  //Edge1, Edge2
+  vec3 P, Q, T;
+  float det, inv_det, u, v;
+  e1 = v2-v1;
+  e2 = v3-v1;
+  P = vec3::cross(D,e2);
+  det = vec3::dot(e1,P);
+  if(det > -1e-8 && det < 1e-8) return 0;
+  inv_det = 1.f / det;
+  T = O-v1;
+  u = vec3::dot(T, P) * inv_det;
+  if(u < 0.f || u > 1.f) return 0;
+  Q = vec3::cross(T, e1);
+  v = vec3::dot(D,Q)*inv_det;
+  if(v < 0.f || u + v  > 1.f) return 0;
+  t = vec3::dot(e2, Q) * inv_det;
+  if(t > 1e-8) { //ray intersection
+    return 1;
+  }
+  // No hit, no win
+  return 0;
 }
+
+
+
 
 __global__ void voxelizeMeshKernel( Tri *tris, int triCount, Grid grid, bool *flags )
 {
@@ -80,7 +89,7 @@ __global__ void voxelizeMeshKernel( Tri *tris, int triCount, Grid grid, bool *fl
     int xyOffset = x*dim.y*dim.z + y*dim.z, z;
     for ( int i = 0; i < triCount; ++i ) {
         const Tri &tri = tris[i];
-        if ( intersectTri(origin, direction, tri.v0, tri.v1, tri.v2, t) ) {
+        if ( intersectTri(tri.v0, tri.v1, tri.v2, origin, direction, t) ) {
             z = (int)(t/grid.h);
             flags[xyOffset+z] = true;
         }
@@ -147,7 +156,7 @@ __global__ void fillMeshVoxelsKernel( curandState *states, unsigned int seed, Gr
     particles[tid] = particle;
 }
 
-void fillMesh( cudaGraphicsResource **resource, int triCount, const Grid &grid, Particle *particles, int particleCount, float targetDensity )
+void fillMesh( cudaGraphicsResource **resource, int triCount, const Grid &grid, Particle *particles, int particleCount, float targetDensity, int materialPreset)
 {
     // Get mesh data
     cudaGraphicsMapResources( 1, resource, 0 );
@@ -192,11 +201,105 @@ void fillMesh( cudaGraphicsResource **resource, int triCount, const Grid &grid, 
     checkCudaErrors( cudaMalloc((void**)&devParticles, particleCount*sizeof(Particle)) );
     fillMeshVoxelsKernel<<< (particleCount+511)/512, 512 >>>( devStates, time(NULL), grid, devFlags, devParticles, particleMass, particleCount );
     checkCudaErrors( cudaDeviceSynchronize() );
+
+    switch (materialPreset)
+    {
+    case 0:
+        break;
+    case 1: applyChunky<<<(particleCount+511)/512, 512>>>(devParticles, particleCount); // TODO - we could use the uisettings materialstiffness here
+        break;
+    default:
+        break;
+    }
+    printf("material preset %d applied \n", materialPreset);
+
     checkCudaErrors( cudaMemcpy(particles, devParticles, particleCount*sizeof(Particle), cudaMemcpyDeviceToHost) );
 
     checkCudaErrors( cudaFree(devFlags) );
     checkCudaErrors( cudaFree(devStates) );
     checkCudaErrors( cudaGraphicsUnmapResources(1, resource, 0) );
 }
+
+
+#if 0 // mesh filling algorithm #2
+
+__device__ bool isInMesh(vec3 pos, int seed, Tri *tris, int triCount)
+{
+    // returns true if point lies inside mesh.
+    // this is a simple scanline check, returns true if number of intersections
+    // between point and top of boudning box is odd.
+    // one unfortunate case is handling glancing intersections,
+    // so in that case we want to sample 2 random rays
+    //vec3 d1(0,1,0);
+    vec3 d1(0.110432, 0.993884, 0.);
+    vec3 d2(0,-1,0);
+    int c = 1; // number of intersections. start with one so the parity check will work when no intersections happen.
+    float t;
+    for ( int i = 0; i < triCount; ++i ) {
+        const Tri &tri = tris[i];
+        int test1 =intersectTri(tri.v0, tri.v1, tri.v2, pos, d1,t);
+        int test2 = intersectTri(tri.v0, tri.v1, tri.v2, pos, d2, t);
+        c += int(test1 && test2);
+       //c += test1;
+    }
+    return (c+1)%2;
+}
+
+
+
+__global__ void fillMeshKernel2( Tri *tris, int triCount, vec3 bbox_min, vec3 bbox_size, Particle *particles, float particleMass, int particleCount)
+{
+    // naive mesh filling algorithm
+    // this approach results in less successes than scanline projection from Z plane and sorting the intersections,
+    // but implementation is much simpler and all particles should be filled within a couple iterations.
+    int tid = threadIdx.x + blockIdx.x * blockDim.x;
+    if ( tid >= particleCount ) return;
+
+    vec3 pos;
+    int ii = 20; // halton incrementer. discard first 20
+    int rejected = 0;
+    bool accept = false;
+    while (!accept) {
+        ii += 1; // rejected, keep going
+        rejected += 1;
+        vec3 u = vec3(halton(tid+ii, 3), halton(tid+ii, 5), halton(tid+ii, 7));
+        pos = bbox_min + u * bbox_size; // sample random point within bounding box
+        accept = isInMesh(pos, tid+ii, tris, triCount);
+    }
+    printf("%d\n", rejected);
+    Particle particle;
+    particle.mass = particleMass;
+    particle.position = pos;
+    particles[tid] = particle;
+}
+
+/**
+ * alternative mesh filling scheme - rejection sampling the bounding box.
+ * works really well if mesh occupies majority of bounding box but really slow otherwise.
+ * CUDA ends up timing out
+ */
+void fillMesh2( cudaGraphicsResource **resource, int triCount, const Grid &grid, Particle *particles, int particleCount, float targetDensity)
+{
+    // Get mesh data    
+    cudaGraphicsMapResources( 1, resource, 0 );
+    Tri *devTris;
+    size_t size;
+    checkCudaErrors( cudaGraphicsResourceGetMappedPointer((void**)&devTris, &size, *resource) );
+
+    Particle *devParticles;
+    checkCudaErrors( cudaMalloc((void**)&devParticles, particleCount*sizeof(Particle)) );
+    float volume = particleCount*grid.h*grid.h*grid.h;
+    float particleMass = targetDensity * volume / particleCount;
+    BBox box(grid);
+
+    fillMeshKernel2<<< (particleCount+511)/512, 512 >>>( devTris, triCount, box.min(), box.size(), devParticles, particleMass, particleCount );
+
+    checkCudaErrors( cudaDeviceSynchronize() );
+    checkCudaErrors( cudaMemcpy(particles, devParticles, particleCount*sizeof(Particle), cudaMemcpyDeviceToHost) );
+    checkCudaErrors( cudaGraphicsUnmapResources(1, resource, 0) );
+}
+
+#endif
+
 
 #endif // MESH_CU

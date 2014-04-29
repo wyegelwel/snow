@@ -19,6 +19,7 @@
 #include "ui/userinput.h"
 #include "viewport/viewport.h"
 #include "io/objparser.h"
+#include "io/sceneio.h"
 #include "geometry/mesh.h"
 #include "geometry/bbox.h"
 #include "scene/scene.h"
@@ -62,6 +63,8 @@ ViewPanel::ViewPanel( QWidget *parent )
     m_draw = true;
     m_fps = FPS;
 
+    m_sceneIO = new SceneIO;
+
     m_scene = new Scene;
     m_engine = new Engine;
 
@@ -78,6 +81,7 @@ ViewPanel::~ViewPanel()
     SAFE_DELETE( m_tool );
     SAFE_DELETE( m_infoPanel );
     SAFE_DELETE( m_scene );
+    SAFE_DELETE( m_sceneIO );
 }
 
 void
@@ -224,22 +228,8 @@ ViewPanel::keyPressEvent( QKeyEvent *event )
 bool ViewPanel::startSimulation()
 {
     makeCurrent();
-
+    QString fprefix;
     if ( !m_engine->isRunning() ) {
-        if ( UiSettings::exportVolume() ) {
-            // ask the user where the data should be saved
-            //        QDir sceneDir("~/offline_renders");
-            //        sceneDir.makeAbsolute();
-            QString fprefix = QFileDialog::getSaveFileName(this, QString("Choose Export Name"), QString());
-            if ( fprefix.isEmpty() ) {
-                // cancel
-                QMessageBox msgBox;
-                msgBox.setText("Error : Invalid Volume Export Path");
-                msgBox.exec();
-                return false;
-            }
-            m_engine->initExporter(fprefix);
-        }
         m_engine->clearColliders();
         for ( SceneNodeIterator it = m_scene->begin(); it.isValid(); ++it ) {
             if ( (*it)->hasRenderable() ) {
@@ -252,7 +242,20 @@ bool ViewPanel::startSimulation()
                 }
             }
         }
-        return m_engine->start( UiSettings::exportVolume() );
+
+        const bool exportVol = UiSettings::exportDensity() || UiSettings::exportVelocity();
+        if ( exportVol ) {
+            bool ok = !m_sceneIO->sceneFile().isNull();
+            if (!ok) // have not saved yet
+                ok = saveScene();
+            if (ok)
+            {
+                QFileInfo sceneFileInfo(m_sceneIO->sceneFile());
+                m_engine->initExporter(sceneFileInfo.path());
+            }
+        }
+
+        return m_engine->start(exportVol);
     }
 
     return false;
@@ -297,6 +300,7 @@ void ViewPanel::loadMesh( const QString &filename )
     // single obj file is associated with multiple renderables and a single
     // scene node.
     QList<Mesh*> meshes;
+
     OBJParser::load( filename, meshes );
 
     clearSelection();
@@ -542,3 +546,40 @@ ViewPanel::saveSelectedMesh()
 
 
 }
+
+bool
+ViewPanel::loadScene()
+{
+    // call file dialog
+    QString str;
+    m_sceneIO->read(str, m_scene, m_engine);
+}
+
+bool
+ViewPanel::saveScene()
+{
+    // this is enforced if engine->start is called and export is not checked
+    if (m_sceneIO->sceneFile().isNull())
+    {
+        // filename not initialized yet
+        QString filename = QFileDialog::getSaveFileName( this, "Choose Simulation File Path", PROJECT_PATH "/data/scenes/" );
+        if (!filename.isNull())
+        {
+            m_sceneIO->setSceneFile(filename);
+            m_sceneIO->write(m_sceneIO->sceneFile(), m_scene, m_engine);
+        }
+        else
+        {
+            // cancelled
+            QMessageBox msgBox;
+            msgBox.setText("Error : Invalid Save Path");
+            msgBox.exec();
+            return false;
+        }
+    }
+    else
+    {
+        m_sceneIO->write(m_sceneIO->sceneFile(),m_scene, m_engine);
+    }
+}
+

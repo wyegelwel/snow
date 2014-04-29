@@ -65,7 +65,7 @@ __global__ void computedF( const Particle *particles, ParticleCache *pCaches,
                            const Grid *grid, const Node *nodes, const NodeCache *nodeCaches,
                            NodeCache::Offset uOffset, float dt )
 {
-    int particleIdx = blockIdx.y*gridDim.x*blockDim.x + blockIdx.x*blockDim.x + threadIdx.x;
+    int particleIdx = blockIdx.x*blockDim.x + threadIdx.x;
 
     const Particle &particle = particles[particleIdx];
     ParticleCache &pCache = pCaches[particleIdx];
@@ -115,6 +115,8 @@ __global__ void computedF( const Particle *particles, ParticleCache *pCaches,
 
 }
 
+
+
 /** Currently computed in computedF, we could parallelize this and computedF but not sure what the time benefit would be*/
 //__global__ void computeFeHat(Particle *particles, Grid *grid, float dt, Node *nodes, ACache *ACaches){
 //    int particleIdx = blockIdx.x*blockDim.x + threadIdx.x;
@@ -149,6 +151,16 @@ __global__ void computedF( const Particle *particles, ParticleCache *pCaches,
 //       computePD(ACache.FeHat, ACache.ReHat, ACache.SeHat);
 //}
 
+/**
+ * Computes dR
+ *
+ * FeHat = Re * Se (polar decomposition)
+ *
+ * Re is assumed to be orthogonal
+ * Se is assumed to be symmetry Positive semi definite
+ *
+ *
+ */
 __device__ void computedR( const mat3 &dF, const mat3 &Se, const mat3 &Re, mat3 &dR )
 {
     mat3 V = mat3::multiplyAtB( Re, dF ) - mat3::multiplyAtB( dF, Re );
@@ -205,12 +217,13 @@ __device__ void compute_dJF_invTrans( const mat3 &F, const mat3 &dF, mat3 &dJF_i
     dJF_invTrans[8] = F[0]*dF[4] - F[1]*dF[1] + F[4]*dF[0] - F[3]*dF[3];
 }
 
+
 /**
  * Called over particles
  **/
 __global__ void computeAp( const Particle *particles, const MaterialConstants *material, ParticleCache *pCaches )
 {
-    int particleIdx = blockIdx.y*gridDim.x*blockDim.x + blockIdx.x*blockDim.x + threadIdx.x;
+    int particleIdx =  blockIdx.x*blockDim.x + threadIdx.x;
     const Particle &particle = particles[particleIdx];
     ParticleCache &pCache = pCaches[particleIdx];
     mat3 dF = pCache.dF;
@@ -237,7 +250,6 @@ __global__ void computeAp( const Particle *particles, const MaterialConstants *m
 
     pCache.Ap = (2*muFp*(dF - dR) + lambdaFp*JFe_invTrans*mat3::innerProduct(JFe_invTrans, dF) + lambdaFp*(Jep - 1)*dJFe_invTrans);
 }
-
 
 __global__ void computedf( const Particle *particles, const ParticleCache *pCaches, const Grid *grid, NodeCache *nodeCaches )
 {

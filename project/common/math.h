@@ -78,4 +78,6 @@ static inline float smootherstep( float value, float edge0, float edge1 )
     return x*x*x*(x*(x*6-15)+10);
 }
 
+
+
 #endif // MATH_H

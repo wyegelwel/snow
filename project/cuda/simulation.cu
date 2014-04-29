@@ -120,7 +120,7 @@ __host__ void initializeParticleVolumes( Particle *particles, int numParticles, 
     checkCudaErrors( cudaFree(devNodeMasses) );
 }
 
-__global__ void computeSigma( const Particle *particles, ParticleCache *pCaches, const Grid *grid, const MaterialConstants *material )
+__global__ void computeSigma( const Particle *particles, ParticleCache *pCaches, const Grid *grid )
 {
     int particleIdx = blockIdx.x*blockDim.x + threadIdx.x;
 
@@ -136,12 +136,13 @@ __global__ void computeSigma( const Particle *particles, ParticleCache *pCaches,
     mat3 Re;
     computePD( Fe, Re );
 
-    float muFp = material->mu*__expf(material->xi*(1-Jpp));
-    float lambdaFp = material->lambda*__expf(material->xi*(1-Jpp));
+    const MaterialConstants material = particle.material;
+
+    float muFp = material.mu*__expf(material.xi*(1-Jpp));
+    float lambdaFp = material.lambda*__expf(material.xi*(1-Jpp));
 
     pCache.sigma = (2*muFp*mat3::multiplyABt(Fe-Re, Fe) + mat3(lambdaFp*(Jep-1)*Jep)) * -particle.volume;
     pCache.particleGridPos = (particle.position - grid->pos)/grid->h;
-
 }
 
 /**
@@ -277,21 +278,20 @@ __device__ void processGridVelocities( Particle &particle, const Grid *grid, con
     particle.velocity = (1.f-ALPHA)*v_PIC + ALPHA*(particle.velocity+dv_FLIP);
 }
 
-
-__device__ void updateParticleDeformationGradients( Particle &particle, const mat3 &velocityGradient, float timeStep, const MaterialConstants *mat )
+__device__ void updateParticleDeformationGradients( Particle &particle, const mat3 &velocityGradient, float timeStep )
 {
     // Temporarily assign all deformation to elastic portion
     particle.elasticF = mat3::addIdentity( timeStep*velocityGradient ) * particle.elasticF;
-
+    const MaterialConstants mat = particle.material;
     // Clamp the singular values
     mat3 W, S, Sinv, V;
     computeSVD( particle.elasticF, W, S, V );
 
     // FAST COMPUTATION:
 
-    S = mat3( CLAMP( S[0], mat->criticalCompression, mat->criticalStretch ), 0.f, 0.f,
-              0.f, CLAMP( S[4], mat->criticalCompression, mat->criticalStretch ), 0.f,
-              0.f, 0.f, CLAMP( S[8], mat->criticalCompression, mat->criticalStretch ) );
+    S = mat3( CLAMP( S[0], mat.criticalCompression, mat.criticalStretch ), 0.f, 0.f,
+              0.f, CLAMP( S[4], mat.criticalCompression, mat.criticalStretch ), 0.f,
+              0.f, 0.f, CLAMP( S[8], mat.criticalCompression, mat.criticalStretch ) );
 
     Sinv = mat3( 1.f/S[0], 0.f, 0.f,
                  0.f, 1.f/S[4], 0.f,
@@ -324,7 +324,7 @@ __global__ void updateParticlesFromGrid( Particle *particles, const Grid *grid, 
     mat3 velocityGradient = mat3( 0.f );
     processGridVelocities( particle, grid, nodes, velocityGradient );
 
-    updateParticleDeformationGradients( particle, velocityGradient, timeStep, mat );
+    updateParticleDeformationGradients( particle, velocityGradient, timeStep );
 
     // Do this before collision test!
     particle.velocity += timeStep * gravity;
@@ -402,7 +402,7 @@ __host__ void updateParticles( const SimulationParameters &parameters,
 
     static const int threadCount = 128;
 
-    computeSigma<<< numParticles / threadCount , threadCount >>>( particles, pCaches, grid, material );
+    computeSigma<<< numParticles / threadCount , threadCount >>>( particles, pCaches, grid );
     checkCudaErrors( cudaDeviceSynchronize() );
 
     dim3 blockDim = dim3( numParticles / threadCount, 64 );

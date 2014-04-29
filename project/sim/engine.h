@@ -46,7 +46,7 @@ public:
     virtual ~Engine();
 
     // Returns whether it actually did start
-    bool start( bool exportScene );
+    bool start( bool exportVolume );
     void pause();
     void resume();
     void stop();
@@ -63,7 +63,8 @@ public:
     void setGrid( const Grid &grid );
     void clearParticleGrid();
 
-    MaterialConstants& materialConstants() { return m_materialConstants; }
+//    MaterialConstants& materialConstants() { return m_materialConstants; }
+    void initParticleMaterials(int preset);
 
 //    void addCollider( const ImplicitCollider &collider ) { m_colliders += collider; }
     void addCollider(Collider &collider, const glm::mat4 &ctm);

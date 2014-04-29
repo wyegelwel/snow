@@ -42,7 +42,7 @@ Engine::Engine()
 
     m_params.timeStep = 5e-5;
     m_params.startTime = 0.f;
-    m_params.endTime = 60.f;
+    m_params.endTime = 60.f; // not being used...
     m_params.gravity = vec3( 0.f, -9.8f, 0.f );
 
     assert( connect(&m_ticker, SIGNAL(timeout()), this, SLOT(update())) );
@@ -117,11 +117,11 @@ void Engine::initExporter( QString fprefix )
     m_exporter = new MitsubaExporter( fprefix, UiSettings::exportFPS() );
 }
 
-bool Engine::start( bool exportScene )
+bool Engine::start( bool exportVolume )
 {
     if ( m_particleSystem->size() > 0 && !m_grid.empty() && !m_running ) {
 
-        if ( (m_export = exportScene) ) m_exporter->reset( m_grid );
+        if ( (m_export = exportVolume) ) m_exporter->reset( m_grid );
 
         LOG( "STARTING SIMULATION" );
 
@@ -215,8 +215,10 @@ void Engine::update()
         }
 
         bool doShading = UiSettings::showParticlesMode() == UiSettings::PARTICLE_SHADED;
+
         updateParticles( m_params, devParticles, m_devParticleCaches, m_particleSystem->size(), m_devGrid,
                          devNodes, m_devNodeCaches, m_grid.nodeCount(), m_devColliders, m_colliders.size(), m_devMaterial, doShading );
+
 
         if (m_export && (m_time - m_exporter->getLastUpdateTime() >= m_exporter->getspf()))
         {
@@ -229,6 +231,13 @@ void Engine::update()
         checkCudaErrors( cudaDeviceSynchronize() );
 
         m_time += m_params.timeStep;
+
+        if (m_time >= UiSettings::maxTime()) // user can adjust max export time dynamically
+        {
+            stop();
+            LOG( "Simulation Completed" );
+        }
+
         m_busy = false;
 
     } else {
@@ -278,7 +287,7 @@ void Engine::initializeCudaResources()
     float particleCachesSize = m_particleSystem->size()*sizeof(ParticleCache) / 1e6;
     LOG( "Allocating %.2f MB for implicit update particle caches.", particleCachesSize );
 
-    // Material Constants
+    // Material Constants - presently we are only using this for setting coeff friction from UI
     checkCudaErrors(cudaMalloc( (void**)&m_devMaterial, sizeof(MaterialConstants) ));
     checkCudaErrors(cudaMemcpy( m_devMaterial, &m_materialConstants, sizeof(MaterialConstants), cudaMemcpyHostToDevice ));
 

@@ -26,6 +26,7 @@ class Engine;
 class SceneNode;
 class Tool;
 class SelectionTool;
+class SceneIO;
 
 class ViewPanel : public QGLWidget
 {
@@ -76,9 +77,11 @@ public slots:
     void fillSelectedMesh();
     void saveSelectedMesh();
 
+    bool loadScene();
+    bool saveScene();
+
     // Demo Scenes
     void teapotDemo();
-
 signals:
 
     void showMeshes();
@@ -92,6 +95,8 @@ protected:
     InfoPanel *m_infoPanel;
     Viewport *m_viewport;
     Tool *m_tool;
+
+    SceneIO * m_sceneIO;
 
     Engine *m_engine;
     Scene *m_scene;
@@ -113,6 +118,8 @@ protected:
     friend class MoveTool;
     friend class RotateTool;
     friend class ScaleTool;
+
+    //friend class SceneIO;
 
 };
 
