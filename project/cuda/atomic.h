@@ -2,7 +2,7 @@
 **
 **   SNOW - CS224 BROWN UNIVERSITY
 **
-**   atomic.cu
+**   atomic.h
 **   Authors: evjang, mliberma, taparson, wyegelwe
 **   Created: 28 Apr 2014
 **
@@ -15,8 +15,8 @@
 #include <cuda_runtime.h>
 
 #define CUDA_INCLUDE
-#include "cuda/vector.cu"
-#include "cuda/matrix.cu"
+#include "cuda/vector.h"
+#include "cuda/matrix.h"
 
 __device__ __forceinline__
 void atomicAdd( vec3 *add, const vec3 &toAdd )

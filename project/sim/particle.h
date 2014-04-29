@@ -11,7 +11,7 @@
 #ifndef PARTICLE_H
 #define PARTICLE_H
 
-#include "cuda/matrix.cu"
+#include "cuda/matrix.h"
 
 #ifndef FUNC
     #ifdef CUDA_INCLUDE

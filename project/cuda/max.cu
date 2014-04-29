@@ -20,7 +20,7 @@
 
 #define CUDA_INCLUDE
 #include "tests/tests.h"
-#include "cuda/vector.cu"
+#include "cuda/vector.h"
 
 extern "C" { void implicitTests(); }
 

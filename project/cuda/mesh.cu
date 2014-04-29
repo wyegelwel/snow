@@ -19,7 +19,7 @@
 #include <helper_cuda.h>
 #include <helper_cuda_gl.h>
 
-#include "cuda/vector.cu"
+#include "cuda/vector.h"
 
 #define CUDA_INCLUDE
 #include "common/common.h"

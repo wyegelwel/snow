@@ -2,14 +2,14 @@
 **
 **   SNOW - CS224 BROWN UNIVERSITY
 **
-**   vector.cu
+**   vector.h
 **   Authors: evjang, mliberma, taparson, wyegelwe
 **   Created: 15 Apr 2014
 **
 **************************************************************************/
 
-#ifndef VECTOR_CU
-#define VECTOR_CU
+#ifndef VECTOR_H
+#define VECTOR_H
 
 #include <cuda.h>
 #include <cuda_runtime.h>
@@ -198,4 +198,4 @@ vec3 operator - ( const vec3 &v ) { return vec3( -v.x, -v.y, -v.z ); }
 __host__ __device__ __forceinline__
 vec3 operator * ( float f, const vec3 &v ) { return vec3( f*v.x, f*v.y, f*v.z ); }
 
-#endif // VECTOR_CU
+#endif // VECTOR_H

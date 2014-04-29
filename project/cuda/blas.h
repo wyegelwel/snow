@@ -2,20 +2,20 @@
 **
 **   SNOW - CS224 BROWN UNIVERSITY
 **
-**   blas.cu
+**   blas.h
 **   Authors: evjang, mliberma, taparson, wyegelwe
 **   Created: 28 Apr 2014
 **
 **************************************************************************/
 
-#ifndef BLAS_CU
-#define BLAS_CU
+#ifndef BLAS_H
+#define BLAS_H
 
 #include <cuda.h>
 #include <cuda_runtime.h>
 
 #define CUDA_INCLUDE
-#include "cuda/vector.cu"
+#include "cuda/vector.h"
 
 __global__ void innerProductDotKernel( int length, const vec3 *u, const vec3 *v, float *dots )
 {
@@ -67,4 +67,4 @@ __host__ void scaleAndAdd( int length, float sa, const vec3 *a, float sb, const 
     cudaDeviceSynchronize();
 }
 
-#endif // BLAS_CU
+#endif // BLAS_H

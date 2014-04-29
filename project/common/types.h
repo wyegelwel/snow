@@ -11,7 +11,7 @@
 #ifndef TYPES_H
 #define TYPES_H
 
-#include "cuda/vector.cu"
+#include "cuda/vector.h"
 
 #ifndef GLM_FORCE_RADIANS
     #define GLM_FORCE_RADIANS

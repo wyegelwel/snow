@@ -2,7 +2,7 @@
 **
 **   SNOW - CS224 BROWN UNIVERSITY
 **
-**   decomposition.cu
+**   decomposition.h
 **   Authors: evjang, mliberma, taparson, wyegelwe
 **   Created: 13 Apr 2014
 **
@@ -13,11 +13,10 @@
 
 #include <cuda.h>
 #include <cuda_runtime.h>
-
 #include "math.h"
-#include "common/math.h"
 
-#include "cuda/matrix.cu"
+#include "common/math.h"
+#include "cuda/matrix.h"
 
 #define GAMMA 5.828427124 // FOUR_GAMMA_SQUARED = sqrt(8)+3;
 #define CSTAR 0.923879532 // cos(pi/8)

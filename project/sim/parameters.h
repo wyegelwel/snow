@@ -11,7 +11,7 @@
 #ifndef PARAMETERS_H
 #define PARAMETERS_H
 
-#include "cuda/vector.cu"
+#include "cuda/vector.h"
 
 struct SimulationParameters
 {

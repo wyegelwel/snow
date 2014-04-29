@@ -11,7 +11,7 @@
 #ifndef CACHES_H
 #define CACHES_H
 
-#include "cuda/matrix.cu"
+#include "cuda/matrix.h"
 
 struct NodeCache
 {

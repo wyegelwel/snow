@@ -16,8 +16,8 @@
 #include <cuda_runtime.h> // prevents syntax errors on __global__ and __device__, among other things
 
 #include "common/math.h"
-#include "cuda/decomposition.cu"
-#include "cuda/weighting.cu"
+#include "cuda/decomposition.h"
+#include "cuda/weighting.h"
 
 extern "C" {
 void weightingTestsHost();

@@ -87,7 +87,16 @@ HEADERS  += \
     ui/tools/rotatetool.h \
     ui/tools/scaletool.h \
     ui/collapsiblebox.h \
-    sim/caches.h
+    sim/caches.h \
+    cuda/implicit.h \
+    cuda/atomic.h \
+    cuda/blas.h \
+    cuda/collider.h \
+    cuda/decomposition.h \
+    cuda/vector.h \
+    cuda/matrix.h \
+    cuda/quaternion.h \
+    cuda/weighting.h
 
 FORMS    += ui/mainwindow.ui
 
@@ -119,20 +128,12 @@ OTHER_FILES += \
     cuda/max.cu \
     cuda/tim.cu \
     cuda/eric.cu \
-    cuda/decomposition.cu \
-    cuda/weighting.cu \
-    cuda/matrix.cu \
-    cuda/vector.cu \
-    cuda/quaternion.cu \
     cuda/simulation.cu \
-    cuda/collider.cu \
-    cuda/implicit.cu \
-    cuda/atomic.cu \
-    cuda/blas.cu \
     resources/shaders/particlesystem.vert \
     resources/shaders/particlesystem.frag \
     resources/shaders/particlegrid.frag \
-    resources/shaders/particlegrid.vert
+    resources/shaders/particlegrid.vert \
+
 
 # GPU ARCH
 # this gets passed as the gpu-architecture flag to nvcc compiler

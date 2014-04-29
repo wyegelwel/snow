@@ -11,7 +11,7 @@
 #include "ui/tools/tool.h"
 
 #include "common/common.h"
-#include "cuda/vector.cu"
+#include "cuda/vector.h"
 #include "ui/viewpanel.h"
 #include "viewport/camera.h"
 #include "viewport/viewport.h"

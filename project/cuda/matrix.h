@@ -2,14 +2,14 @@
 **
 **   SNOW - CS224 BROWN UNIVERSITY
 **
-**   matrix.cu
+**   matrix.h
 **   Authors: evjang, mliberma, taparson, wyegelwe
 **   Created: 15 Apr 2014
 **
 **************************************************************************/
 
-#ifndef MATRIX_CU
-#define MATRIX_CU
+#ifndef MATRIX_H
+#define MATRIX_H
 
 #include <cuda.h>
 #include <cuda_runtime.h>
@@ -22,8 +22,8 @@
 #include "glm/mat3x3.hpp"
 #include "glm/gtc/type_ptr.hpp"
 
-#include "cuda/vector.cu"
-#include "cuda/quaternion.cu"
+#include "cuda/vector.h"
+#include "cuda/quaternion.h"
 
 struct mat3
 {
@@ -412,4 +412,4 @@ __host__ __device__ __forceinline__
 mat3 operator * ( float f, const mat3 &m ) { return m*f; }
 
 
-#endif // MATRIX_CU
+#endif // MATRIX_H

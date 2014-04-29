@@ -24,7 +24,7 @@
     #endif
 #endif
 
-#include "cuda/vector.cu"
+#include "cuda/vector.h"
 
 struct Grid
 {

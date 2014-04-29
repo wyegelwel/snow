@@ -11,7 +11,6 @@
 #include <cuda.h>
 #include <helper_functions.h>
 #include <helper_cuda.h>
-
 #include "math.h"
 
 #define CUDA_INCLUDE
@@ -24,12 +23,11 @@
 
 #include "common/math.h"
 
-#include "cuda/atomic.cu"
-#include "cuda/collider.cu"
-#include "cuda/decomposition.cu"
-#include "cuda/implicit.cu"
-#include "cuda/weighting.cu"
-
+#include "cuda/atomic.h"
+#include "cuda/collider.h"
+#include "cuda/decomposition.h"
+#include "cuda/implicit.h"
+#include "cuda/weighting.h"
 
 #include "cuda/functions.h"
 

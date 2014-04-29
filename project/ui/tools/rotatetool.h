@@ -18,7 +18,7 @@
 
 #include "ui/tools/selectiontool.h"
 
-#include "cuda/vector.cu"
+#include "cuda/vector.h"
 
 typedef unsigned int GLuint;
 

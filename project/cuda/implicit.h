@@ -2,7 +2,7 @@
 **
 **   SNOW - CS224 BROWN UNIVERSITY
 **
-**   implicit.cu
+**   implicit.h
 **   Authors: evjang, mliberma, taparson, wyegelwe
 **   Created: 26 Apr 2014
 **
@@ -22,12 +22,12 @@
 #include "sim/material.h"
 #include "sim/particle.h"
 #include "sim/particlegridnode.h"
-#include "cuda/vector.cu"
+#include "cuda/vector.h"
 
-#include "cuda/atomic.cu"
-#include "cuda/blas.cu"
-#include "cuda/decomposition.cu"
-#include "cuda/weighting.cu"
+#include "cuda/atomic.h"
+#include "cuda/blas.h"
+#include "cuda/decomposition.h"
+#include "cuda/weighting.h"
 
 #define BETA 0.5
 #define MAX_ITERATIONS 30
@@ -334,22 +334,26 @@ __host__ void updateNodeVelocitiesImplicit( Particle *particles, ParticleCache *
     float gamma, alpha, beta;
     initializeConjugateResidual( particles, pCaches, numParticles, grid, nodes, nodeCache, numNodes, dt, gamma, alpha, material );
 
-    int k = 0;
-    float d;
-    do {
-        fprintf( stderr, "k = %d\n", k );
-        scaleAndAdd( numNodes, 1.f, nodeCache->v, alpha, nodeCache->p, nodeCache->v );
-        scaleAndAdd( numNodes, 1.f, nodeCache->r, -alpha, nodeCache->q, nodeCache->r );
-        computeEu( particles, pCaches, numParticles, grid, nodes, numNodes, dt, nodeCache->r, nodeCache->df, nodeCache->s, material );
-        beta = innerProduct( numNodes, nodeCache->r, nodeCache->s, nodeCache->scratch ) / gamma;
-        gamma = beta * gamma;
-        scaleAndAdd( numNodes, 1.f, nodeCache->r, beta, nodeCache->p, nodeCache->p );
-        scaleAndAdd( numNodes, 1.f, nodeCache->s, beta, nodeCache->q, nodeCache->q );
-        alpha = gamma / innerProduct( numNodes, nodeCache->q, nodeCache->q, nodeCache->scratch );
-        fprintf( stderr, "alpha = %g\n", alpha );
-        d = alpha * alpha * innerProduct( numNodes, nodeCache->p, nodeCache->p, nodeCache->scratch ) / numNodes;
-        fprintf( stderr, "d = %g\n", d ); fflush(stderr);
-    } while ( k++ < MAX_ITERATIONS && d > STOPPING_EPSILON );
+    if ( !isnan(gamma) && !isnan(alpha) ) {
+        int k = 0;
+        float d;
+        do {
+            fprintf( stderr, "k = %d\n", k );
+            scaleAndAdd( numNodes, 1.f, nodeCache->v, alpha, nodeCache->p, nodeCache->v );
+            scaleAndAdd( numNodes, 1.f, nodeCache->r, -alpha, nodeCache->q, nodeCache->r );
+            computeEu( particles, pCaches, numParticles, grid, nodes, numNodes, dt, nodeCache->r, nodeCache->df, nodeCache->s, material );
+            beta = innerProduct( numNodes, nodeCache->r, nodeCache->s, nodeCache->scratch ) / gamma;
+            gamma = beta * gamma;
+            scaleAndAdd( numNodes, 1.f, nodeCache->r, beta, nodeCache->p, nodeCache->p );
+            scaleAndAdd( numNodes, 1.f, nodeCache->s, beta, nodeCache->q, nodeCache->q );
+            alpha = gamma / innerProduct( numNodes, nodeCache->q, nodeCache->q, nodeCache->scratch );
+            fprintf( stderr, "alpha = %g\n", alpha );
+            d = alpha * alpha * innerProduct( numNodes, nodeCache->p, nodeCache->p, nodeCache->scratch ) / numNodes;
+            fprintf( stderr, "d = %g\n", d ); fflush(stderr);
+        } while ( k++ < MAX_ITERATIONS && d > STOPPING_EPSILON );
+    } else {
+        fprintf( stderr, "%f or %f nan, skipping computation.\n", alpha, gamma ); fflush(stderr);
+    }
 
     finishConjugateResidual( nodes, numNodes, nodeCache->v );
 }

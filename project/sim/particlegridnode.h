@@ -13,8 +13,8 @@
 
 #include "geometry/grid.h"
 
-#include "cuda/matrix.cu"
-#include "cuda/vector.cu"
+#include "cuda/matrix.h"
+#include "cuda/vector.h"
 
 struct Node
 {  

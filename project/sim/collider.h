@@ -1,7 +1,7 @@
 #ifndef COLLIDER_H
 #define COLLIDER_H
 
-#include "cuda/vector.cu"
+#include "cuda/vector.h"
 
 /**
  * For the sake of supporting multiple implicit colliders in cuda, we define an enum for the type of collider
