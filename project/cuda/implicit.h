@@ -33,6 +33,10 @@
 #define MAX_ITERATIONS 30
 #define STOPPING_EPSILON 1e-8
 
+extern "C"  {
+    void testComputedF();
+}
+
 /**
  * Called over particles
  **/
@@ -88,6 +92,7 @@ __global__ void computedF( const Particle *particles, const Grid *grid, float dt
     pCache.FeHat = mat3::addIdentity(vGradient) * particle.elasticF;
     computePD( pCache.FeHat, pCache.ReHat, pCache.SeHat );
 }
+
 
 /** Currently computed in computedF, we could parallelize this and computedF but not sure what the time benefit would be*/
 //__global__ void computeFeHat(Particle *particles, Grid *grid, float dt, Node *nodes, ACache *ACaches){
