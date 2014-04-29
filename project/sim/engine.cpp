@@ -217,6 +217,7 @@ void Engine::update()
         updateParticles( m_params, devParticles, m_devParticleCaches, m_particleSystem->size(), m_devGrid,
                          devNodes, m_devNodeCache, m_grid.nodeCount(), m_devColliders, m_colliders.size(), m_devMaterial, doShading );
 
+
         if (m_export && (m_time - m_exporter->getLastUpdateTime() >= m_exporter->getspf()))
         {
             cudaMemcpy(m_exporter->getNodesPtr(), devNodes, m_grid.nodeCount() * sizeof(Node), cudaMemcpyDeviceToHost);
@@ -290,7 +291,7 @@ void Engine::initializeCudaResources()
     float particleCachesSize = m_particleSystem->size()*sizeof(ParticleCache) / 1e6;
     LOG( "Allocating %.2f MB for implicit update particle caches.", particleCachesSize );
 
-    // Material Constants
+    // Material Constants - presently we are only using this for setting coeff friction from UI
     checkCudaErrors(cudaMalloc( (void**)&m_devMaterial, sizeof(MaterialConstants) ));
     checkCudaErrors(cudaMemcpy( m_devMaterial, &m_materialConstants, sizeof(MaterialConstants), cudaMemcpyHostToDevice ));
 
@@ -349,6 +350,10 @@ void
 Engine::initParticleMaterials(int preset)
 {
     m_busy = true;
+
+    // if user interface implements single material editing of material, we can use that as a 'base' material
+//    checkCudaErrors(cudaMalloc( (void**)&m_devMaterial, sizeof(MaterialConstants) ));
+//    checkCudaErrors(cudaMemcpy( m_devMaterial, &m_materialConstants, sizeof(MaterialConstants), cudaMemcpyHostToDevice ));
 
     //cudaGraphicsMapResources( 1, &m_particlesResource, 0 );
     Particle *devParticles;
