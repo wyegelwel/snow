@@ -33,7 +33,7 @@ SOURCES += \
     sim/collider.cpp \
     geometry/bbox.cpp \
     sim/engine.cpp \
-    io/sceneparser.cpp \
+    io/sceneio.cpp \
     ui/uisettings.cpp \
     ui/picker.cpp \
     ui/tools/selectiontool.cpp \
@@ -70,7 +70,7 @@ HEADERS  += \
     common/math.h \
     geometry/grid.h \
     sim/engine.h \
-    io/sceneparser.h \
+    io/sceneio.h \
     ui/databinding.h \
     ui/uisettings.h \
     sim/material.h \
@@ -97,7 +97,9 @@ HEADERS  += \
     cuda/vector.h \
     cuda/matrix.h \
     cuda/quaternion.h \
-    cuda/weighting.h
+    cuda/weighting.h \
+    cuda/noise.h \
+    cuda/material.h \
 
 FORMS    += ui/mainwindow.ui
 

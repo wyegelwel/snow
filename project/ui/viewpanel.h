@@ -26,6 +26,7 @@ class Engine;
 class SceneNode;
 class Tool;
 class SelectionTool;
+class SceneIO;
 
 class ViewPanel : public QGLWidget
 {
@@ -76,8 +77,13 @@ public slots:
     void fillSelectedMesh();
     void saveSelectedMesh();
 
+    void loadScene();
+    void saveScene();
+
     // Demo Scenes
     void teapotDemo();
+
+    void applyMaterials(); // applies snow material per particle
 
 signals:
 
@@ -92,6 +98,8 @@ protected:
     InfoPanel *m_infoPanel;
     Viewport *m_viewport;
     Tool *m_tool;
+
+    SceneIO * m_sceneIO;
 
     Engine *m_engine;
     Scene *m_scene;
@@ -113,6 +121,8 @@ protected:
     friend class MoveTool;
     friend class RotateTool;
     friend class ScaleTool;
+
+    //friend class SceneIO;
 
 };
 

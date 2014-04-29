@@ -23,8 +23,8 @@ class MainWindow : public QMainWindow
 
 public slots:
 
-    /// saves out screenshot of MainWindow
     void takeScreenshot();
+    void roundFillParticles();
 
     void importMesh();
     void addCollider();

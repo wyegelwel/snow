@@ -140,7 +140,6 @@ __global__ void computeSigma( const Particle *particles, ParticleCache *pCaches,
 
     pCache.sigma = (2*muFp*mat3::multiplyABt(Fe-Re, Fe) + mat3(lambdaFp*(Jep-1)*Jep)) * -particle.volume;
     pCache.particleGridPos = (particle.position - grid->pos)/grid->h;
-
 }
 
 /**

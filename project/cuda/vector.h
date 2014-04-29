@@ -19,11 +19,11 @@
 #endif
 #include "glm/vec3.hpp"
 
-#include "common/math.h"
-
 #ifdef CUDA_INCLUDE
     #include "math.h"
 #endif
+
+#include "common/math.h"
 
 struct vec3
 {
@@ -110,6 +110,12 @@ struct vec3
 
     __host__ __device__ __forceinline__
     static vec3 max( const vec3 &v, const vec3 &w ) { return vec3( fmaxf(v.x, w.x), fmaxf(v.y, w.y), fmaxf(v.z,w.z) ); }
+
+    __host__ __device__ __forceinline__
+    static vec3 mix(const vec3 &v, const vec3 &w, const vec3 &a) { return vec3(v.x*(1.f-a.x)+w.x*a.x, v.y*(1.f-a.y)+w.y*a.y, v.z*(1.f-a.z)+w.z*a.z); }
+
+    __host__ __device__ __forceinline__
+    static vec3 mix(const vec3 &v, const vec3 &w, float a) { return vec3(v.x*(1.f-a)+w.x*a, v.y*(1.f-a)+w.y*a, v.z*(1.f-a)+w.z*a); }
 
     __host__ __device__ __forceinline__
     static float length2( const vec3 &v ) { return v.x*v.x + v.y*v.y + v.z*v.z; }

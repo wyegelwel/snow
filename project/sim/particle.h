@@ -11,6 +11,7 @@
 #ifndef PARTICLE_H
 #define PARTICLE_H
 
+#include "material.h"
 #include "cuda/matrix.h"
 
 #ifndef FUNC
@@ -29,7 +30,8 @@ struct Particle
     float volume;
     mat3 elasticF;
     mat3 plasticF;
-    vec3 normal;
+    vec3 normal; // used only for shading
+    MaterialConstants material;
     FUNC Particle()
     {
         position = vec3( 0.f, 0.f, 0.f );
@@ -39,6 +41,7 @@ struct Particle
         elasticF = mat3( 1.f );
         plasticF = mat3( 1.f );
         normal = vec3(1,0,0);
+        material = MaterialConstants(); // default
     }
 };
 
