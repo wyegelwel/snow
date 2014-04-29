@@ -46,6 +46,7 @@ SOURCES += \
     ui/tools/tool.cpp \
     ui/collapsiblebox.cpp
 
+
 HEADERS  += \
     ui/mainwindow.h \
     ui/viewpanel.h \
@@ -113,6 +114,7 @@ CUDA_SOURCES += cuda/snow.cu \
 #    cuda/max.cu \
 #    cuda/tim.cu \
 #    cuda/eric.cu \
+#    cuda/wil_tests.cu \
     cuda/simulation.cu
 
 CUDA_DIR = /contrib/projects/cuda5-toolkit
@@ -130,6 +132,7 @@ OTHER_FILES += \
     cuda/max.cu \
     cuda/tim.cu \
     cuda/eric.cu \
+    cuda/wil_tests.cu \
     cuda/simulation.cu \
     resources/shaders/particlesystem.vert \
     resources/shaders/particlesystem.frag \
