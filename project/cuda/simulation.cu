@@ -8,12 +8,13 @@
 **
 **************************************************************************/
 
+#define CUDA_INCLUDE
+
 #include <cuda.h>
 #include <helper_functions.h>
 #include <helper_cuda.h>
 #include "math.h"
 
-#define CUDA_INCLUDE
 #include "sim/caches.h"
 #include "sim/collider.h"
 #include "sim/material.h"
@@ -33,8 +34,8 @@
 
 #define ALPHA 0.95f
 
-// Chain to compute the volume of the particle
 
+// Chain to compute the volume of the particle
 /**
  * Part of one time operation to compute particle volumes. First rasterize particle masses to grid
  *
@@ -200,28 +201,32 @@ __global__ void computeCellMassVelocityAndForceFast( const Particle *particleDat
  * nodes -- updated velocity and velocityChange
  *
  */
-__global__ void updateNodeVelocities( Node *nodes, float dt, const ImplicitCollider* colliders, int numColliders, const MaterialConstants *material, const Grid *grid )
+__global__ void updateNodeVelocities( Node *nodes, int numNodes, float dt, const ImplicitCollider* colliders, int numColliders, const MaterialConstants *material, const Grid *grid )
 {
     int nodeIdx = blockIdx.x*blockDim.x + threadIdx.x;
+    if ( nodeIdx >= numNodes ) return;
+
     Node &node = nodes[nodeIdx];
 
     if ( node.mass > 1e-12 ) {
-        float scale = 1.f/node.mass;
+
+        float scale = 1.f / node.mass;
 
         node.velocity *= scale; //Have to normalize velocity by mass to conserve momentum
 
+        // Initialize with pre-update velocity
+        node.velocityChange = node.velocity;
+
         // Update velocity with node force
-        vec3 tmpVelocity = node.velocity + dt*node.force*scale;
+        node.velocity += dt * node.force*scale;
 
         // Handle collisions
         int gridI, gridJ, gridK;
         Grid::gridIndexToIJK(nodeIdx, gridI, gridJ, gridK, grid->dim+1);
         vec3 nodePosition = vec3(gridI, gridJ, gridK)*grid->h + grid->pos;
-        checkForAndHandleCollisions( colliders, numColliders, material->coeffFriction, nodePosition, tmpVelocity );
-
-        node.velocityChange = tmpVelocity - node.velocity;
-        node.velocity = tmpVelocity;
+        checkForAndHandleCollisions( colliders, numColliders, material->coeffFriction, nodePosition, node.velocity );
     }
+
 }
 
 // Use weighting functions to compute particle velocity gradient and update particle velocity
@@ -304,7 +309,6 @@ __device__ void updateParticleDeformationGradients( Particle &particle, const ma
 
 //    particle.elasticF = W * S * mat3::transpose( V );
 //    particle.plasticF = V * mat3::inverse( S ) * mat3::transpose( W ) * particle.elasticF * particle.plasticF;
-
 }
 
 // NOTE: assumes particleCount % blockDim.x = 0, so tid is never out of range!
@@ -326,35 +330,37 @@ __global__ void updateParticlesFromGrid( Particle *particles, const Grid *grid, 
     particle.velocity += timeStep * gravity;
 
     checkForAndHandleCollisions( colliders, numColliders, mat->coeffFriction, particle.position, particle.velocity );
-
     particle.position += timeStep * ( particle.velocity );
 }
 
 __host__ void updateParticles( const SimulationParameters &parameters,
                                Particle *particles, ParticleCache *pCaches, int numParticles,
-                               Grid *grid, Node *nodes, NodeCache *nodeCache, int numNodes,
+                               Grid *grid, Node *nodes, NodeCache *nodeCaches, int numNodes,
                                ImplicitCollider *colliders, int numColliders,
                                MaterialConstants *material)
 {
     cudaDeviceSetCacheConfig( cudaFuncCachePreferL1 );
+
+    // Clear data before update
+    checkCudaErrors( cudaMemset(nodes, 0, numNodes*sizeof(Node)) );
+    checkCudaErrors( cudaMemset(nodeCaches, 0, numNodes*sizeof(NodeCache)) );
+    checkCudaErrors( cudaMemset(pCaches, 0, numParticles*sizeof(ParticleCache)) );
 
     static const int threadCount = 128;
 
     computeSigma<<< numParticles / threadCount , threadCount >>>( particles, pCaches, grid );
     checkCudaErrors( cudaDeviceSynchronize() );
 
-    // Clear grid data before update
-    checkCudaErrors( cudaMemset(nodes, 0, numNodes*sizeof(Node)) );
-
     dim3 blockDim = dim3( numParticles / threadCount, 64 );
     dim3 threadDim = dim3( threadCount/64, 64 );
     computeCellMassVelocityAndForceFast<<< blockDim, threadDim >>>( particles, pCaches, grid, nodes );
     checkCudaErrors( cudaDeviceSynchronize() );
 
-    updateNodeVelocities<<< numNodes / threadCount, threadCount >>>( nodes, parameters.timeStep, colliders, numColliders, material, grid );
+
+    updateNodeVelocities<<< (numNodes+threadCount-1) / threadCount, threadCount >>>( nodes, numNodes, parameters.timeStep, colliders, numColliders, material, grid );
     checkCudaErrors( cudaDeviceSynchronize() );
 
-   // updateNodeVelocitiesImplicit( particles, pCaches, numParticles, grid, nodes, nodeCache, numNodes, parameters.timeStep, material );
+    updateNodeVelocitiesImplicit( particles, pCaches, numParticles, grid, nodes, nodeCaches, numNodes, parameters.timeStep, material );
 
     updateParticlesFromGrid<<< numParticles / threadCount, threadCount >>>( particles, grid, nodes, parameters.timeStep, colliders, numColliders, material, parameters.gravity );
     checkCudaErrors( cudaDeviceSynchronize() );

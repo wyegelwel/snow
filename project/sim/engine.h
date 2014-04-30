@@ -100,7 +100,7 @@ private:
     cudaGraphicsResource *m_nodesResource; // Particle grid nodes
     Grid *m_devGrid;
 
-    NodeCache *m_devNodeCache;
+    NodeCache *m_devNodeCaches;
     ParticleCache *m_devParticleCaches;
 
     ImplicitCollider *m_devColliders;

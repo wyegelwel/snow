@@ -407,6 +407,18 @@ struct mat3
     {
        return mat3::inverse(A) * b;
     }
+
+    __host__ __device__ __forceinline__
+    static void print( const mat3 &m )
+    {
+        printf( "\n%10f %10f %10f\n"\
+                  "%10f %10f %10f\n"\
+                  "%10f %10f %10f\n",
+                   m[0], m[3], m[6],
+                   m[1], m[4], m[7],
+                   m[2], m[5], m[8] );
+    }
+
 };
 
 __host__ __device__ __forceinline__
