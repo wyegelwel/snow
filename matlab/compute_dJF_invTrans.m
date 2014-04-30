@@ -6,17 +6,21 @@ F = [F0 F3 F6; F1 F4 F7; F2 F5 F8]; % Note, numbers are column major
 adjugate_F = [ F4*F8-F5*F7  F5*F6-F3*F8  F3*F7-F4*F6; 
                F2*F7-F1*F8  F0*F8-F2*F6  F1*F6-F0*F7;  
                F1*F5-F2*F4  F2*F3-F0*F5  F0*F4-F1*F3 ];
+           
+cofactor_F = [ F4*F8-F5*F7  F2*F7-F1*F8  F1*F5-F2*F4; 
+               F5*F6-F3*F8  F0*F8-F2*F6  F2*F3-F0*F5;  
+               F3*F7-F4*F6  F1*F6-F0*F7  F0*F4-F1*F3 ];
         
-d_adjugate_F = sym(zeros(9,9));           
+d_cofactor_F = sym(zeros(9,9));           
            
 for col = 1:3
     for row = 1:3
         di = F(row, col);
-        d_adjugate_F((row-1)*3+1:row*3, (col-1)*3+1:col*3) = diff(adjugate_F, di);
+        d_cofactor_F((row-1)*3+1:row*3, (col-1)*3+1:col*3) = diff(cofactor_F, di);
     end
 end
 
-displaySymbolicLatex(d_adjugate_F);
+displaySymbolicLatex(d_cofactor_F);
 
 %% Generate d_adjugate_F : dF where A = B : C  imples A(row, col) = sum(sum(B((row-1)*3+1:row*3, (col-1)*3+1:col*3) .* C)) 
 
@@ -28,7 +32,7 @@ dJF_invTrans = sym(zeros(9,1));
 
 for col = 1:3
     for row = 1:3
-        dJF_invTrans(row+(col-1)*3) = sum(sum(d_adjugate_F((row-1)*3+1:row*3, (col-1)*3+1:col*3).*dF));
+        dJF_invTrans(row+(col-1)*3) = sum(sum(d_cofactor_F((row-1)*3+1:row*3, (col-1)*3+1:col*3).*dF));
     end
 end
 

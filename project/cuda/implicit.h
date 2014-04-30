@@ -96,8 +96,6 @@ __global__ void computedF( const Particle *particles, ParticleCache *pCaches,
 
 }
 
-
-
 /** Currently computed in computedF, we could parallelize this and computedF but not sure what the time benefit would be*/
 //__global__ void computeFeHat(Particle *particles, Grid *grid, float dt, Node *nodes, ACache *ACaches){
 //    int particleIdx = blockIdx.x*blockDim.x + threadIdx.x;
@@ -163,7 +161,7 @@ __device__ void computedR( const mat3 &dF, const mat3 &Se, const mat3 &Re, mat3 
 }
 
 /**
- * This function involves taking the partial derivative of the adjugate of F
+ * This function involves taking the partial derivative of the cofactor of F
  * with respect to each element of F. This process results in a 3x3 block matrix
  * where each block is the 3x3 partial derivative for an element of F
  *
@@ -171,13 +169,13 @@ __device__ void computedR( const mat3 &dF, const mat3 &Se, const mat3 &Re, mat3 
  *           d e f
  *           g h i ]
  *
- * Let adjugate(F) = [ ei-hf  hc-bi  bf-ec
- *                     gf-di  ai-gc  dc-af
- *                     dh-ge  gb-ah  ae-db ]
+ * Let cofactor(F) = [ ei-hf  gf-di  dh-ge
+ *                     hc-bi  ai-gc  gb-ah
+ *                     bf-ec  dc-af  ae-db ]
  *
- * Then d/da (adjugate(F) = [ 0   0   0
- *                            0   i  -f
- *                            0  -h   e ]
+ * Then d/da (cofactor(F) = [ 0   0   0
+ *                            0   i  -h
+ *                            0  -f   e ]
  *
  * The other 8 partials will have similar form. See (and run) the code in
  * matlab/derivateAdjugateF.m for the full computation as well as to see where
@@ -186,16 +184,16 @@ __device__ void computedR( const mat3 &dF, const mat3 &Se, const mat3 &Re, mat3 
  *
  */
 __device__ void compute_dJF_invTrans( const mat3 &F, const mat3 &dF, mat3 &dJF_invTrans )
-{
-    dJF_invTrans[0] = F[4]*dF[8] - F[5]*dF[5] + F[8]*dF[4] - F[7]*dF[7];
-    dJF_invTrans[1] = F[5]*dF[2] - F[8]*dF[1] - F[3]*dF[8] + F[6]*dF[7];
-    dJF_invTrans[2] = F[3]*dF[5] - F[4]*dF[2] + F[7]*dF[1] - F[6]*dF[4];
-    dJF_invTrans[3] = F[2]*dF[5] - F[1]*dF[8] - F[8]*dF[3] + F[7]*dF[6];
-    dJF_invTrans[4] = F[0]*dF[8] - F[2]*dF[2] + F[8]*dF[0] - F[6]*dF[6];
-    dJF_invTrans[5] = F[1]*dF[2] - F[0]*dF[5] - F[7]*dF[0] + F[6]*dF[3];
-    dJF_invTrans[6] = F[1]*dF[7] - F[2]*dF[4] + F[5]*dF[3] - F[4]*dF[6];
-    dJF_invTrans[7] = F[2]*dF[1] - F[5]*dF[0] - F[0]*dF[7] + F[3]*dF[6];
-    dJF_invTrans[8] = F[0]*dF[4] - F[1]*dF[1] + F[4]*dF[0] - F[3]*dF[3];
+{  
+    dJF_invTrans[0] = F[4]*dF[8] - F[5]*dF[7] - F[7]*dF[5] + F[8]*dF[4];
+    dJF_invTrans[1] = F[5]*dF[6] - F[3]*dF[8] + F[6]*dF[5] - F[8]*dF[3];
+    dJF_invTrans[2] = F[3]*dF[7] - F[4]*dF[6] - F[6]*dF[4] + F[7]*dF[3];
+    dJF_invTrans[3] = F[2]*dF[7] - F[1]*dF[8] + F[7]*dF[2] - F[8]*dF[1];
+    dJF_invTrans[4] = F[0]*dF[8] - F[2]*dF[6] - F[6]*dF[2] + F[8]*dF[0];
+    dJF_invTrans[5] = F[1]*dF[6] - F[0]*dF[7] + F[6]*dF[1] - F[7]*dF[0];
+    dJF_invTrans[6] = F[1]*dF[5] - F[2]*dF[4] - F[4]*dF[2] + F[5]*dF[1];
+    dJF_invTrans[7] = F[2]*dF[3] - F[0]*dF[5] + F[3]*dF[2] - F[5]*dF[0];
+    dJF_invTrans[8] = F[0]*dF[4] - F[1]*dF[3] - F[3]*dF[1] + F[4]*dF[0];
 }
 
 /**
