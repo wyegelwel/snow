@@ -24,30 +24,29 @@
 #include "sim/particle.h"
 #include "sim/material.h"
 
-// TODO - also copy MaterialConstants object from host to GPU so this can generate a distribution around that?
-// Nah, this will be fixed presets.
-// Presets override material settings unless we are on DEFAULT preset.
+
+/*
+ * theta_c, theta_s -> determine when snow starts breaking.
+ *          larger = chunky, wet. smaller = powdery, dry
+ *
+ * low xi, E0 = muddy. high xi, E0 = Icy
+ * low xi = ductile, high xi = brittle
+ *
+ */
+
 __global__ void applyChunky(Particle *particles, int particleCount)
 {
-    // TODO - use the chunkiness parameter here to mix
     // spatially varying constitutive parameters
-    // snowballs are harder and heavier on the outside (stiffer, crunchier)
-    // stiffness varied with noise fraction - chunky fracture.
     int tid = threadIdx.x + blockIdx.x * blockDim.x;
     if ( tid >= particleCount ) return;
     Particle &particle = particles[tid];
     vec3 pos = particle.position;
-
-    float fbm = fbm3(pos);
-    particle.material.lambda *= fbm;
-//    printf("b : %f\n", lambda);
-
-//    printf("a : %f\n", lambda);
-
-    //Particle particle = particles[tid];
-    //fbm3(particle.position);
+    float fbm = fbm3(pos*.5); // adjust the .5 to get desired frequency of chunks within fbm
+    MaterialConstants mat(MAX_THETA_C,MAX_THETA_S,MIN_XI+fbm*(MAX_XI-MIN_XI),0.2,MIN_E0+fbm*(MAX_E0-MIN_E0));
+    particle.material = mat;
 }
 
+// hardening on the outside should be achieved with shells, so I guess this is the only spatially varying
 
 #endif
 

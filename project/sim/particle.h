@@ -30,7 +30,8 @@ struct Particle
     float volume;
     mat3 elasticF;
     mat3 plasticF;
-    vec3 normal; // used only for shading
+    //float stiffness; // used only for shading
+
     MaterialConstants material;
     FUNC Particle()
     {
@@ -40,7 +41,7 @@ struct Particle
         volume = 1e-9;
         elasticF = mat3( 1.f );
         plasticF = mat3( 1.f );
-        normal = vec3(1,0,0);
+        //stiffness = 1.f;
         material = MaterialConstants(); // default
     }
 };

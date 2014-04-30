@@ -65,7 +65,6 @@ public:
         PARTICLE_MASS,
         PARTICLE_VELOCITY,
         PARTICLE_SPEED,
-        PARTICLE_SHADED,
         PARTICLE_STIFFNESS
     };
 
