@@ -25,6 +25,7 @@
 #include "sim/particlegridnode.h"
 #include "cuda/vector.h"
 
+#include "cuda/helpers.h"
 #include "cuda/atomic.h"
 #include "cuda/decomposition.h"
 #include "cuda/weighting.h"
@@ -34,8 +35,6 @@
 #define BETA 0.5f
 #define MAX_ITERATIONS 15
 #define RESIDUAL_THRESHOLD 1e-6
-
-#define LAUNCH( ... ) { __VA_ARGS__; checkCudaErrors( cudaDeviceSynchronize() ); }
 
 /**
  * Called over particles
@@ -306,6 +305,33 @@ __global__ void initializeRPKernel( NodeCache *nodeCaches, int numNodes )
     nodeCache.p = nodeCache.r;
 }
 
+__global__ void initializeApKernel( NodeCache *nodeCaches, int numNodes )
+{
+    int tid = blockDim.x*blockIdx.x + threadIdx.x;
+    if ( tid >= numNodes ) return;
+    NodeCache &nodeCache = nodeCaches[tid];
+    nodeCache.Ap = nodeCache.Ar;
+}
+
+__global__ void updateVRKernel( NodeCache *nodeCaches, int numNodes, double alpha )
+{
+    int tid = blockDim.x*blockIdx.x + threadIdx.x;
+    if ( tid >= numNodes ) return;
+    NodeCache &nodeCache = nodeCaches[tid];
+    nodeCache.v += alpha*nodeCache.p;
+    nodeCache.r -= alpha*nodeCache.Ap;
+}
+
+__global__ void updatePApResidualKernel( NodeCache *nodeCaches, int numNodes, double beta )
+{
+    int tid = blockDim.x*blockIdx.x + threadIdx.x;
+    if ( tid >= numNodes ) return;
+    NodeCache &nodeCache = nodeCaches[tid];
+    nodeCache.p = nodeCache.r + beta * nodeCache.p;
+    nodeCache.Ap = nodeCache.Ar + beta * nodeCache.Ap;
+    nodeCache.scratch = (double)vec3::dot( nodeCache.r, nodeCache.r );
+}
+
 __global__ void finishConjugateResidualKernel( Node *nodes, const NodeCache *nodeCaches, int numNodes )
 {
     int tid = blockDim.x*blockIdx.x + threadIdx.x;
@@ -315,24 +341,6 @@ __global__ void finishConjugateResidualKernel( Node *nodes, const NodeCache *nod
     nodes[tid].velocityChange = nodes[tid].velocity - nodes[tid].velocityChange;
 }
 
-__global__ void updateVRKernel( NodeCache *nodeCaches, int numNodes, float alpha )
-{
-    int tid = blockDim.x*blockIdx.x + threadIdx.x;
-    if ( tid >= numNodes ) return;
-    NodeCache &nodeCache = nodeCaches[tid];
-    nodeCache.v += alpha * nodeCache.p;
-    nodeCache.r -= alpha * nodeCache.Ap;
-}
-
-__global__ void updatePApKernel( NodeCache *nodeCaches, int numNodes, float beta )
-{
-    int tid = blockDim.x*blockIdx.x + threadIdx.x;
-    if ( tid >= numNodes ) return;
-    NodeCache &nodeCache = nodeCaches[tid];
-    nodeCache.p = nodeCache.r + beta * nodeCache.p;
-    nodeCache.Ap = nodeCache.Ar + beta * nodeCache.Ap;
-}
-
 __global__ void scratchReduceKernel( NodeCache *nodeCaches, int numNodes, int reductionSize )
 {
     int tid = blockDim.x*blockIdx.x + threadIdx.x;
@@ -340,22 +348,10 @@ __global__ void scratchReduceKernel( NodeCache *nodeCaches, int numNodes, int re
     nodeCaches[tid].scratch += nodeCaches[tid+reductionSize].scratch;
 }
 
-__global__ void innerProductKernel( NodeCache *nodeCaches, int numNodes, NodeCache::Offset uOffset, NodeCache::Offset vOffset )
+__host__ double scratchSum( NodeCache *nodeCaches, int numNodes )
 {
-    int tid = blockDim.x*blockIdx.x + threadIdx.x;
-    if ( tid >= numNodes ) return;
-    NodeCache &nodeCache = nodeCaches[tid];
-    nodeCache.scratch = vec3::dot( nodeCache[uOffset], nodeCache[vOffset] );
-}
-
-__host__ float innerProduct( NodeCache *nodeCaches, int numNodes, NodeCache::Offset uOffset, NodeCache::Offset vOffset )
-{
-    static const int threadCount = 256;
-    static const dim3 blocks( (numNodes+threadCount-1)/threadCount );
-    static const dim3 threads( threadCount );
-
-    LAUNCH( innerProductKernel<<< blocks, threads >>>(nodeCaches, numNodes, uOffset, vOffset) );
-
+    static const dim3 blocks( (numNodes+THREAD_COUNT-1)/THREAD_COUNT );
+    static const dim3 threads( THREAD_COUNT );
     int steps = (int)(ceilf(log2f(numNodes)));
     int reductionSize = 1 << (steps-1);
     for ( int i = 0; i < steps; i++ ) {
@@ -363,53 +359,61 @@ __host__ float innerProduct( NodeCache *nodeCaches, int numNodes, NodeCache::Off
         reductionSize /= 2;
         cudaDeviceSynchronize();
     }
-
-    float result;
-    cudaMemcpy( &result, &(nodeCaches[0].scratch), sizeof(float), cudaMemcpyDeviceToHost );
+    double result;
+    cudaMemcpy( &result, &(nodeCaches[0].scratch), sizeof(double), cudaMemcpyDeviceToHost );
     return result;
+}
+
+__global__ void innerProductKernel( NodeCache *nodeCaches, int numNodes, NodeCache::Offset uOffset, NodeCache::Offset vOffset )
+{
+    int tid = blockDim.x*blockIdx.x + threadIdx.x;
+    if ( tid >= numNodes ) return;
+    NodeCache &nodeCache = nodeCaches[tid];
+    nodeCache.scratch = (double)vec3::dot( nodeCache[uOffset], nodeCache[vOffset] );
+}
+
+__host__ double innerProduct( NodeCache *nodeCaches, int numNodes, NodeCache::Offset uOffset, NodeCache::Offset vOffset )
+{
+    const dim3 blocks( (numNodes+THREAD_COUNT-1)/THREAD_COUNT );
+    static const dim3 threads( THREAD_COUNT );
+    LAUNCH( innerProductKernel<<< blocks, threads >>>(nodeCaches, numNodes, uOffset, vOffset) );
+    return scratchSum( nodeCaches, numNodes );
 }
 
 __host__ void integrateNodeForces( Particle *particles, ParticleCache *pCaches, int numParticles,
                                    Grid *grid, Node *nodes, NodeCache *nodeCaches, int numNodes,
-                                   float dt, bool implicitUpdate )
+                                   float dt )
 {
-    static const int threadCount = 128;
-    static const dim3 blocks( (numNodes+threadCount-1)/threadCount );
-    static const dim3 threads( threadCount );
+    const dim3 blocks( (numNodes+THREAD_COUNT-1)/THREAD_COUNT );
+    static const dim3 threads( THREAD_COUNT );
 
+    // Initialize conjugate residual method
     LAUNCH( initializeVKernel<<<blocks,threads>>>(nodes, nodeCaches, numNodes) );
+    computeEu( particles, pCaches, numParticles, grid, nodes, nodeCaches, numNodes, NodeCache::V, NodeCache::R, dt );
+    LAUNCH( initializeRPKernel<<<blocks,threads>>>(nodeCaches, numNodes) );
+    computeEu( particles, pCaches, numParticles, grid, nodes, nodeCaches, numNodes, NodeCache::R, NodeCache::AR, dt );
+    LAUNCH( initializeApKernel<<<blocks,threads>>>(nodeCaches, numNodes) );
 
-    if ( implicitUpdate ) {
+    int k = 0;
+    float residual;
+    do {
 
-        // Initialize conjugate residual method
-        computeEu( particles, pCaches, numParticles, grid, nodes, nodeCaches, numNodes, NodeCache::V, NodeCache::R, dt );
-        LAUNCH( initializeRPKernel<<<blocks,threads>>>(nodeCaches, numNodes) );
-        computeEu( particles, pCaches, numParticles, grid, nodes, nodeCaches, numNodes, NodeCache::P, NodeCache::AP, dt );
+        double alphaNum = innerProduct( nodeCaches, numNodes, NodeCache::R, NodeCache::AR );
+        double alphaDen = innerProduct( nodeCaches, numNodes, NodeCache::AP, NodeCache::AP );
+        double alpha = ( fabsf(alphaDen) > 0.f ) ? alphaNum/alphaDen : 0.f;
+
+        double betaDen = alphaNum;
+        LAUNCH( updateVRKernel<<<blocks,threads>>>( nodeCaches, numNodes, alpha ) );
         computeEu( particles, pCaches, numParticles, grid, nodes, nodeCaches, numNodes, NodeCache::R, NodeCache::AR, dt );
+        double betaNum = innerProduct( nodeCaches, numNodes, NodeCache::R, NodeCache::AR );
+        double beta = ( fabsf(betaDen) > 0.f ) ? betaNum/betaDen : 0.f;
 
-        int k = 0;
-        float residual = 1e-7;
-        do {
+        LAUNCH( updatePApResidualKernel<<<blocks,threads>>>(nodeCaches,numNodes,beta) );
+        residual = scratchSum( nodeCaches, numNodes );
 
-            float alphaNum = innerProduct( nodeCaches, numNodes, NodeCache::R, NodeCache::AR );
-            float alphaDen = innerProduct( nodeCaches, numNodes, NodeCache::AP, NodeCache::AP );
-            float alpha = ( fabsf(alphaDen) > 0.f ) ? alphaNum/alphaDen : 0.f;
+        LOG( "k = %3d, rAr = %10g, alpha = %10g, beta = %10g, r = %g", k, alphaNum, alpha, beta, residual );
 
-            float betaDen = innerProduct( nodeCaches, numNodes, NodeCache::R, NodeCache::AR );
-            LAUNCH( updateVRKernel<<<blocks,threads>>>( nodeCaches, numNodes, alpha ) );
-            computeEu( particles, pCaches, numParticles, grid, nodes, nodeCaches, numNodes, NodeCache::R, NodeCache::AR, dt );
-            float betaNum = innerProduct( nodeCaches, numNodes, NodeCache::R, NodeCache::AR );
-            float beta = ( fabsf(betaDen) > 0.f ) ? betaNum/betaDen : 0.f;
-
-            LAUNCH( updatePApKernel<<<blocks,threads>>>(nodeCaches,numNodes,beta) );
-
-            residual = innerProduct( nodeCaches, numNodes, NodeCache::R, NodeCache::R );
-
-            LOG( "k = %3d, rAr = %10g, alpha = %10gf, beta = %10g, r = %10g", k, alphaNum, alpha, beta, residual );
-
-        } while ( ++k < MAX_ITERATIONS && residual > RESIDUAL_THRESHOLD );
-
-    }
+    } while ( ++k < MAX_ITERATIONS && residual > RESIDUAL_THRESHOLD );
 
     LAUNCH( finishConjugateResidualKernel<<<blocks,threads>>>(nodes, nodeCaches, numNodes) );
 }

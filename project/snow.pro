@@ -45,7 +45,7 @@ SOURCES += \
     ui/tools/tool.cpp \
     ui/collapsiblebox.cpp \
     scene/scenecollider.cpp \
-    sim/implicitcollider.cpp
+    sim/implicitcollider.cpp \
 
 
 HEADERS  += \
@@ -99,7 +99,8 @@ HEADERS  += \
     cuda/noise.h \
     scene/scenecollider.h \
     sim/implicitcollider.h \
-    cuda/snowtypes.h
+    cuda/snowtypes.h \
+    cuda/helpers.h
 
 FORMS    += ui/mainwindow.ui
 
@@ -115,7 +116,8 @@ CUDA_SOURCES += cuda/snow.cu \
 #    cuda/tim.cu \
 #    cuda/eric.cu \
 #    cuda/wil_tests.cu \
-    cuda/simulation.cu
+    cuda/simulation.cu \
+    cuda/cr_tests.cu
 
 CUDA_DIR = /contrib/projects/cuda5-toolkit
 INCLUDEPATH += $$CUDA_DIR/include
@@ -134,6 +136,7 @@ OTHER_FILES += \
     cuda/eric.cu \
     cuda/wil_tests.cu \
     cuda/simulation.cu \
+    cuda/cr_tests.cu \
     resources/shaders/particlesystem.vert \
     resources/shaders/particlesystem.frag \
     resources/shaders/particlegrid.frag \

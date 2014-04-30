@@ -27,7 +27,7 @@ struct NodeCache
     vec3 Ap;
     vec3 v;
     vec3 df;
-    float scratch;
+    double scratch;
     __host__ __device__ vec3& operator [] ( Offset i )
     {
         switch ( i ) {
@@ -38,7 +38,6 @@ struct NodeCache
         case V: return v;
         case DF: return df;
         }
-        printf( "THIS SHOULDN'T HAPPEN\n" );
         return r;
     }
 
@@ -52,7 +51,6 @@ struct NodeCache
         case V: return v;
         case DF: return df;
         }
-        printf( "THIS SHOULDN'T HAPPEN\n" );
         return r;
     }
 

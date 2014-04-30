@@ -169,6 +169,12 @@ struct vec3
     vec3 operator * ( float f ) const { return vec3( f*x, f*y, f*z ); }
 
     __host__ __device__ __forceinline__
+    vec3& operator *= ( double d )  { x = (float)(x*d); y = (float)(y*d); z = (float)(z*d); return *this; }
+
+    __host__ __device__ __forceinline__
+    vec3 operator * ( double d ) const { return vec3( (float)(x*d), (float)(y*d), (float)(z*d) ); }
+
+    __host__ __device__ __forceinline__
     vec3& operator /= ( float f ) { float fi = 1./f; x *= fi; y *= fi; z *= fi; return *this; }
 
     __host__ __device__ __forceinline__
@@ -224,5 +230,8 @@ vec3 operator - ( const vec3 &v ) { return vec3( -v.x, -v.y, -v.z ); }
 
 __host__ __device__ __forceinline__
 vec3 operator * ( float f, const vec3 &v ) { return vec3( f*v.x, f*v.y, f*v.z ); }
+
+__host__ __device__ __forceinline__
+vec3 operator * ( double f, const vec3 &v ) { return vec3( (float)(f*v.x), (float)(f*v.y), (float)(f*v.z) ); }
 
 #endif // VECTOR_H
