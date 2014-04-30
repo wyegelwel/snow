@@ -19,7 +19,7 @@ const int FORCE = 3;
 
 void main( void )
 {
-    float alpha = 0.5 * smoothstep( 0.0, density, nodeMass/(h*h*h) );
+    float alpha = 0.75 * smoothstep( 0.0, density, nodeMass/(h*h*h) );
     nodeColor = vec4( 0.8, 0.8, 0.9, alpha );
     if ( mode == VELOCITY ) {
         nodeColor.rgb = abs(nodeVelocity);

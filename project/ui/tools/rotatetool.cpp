@@ -20,7 +20,6 @@
 #include "glm/gtc/type_ptr.hpp"
 
 #include "rotatetool.h"
-
 #include "scene/scene.h"
 #include "scene/scenenode.h"
 #include "scene/scenenodeiterator.h"
@@ -159,21 +158,21 @@ RotateTool::mouseMoved()
         glm::mat4 transform = T * R * Tinv;
         for ( SceneNodeIterator it = m_panel->m_scene->begin(); it.isValid(); ++it ) {
             if ( (*it)->hasRenderable() && (*it)->getRenderable()->isSelected() &&
-                 (*it)->getType() != SceneNode::SIMULATION_GRID && (*it)->getType() != SceneNode::IMPLICIT_COLLIDER) {
+                 (*it)->getType() != SceneNode::SIMULATION_GRID ) {
                 (*it)->applyTransformation( transform );
             }
-            else if((*it)->getType() == SceneNode::IMPLICIT_COLLIDER && (*it)->hasRenderable() && (*it)->getRenderable()->isSelected())  {
-                switch(dynamic_cast<Collider*>((*it)->getRenderable())->getImplicitCollider()->type) {
-                    case SPHERE:
-                        break;
-                    case HALF_PLANE:
-                        (*it)->applyTransformation( transform );
-                        break;
-                    default:
-                        break;
-                }
-            }
-            else {}
+//            else if((*it)->getType() == SceneNode::IMPLICIT_COLLIDER && (*it)->hasRenderable() && (*it)->getRenderable()->isSelected())  {
+//                switch(dynamic_cast<SceneCollider*>((*it)->getRenderable())->getImplicitCollider()->type) {
+//                    case SPHERE:
+//                        break;
+//                    case HALF_PLANE:
+//                        (*it)->applyTransformation( transform );
+//                        break;
+//                    default:
+//                        break;
+//                }
+//            }
+//            else {}
         }
     }
     update();

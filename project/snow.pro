@@ -30,7 +30,6 @@ SOURCES += \
     scene/scene.cpp \
     scene/scenenode.cpp \
     tests/tests.cpp \
-    sim/collider.cpp \
     geometry/bbox.cpp \
     sim/engine.cpp \
     io/sceneio.cpp \
@@ -44,7 +43,9 @@ SOURCES += \
     ui/tools/rotatetool.cpp \
     ui/tools/scaletool.cpp \
     ui/tools/tool.cpp \
-    ui/collapsiblebox.cpp
+    ui/collapsiblebox.cpp \
+    scene/scenecollider.cpp \
+    sim/implicitcollider.cpp
 
 
 HEADERS  += \
@@ -65,7 +66,6 @@ HEADERS  += \
     common/renderable.h \
     common/types.h \
     tests/tests.h \
-    sim/collider.h \
     geometry/bbox.h \
     common/math.h \
     geometry/grid.h \
@@ -74,7 +74,6 @@ HEADERS  += \
     ui/databinding.h \
     ui/uisettings.h \
     sim/material.h \
-    sim/parameters.h \
     sim/particlegridnode.h \
     ui/picker.h \
     scene/scenenodeiterator.h \
@@ -98,7 +97,9 @@ HEADERS  += \
     cuda/quaternion.h \
     cuda/weighting.h \
     cuda/noise.h \
-    cuda/material.h \
+    scene/scenecollider.h \
+    sim/implicitcollider.h \
+    cuda/snowtypes.h
 
 FORMS    += ui/mainwindow.ui
 

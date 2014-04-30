@@ -18,22 +18,23 @@
 
 #include <QObject>
 #include <QTimer>
+#include <QVector>
 
 #include "common/renderable.h"
 #include "geometry/grid.h"
-#include "sim/collider.h"
+#include "sim/implicitcollider.h"
 #include "sim/material.h"
-#include "sim/parameters.h"
-#include "geometry/grid.h"
-#include "io/mitsubaexporter.h"
 
 struct cudaGraphicsResource;
-struct Particle;
-struct ParticleGrid;
-struct Node;
 
+struct Node;
 struct NodeCache;
+struct Particle;
 struct ParticleCache;
+struct ParticleGrid;
+struct ParticleSystem;
+
+struct MitsubaExporter;
 
 class Engine : public QObject, public Renderable
 {
@@ -54,8 +55,6 @@ public:
 
     float getSimulationTime() { return m_time; }
 
-    SimulationParameters& parameters() { return m_params; }
-
     void addParticleSystem( const ParticleSystem &particles );
     void clearParticleSystem();
     ParticleSystem* particleSystem() { return m_particleSystem; }
@@ -63,15 +62,13 @@ public:
     void setGrid( const Grid &grid );
     void clearParticleGrid();
 
-//    MaterialConstants& materialConstants() { return m_materialConstants; }
-    void initParticleMaterials(int preset);
+    void initParticleMaterials( int preset );
 
-//    void addCollider( const ImplicitCollider &collider ) { m_colliders += collider; }
-    void addCollider(Collider &collider, const glm::mat4 &ctm);
+    void addCollider( const ImplicitCollider &collider ) { m_colliders += collider; }
     void clearColliders() { m_colliders.clear(); }
     QVector<ImplicitCollider>& colliders() { return m_colliders; }
 
-    void initExporter(QString fprefix);
+    void initExporter( QString fprefix );
 
     bool isRunning();
 
@@ -93,7 +90,6 @@ private:
     ParticleGrid *m_particleGrid;
     Grid m_grid;
     QVector<ImplicitCollider> m_colliders;
-    Material m_materialConstants;
 
     // CUDA pointers
     cudaGraphicsResource *m_particlesResource; // Particles
@@ -106,7 +102,6 @@ private:
     ImplicitCollider *m_devColliders;
     Material *m_devMaterial;
 
-    SimulationParameters m_params;
     float m_time;
 
     bool m_busy;

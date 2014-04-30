@@ -71,6 +71,7 @@ UiSettings::loadSettings()
     gridResolution() = s.value( "gridResolution", 0.05f ).toFloat();
 
     timeStep() = s.value( "timeStep", 1e-5 ).toFloat();
+    implicit() = s.value( "implicit", true ).toBool();
     materialPreset() = s.value( "materialPreset", MAT_DEFAULT).toInt();
 
     showContainers() = s.value( "showContainers", true ).toBool();
@@ -115,6 +116,7 @@ UiSettings::saveSettings()
     s.setValue( "gridResolution", gridResolution() );
 
     s.setValue( "timeStep", timeStep() );
+    s.setValue( "implicit", implicit() );
     s.setValue("materialPreset", materialPreset());
 
     s.setValue( "showContainers", showContainers() );

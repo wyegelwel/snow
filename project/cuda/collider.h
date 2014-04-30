@@ -20,7 +20,7 @@
 #endif
 #include <glm/geometric.hpp>
 
-#include "sim/collider.h"
+#include "sim/implicitcollider.h"
 #include "cuda/matrix.h"
 #include "cuda/vector.h"
 
@@ -88,21 +88,22 @@ __device__ void colliderNormal(const ImplicitCollider &collider, const vec3 &pos
     colliderNormalFunctions[collider.type](collider, position, normal);
 }
 
-__device__ void checkForAndHandleCollisions( const ImplicitCollider *colliders, int numColliders, float coeffFriction, const vec3 &position, vec3 &velocity ){
-    for (int i = 0; i < numColliders; i++){
+__device__ void checkForAndHandleCollisions( const ImplicitCollider *colliders, int numColliders, const vec3 &position, vec3 &velocity )
+{
+    for ( int i = 0; i < numColliders; ++i ) {
         const ImplicitCollider &collider = colliders[i];
-        if (isColliding(collider, position)){
+        if ( isColliding(collider, position) ){
             vec3 vRel = velocity - collider.velocity;
             vec3 normal;
-            colliderNormal(collider, position, normal);
-            float vn = vec3::dot(vRel, normal);
-            if (vn < 0 ){ //Bodies are not separating and a collision must be applied
+            colliderNormal( collider, position, normal );
+            float vn = vec3::dot( vRel, normal );
+            if ( vn < 0 ) { //Bodies are not separating and a collision must be applied
                 vec3 vt = vRel - normal*vn;
                 float magVt = vec3::length(vt);
-                if (magVt <= -coeffFriction*vn){ // tangential velocity not enough to overcome force of friction
-                    vRel = vec3(0.0f);
+                if ( magVt <= -collider.coeffFriction*vn ) { // tangential velocity not enough to overcome force of friction
+                    vRel = vec3( 0.0f );
                 } else{
-                    vRel = (1+coeffFriction*vn/magVt)*vt;
+                    vRel = (1+collider.coeffFriction*vn/magVt)*vt;
                 }
             }
             velocity = vRel + collider.velocity;

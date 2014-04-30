@@ -11,8 +11,9 @@
 #include <GL/gl.h>
 
 #include "common/common.h"
+#include "io/mitsubaexporter.h"
 #include "sim/caches.h"
-#include "sim/collider.h"
+#include "sim/implicitcollider.h"
 #include "sim/engine.h"
 #include "sim/particlesystem.h"
 #include "sim/particlegrid.h"
@@ -33,17 +34,11 @@ Engine::Engine()
       m_particleGrid(NULL),
       m_time(0.f),
       m_running(false),
-      m_paused(false)
+      m_paused(false),
+      m_exporter(NULL)
 {
     m_particleSystem = new ParticleSystem;
     m_particleGrid =  new ParticleGrid;
-
-    m_exporter = NULL;
-
-    m_params.timeStep = 5e-5;
-    m_params.startTime = 0.f;
-    m_params.endTime = 60.f; // not being used...
-    m_params.gravity = vec3( 0.f, -9.8f, 0.f );
 
     assert( connect(&m_ticker, SIGNAL(timeout()), this, SLOT(update())) );
 }
@@ -53,48 +48,13 @@ Engine::~Engine()
     if ( m_running ) stop();
     SAFE_DELETE( m_particleSystem );
     SAFE_DELETE( m_particleGrid );
-    if ( m_export )
-        SAFE_DELETE( m_exporter );
+    SAFE_DELETE( m_exporter );
 }
 
 void Engine::setGrid(const Grid &grid)
 {
     m_grid = grid;
     m_particleGrid->setGrid( grid );
-}
-
-void Engine::addCollider(Collider &collider, const glm::mat4 &ctm)  {
-    ImplicitCollider &col = *(collider.getImplicitCollider());
-//    glm::vec4 centerTemp = glm::vec4(col.center.x,col.center.y,col.center.z,1);
-//    //transform center
-//    centerTemp = ctm*centerTemp;
-//    col.center = glm::vec3(centerTemp.x,centerTemp.y,centerTemp.z);
-
-    //transform center
-    std::cout << "ctm: " << std::endl << ctm[0][0] << "," << ctm[0][1] << "," << ctm[0][2] << "," << ctm[0][3] << std::endl
-                         << std::endl << ctm[1][0] << "," << ctm[1][1] << "," << ctm[1][2] << "," << ctm[1][3] << std::endl
-                         << std::endl << ctm[2][0] << "," << ctm[2][1] << "," << ctm[2][2] << "," << ctm[2][3] << std::endl
-                         << std::endl << ctm[3][0] << "," << ctm[3][1] << "," << ctm[3][2] << "," << ctm[3][3] << std::endl << std::endl;
-    col.center = glm::vec3(ctm[3][0],ctm[3][1],ctm[3][2]);
-    std::cout << "center: " << col.center.x << "," << col.center.y << "," << col.center.z << std::endl;
-    //transform scale for sphere
-    glm::vec3 scale(glm::length(glm::vec4(ctm[0][0],ctm[0][1],ctm[0][2],ctm[0][3])),glm::length(glm::vec4(ctm[1][0],ctm[1][1],ctm[1][2],ctm[1][3])),glm::length(glm::vec4(ctm[2][0],ctm[2][1],ctm[2][2],ctm[2][3])));
-    if(col.type == SPHERE)  {
-        col.param.x = scale.x;
-        std::cout << "param: " << col.param.x << std::endl;
-    }
-
-    if(col.type == HALF_PLANE)  {
-        glm::vec4 basisOne(glm::vec4(ctm[0][0],ctm[0][1],ctm[0][2],ctm[0][3])/scale.x);
-        glm::vec4 basisTwo(glm::vec4(ctm[1][0],ctm[1][1],ctm[1][2],ctm[1][3])/scale.x);
-        glm::vec4 basisThree(glm::vec4(ctm[2][0],ctm[2][1],ctm[2][2],ctm[2][3])/scale.x);
-        glm::mat3 rotation(basisOne.x,basisTwo.x,basisThree.x,
-                           basisOne.y,basisTwo.y,basisThree.y,
-                           basisOne.z,basisTwo.z,basisThree.z);
-        col.param = glm::vec3(0,1,0)*rotation;
-        std::cout << "param: " << col.param.x << "," << col.param.y << "," << col.param.z << std::endl;
-    }
-    m_colliders.append(col);
 }
 
 void Engine::addParticleSystem( const ParticleSystem &particles )
@@ -123,14 +83,12 @@ bool Engine::start( bool exportVolume )
 
         if ( (m_export = exportVolume) ) m_exporter->reset( m_grid );
 
-        LOG( "STARTING SIMULATION" );
-
-        m_time = 0.f;
-        m_params.timeStep = UiSettings::timeStep();
         initializeCudaResources();
         m_running = true;
-        m_ticker.start(TICKS);
 
+        LOG( "SIMULATION STARTED" );
+
+        m_ticker.start(TICKS);
         return true;
 
     } else {
@@ -151,6 +109,7 @@ bool Engine::start( bool exportVolume )
 
 void Engine::stop()
 {
+    LOG( "SIMULATION STOPPED" );
     m_ticker.stop();
     freeCudaResources();
     m_running = false;
@@ -210,11 +169,9 @@ void Engine::update()
             LOG( "Grid nodes resource error : %lu bytes (%lu expected)", size, m_particleGrid->size()*sizeof(Node) );
         }
 
-        bool doShading = UiSettings::showParticlesMode() == UiSettings::PARTICLE_SHADED;
-
-        updateParticles( m_params, devParticles, m_devParticleCaches, m_particleSystem->size(), m_devGrid,
-                         devNodes, m_devNodeCaches, m_grid.nodeCount(), m_devColliders, m_colliders.size(), doShading );
-
+        updateParticles( devParticles, m_devParticleCaches, m_particleSystem->size(), m_devGrid,
+                         devNodes, m_devNodeCaches, m_grid.nodeCount(), m_devColliders, m_colliders.size(),
+                         UiSettings::timeStep(), UiSettings::implicit() );
 
         if (m_export && (m_time - m_exporter->getLastUpdateTime() >= m_exporter->getspf()))
         {
@@ -226,7 +183,7 @@ void Engine::update()
         checkCudaErrors( cudaGraphicsUnmapResources( 1, &m_nodesResource, 0 ) );
         checkCudaErrors( cudaDeviceSynchronize() );
 
-        m_time += m_params.timeStep;
+        m_time += UiSettings::timeStep();
 
         if (m_time >= UiSettings::maxTime()) // user can adjust max export time dynamically
         {
@@ -283,14 +240,9 @@ void Engine::initializeCudaResources()
     float particleCachesSize = m_particleSystem->size()*sizeof(ParticleCache) / 1e6;
     LOG( "Allocating %.2f MB for implicit update particle caches.", particleCachesSize );
 
-    // Material Constants - presently we are only using this for setting coeff friction from UI
-    checkCudaErrors(cudaMalloc( (void**)&m_devMaterial, sizeof(Material) ));
-    checkCudaErrors(cudaMemcpy( m_devMaterial, &m_materialConstants, sizeof(Material), cudaMemcpyHostToDevice ));
-
     LOG( "Allocated %.2f MB in total", particlesSize + nodesSize + nodeCachesSize + particleCachesSize );
 
     LOG( "Computing particle volumes..." );
-
     cudaGraphicsMapResources( 1, &m_particlesResource, 0 );
     Particle *devParticles;
     size_t size;

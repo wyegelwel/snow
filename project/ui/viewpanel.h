@@ -17,7 +17,6 @@
 #include <QFile>
 #include <QDir>
 #include "geometry/mesh.h"
-#include "sim/collider.h"
 
 class InfoPanel;
 class Viewport;
@@ -67,7 +66,7 @@ public slots:
 
     void loadMesh( const QString &filename );
 
-    void addCollider(ColliderType c,QString planeType);
+    void addCollider( int colliderType );
 
     void setTool( int tool );
 

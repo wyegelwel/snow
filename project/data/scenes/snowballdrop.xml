@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+	<SnowSimulation>
+		<engine>
+		<!-- stuff used for sim and export -->
+		<grid>
+			<dim x="128" y="128" z="128" />
+			<pos x="0" y="0" z="0" />
+			<h value="0.01"/>
+		</grid>
+
+		<particlesystem>
+			<float name="numParticles"/>
+			<MaterialPreset value="chunky" />
+			 <!-- Multiple particle systems permitted -->
+			<string name="teapot.obj">
+				<matrix value="0  -0.53  0  -1.79  0.92  0  0  8.03  0  0  0.53  0  0  0  0  1"/>
+				<string name="materialConstant" value="chunky"/> <!-- materialconstants of these snow particles set here -->
+			</container>
+			<container name="monkey.obj">
+				<CTM /> 
+			</container>
+		</particlesystem>
+
+		<ImplicitColliders>
+			<collider type="HALF_PLANE">
+				<point name="center" x="0" y="-2" z="-1"/>
+				<vector name="velocity" x="0" y="0" z="0" />
+				<vector name="param" x="0" y="0" z="0" />
+			</collider>
+			<collider type="SPHERE">
+				<point name="center" x="0" y="-2" z="-1"/>
+				<vector name="velocity" x="0" y="0" z="0" />
+				<vector name="param" x="0" y="0" z="0" />
+			</collider>
+		</ImplicitColliders>
+		<!-- stuff used just for exporting -->
+		<integer name="numFrames" value="1000" />
+			
+		</engine>
+	</SnowSimulation>
+</xml>

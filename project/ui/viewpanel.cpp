@@ -23,17 +23,21 @@
 #include "geometry/mesh.h"
 #include "geometry/bbox.h"
 #include "scene/scene.h"
+#include "scene/scenecollider.h"
 #include "scene/scenegrid.h"
 #include "scene/scenenode.h"
 #include "scene/scenenodeiterator.h"
 #include "sim/engine.h"
+#include "sim/implicitcollider.h"
 #include "sim/particlesystem.h"
 #include "ui/infopanel.h"
 #include "ui/picker.h"
 #include "ui/tools/Tools.h"
 #include "ui/uisettings.h"
-#include "sim/collider.h"
 
+#ifndef GLM_FORCE_RADIANS
+    #define GLM_FORCE_RADIANS
+#endif
 #include "glm/mat4x4.hpp"
 #include "glm/gtc/matrix_transform.hpp"
 #include "glm/gtc/type_ptr.hpp"
@@ -236,9 +240,10 @@ bool ViewPanel::startSimulation()
                 if ( (*it)->getType() == SceneNode::SIMULATION_GRID ) {
                     m_engine->setGrid( UiSettings::buildGrid((*it)->getCTM()) );
                 } else if ( (*it)->getType() == SceneNode::IMPLICIT_COLLIDER ) {
-                    Collider collider = *(dynamic_cast<Collider*>((*it)->getRenderable()));
-                    glm::mat4 ctm = (*it)->getCTM();
-                    m_engine->addCollider(collider,ctm);
+                    SceneCollider *sceneCollider = dynamic_cast<SceneCollider*>((*it)->getRenderable());
+                    ImplicitCollider collider( *(sceneCollider->getImplicitCollider()) );
+                    collider.applyTransformation( (*it)->getCTM() );
+                    m_engine->addCollider( collider );
                 }
             }
         }
@@ -320,19 +325,16 @@ void ViewPanel::loadMesh( const QString &filename )
 
 }
 
-void ViewPanel::addCollider(ColliderType c,QString planeType)  {
-    //TODO add a collider to the scene and set it as selected renderable.
-    ImplicitCollider *collider = new ImplicitCollider;
+void ViewPanel::addCollider( int colliderType )
+{
     vec3 parameter;
     SceneNode *node = new SceneNode( SceneNode::IMPLICIT_COLLIDER );
-    glm::mat4 transform;glm::vec3 scale;float r;
-    switch(c)  {
+    float r;
+    switch ( (ColliderType)colliderType ) {
         case SPHERE:
-            r = Collider::SphereRadius();
-            parameter = vec3(r,0,0);
-            scale = glm::vec3(r,r,r);
-            transform = glm::scale( glm::mat4(1.f), scale );
-            node->applyTransformation(transform);
+            r = SceneCollider::SphereRadius();
+            parameter = vec3( r, 0, 0 );
+            node->applyTransformation( glm::scale( glm::mat4(1.f), glm::vec3(r,r,r) ) );
             break;
         case HALF_PLANE:
             parameter = vec3(0,1,0);
@@ -340,17 +342,15 @@ void ViewPanel::addCollider(ColliderType c,QString planeType)  {
         default:
             break;
     }
-    Collider *col = new Collider(*collider,c,parameter);
 
+    ImplicitCollider *collider = new ImplicitCollider( (ColliderType)colliderType, vec3(0,0,0), parameter, vec3(0,0,0), 0.2f );
+    SceneCollider *sceneCollider = new SceneCollider( collider );
 
-    node->setRenderable( col );
+    node->setRenderable( sceneCollider );
     m_scene->root()->addChild( node );
-//    ImplicitCollider &ic = *(col->getImplicitCollider());
-//    m_engine->addCollider(ic);
 
     clearSelection();
-
-    col->setSelected(true);
+    sceneCollider->setSelected( true );
 
     m_tool->update();
 }

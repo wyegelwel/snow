@@ -9,7 +9,7 @@
 **************************************************************************/
 
 #include "sceneio.h"
-#include <QtXml>
+
 #include <QFileDialog>
 #include <QMessageBox>
 

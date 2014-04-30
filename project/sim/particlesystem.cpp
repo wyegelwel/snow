@@ -109,17 +109,12 @@ ParticleSystem::buildBuffers()
     // Volume attribute
     glEnableVertexAttribArray( 3 );
     glVertexAttribPointer( 3, 1, GL_FLOAT, GL_FALSE, sizeof(Particle), (void*)offset );
-    offset += sizeof(vec3);
+    offset += sizeof(GLfloat);
     offset += 2*sizeof(mat3);
 
-    // Normal attribute
-    glEnableVertexAttribArray(4);
-    glVertexAttribPointer( 4, 3, GL_FLOAT, GL_FALSE, sizeof(Particle), (void*)offset);
-    offset += sizeof(vec3);
-
     // lambda (stiffness) attribute
-    glEnableVertexAttribArray(5);
-    glVertexAttribPointer(5,1,GL_FLOAT,GL_FALSE, sizeof(Particle), (void*)offset);
+    glEnableVertexAttribArray(4);
+    glVertexAttribPointer( 4, 1, GL_FLOAT, GL_FALSE, sizeof(Particle), (void*)offset);
     offset += sizeof(GLfloat);
 
     glBindVertexArray( 0 );
@@ -181,7 +176,7 @@ ParticleSystem::shader()
             SHADER->bindAttributeLocation( "particleVelocity", 1 );
             SHADER->bindAttributeLocation( "particleMass", 2 );
             SHADER->bindAttributeLocation( "particleVolume", 3 );
-            SHADER->bindAttributeLocation( "particleNormal",4 );
+            SHADER->bindAttributeLocation( "particleStiffness", 4 );
             glBindFragDataLocation( SHADER->programId(), 0, "fragmentColor" );
             if ( !SHADER->link() ) {
                 LOG( "ParticleSystem::shader() : Link error: \n%s\n", STR(SHADER->log().trimmed()) );

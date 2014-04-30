@@ -185,9 +185,9 @@ ScaleTool::mouseMoved()
     if ( m_scaling ) {
         const glm::ivec2 &p0 = UserInput::mousePos() - UserInput::mouseMove();
         const glm::ivec2 &p1 = UserInput::mousePos();
-        bool sphereTrans = false;
         float t0,t1;
         glm::mat4 transform = glm::mat4(1.f);
+        glm::mat4 uniformScale = glm::mat4(1.f);
         if ( m_axisSelection < 3 ) {
             t0 = intersectAxis( p0 );
             t1 = intersectAxis( p1 );
@@ -195,13 +195,14 @@ ScaleTool::mouseMoved()
                 float t = t1/t0;
                 glm::vec3 scale = glm::vec3(1,1,1); scale[m_axisSelection] = t;
                 transform = glm::scale( glm::mat4(1.f), scale );
+                uniformScale = glm::scale( glm::mat4(1.f), glm::vec3(t) );
             }
         } else {
-            sphereTrans = true;
             float d = 1.f + SCALE * ( p1.x - m_mouseDownPos.x );
             if ( fabsf(d) > 1e-6 ) {
                 m_transform = glm::scale( glm::mat4(1.f), glm::vec3(d,d,d) );
                 transform = m_transform * m_transformInverse;
+                uniformScale = transform;
                 float *i = glm::value_ptr(m_transform);
                 m_transformInverse = glm::mat4( 1.f/i[0], 0.f, 0.f, 0.f,
                                                 0.f, 1.f/i[5], 0.f, 0.f,
@@ -209,36 +210,18 @@ ScaleTool::mouseMoved()
                                                 0.f, 0.f, 0.f, 1.f );
             }
         }
-        transform = glm::translate( glm::mat4(1.f), glm::vec3(m_center.x,m_center.y,m_center.z) ) *
-                    transform *
-                    glm::translate( glm::mat4(1.f), glm::vec3(-m_center.x,-m_center.y,-m_center.z) );
+        glm::mat4 T = glm::translate( glm::mat4(1.f), glm::vec3(m_center.x,m_center.y,m_center.z) );
+        glm::mat4 Tinv = glm::translate( glm::mat4(1.f), glm::vec3(-m_center.x,-m_center.y,-m_center.z) );
+        transform = T * transform * Tinv;
+        uniformScale = T * uniformScale * Tinv;
         for ( SceneNodeIterator it = m_panel->m_scene->begin(); it.isValid(); ++it ) {
-            if ( (*it)->hasRenderable() && (*it)->getRenderable()->isSelected() &&
-                 (*it)->getType() != SceneNode::SIMULATION_GRID && (*it)->getType() != SceneNode::IMPLICIT_COLLIDER) {
-                (*it)->applyTransformation( transform );
-            }
-            else if((*it)->getType() == SceneNode::IMPLICIT_COLLIDER && (*it)->hasRenderable() && (*it)->getRenderable()->isSelected()) {
-                switch(dynamic_cast<Collider*>((*it)->getRenderable())->getImplicitCollider()->type)  {
-                case HALF_PLANE:
-                    break;
-                case SPHERE:
-                    if(sphereTrans) (*it)->applyTransformation( transform );
-                    else  {
-                        glm::mat4 transformSphere(1.f);
-                        float t = t1/t0;
-                        glm::vec3 scale = glm::vec3(t,t,t);
-                        transformSphere = glm::scale( glm::mat4(1.f), scale );
-                        transformSphere = glm::translate( glm::mat4(1.f), glm::vec3(m_center.x,m_center.y,m_center.z) ) *
-                                transformSphere *
-                                glm::translate( glm::mat4(1.f), glm::vec3(-m_center.x,-m_center.y,-m_center.z) );
-                        (*it)->applyTransformation( transformSphere );
-                    }
-                    break;
-                default:
-                    break;
+            if ( (*it)->hasRenderable() && (*it)->getRenderable()->isSelected() && (*it)->getType() != SceneNode::SIMULATION_GRID ) {
+                if ( (*it)->getType() == SceneNode::IMPLICIT_COLLIDER ) {
+                    (*it)->applyTransformation( uniformScale );
+                } else {
+                    (*it)->applyTransformation( transform );
                 }
             }
-            else  {}
         }
     }
     update();

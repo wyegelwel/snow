@@ -29,7 +29,7 @@
 #include "geometry/grid.h"
 #include "geometry/bbox.h"
 #include "cuda/noise.h"
-#include "cuda/material.h"
+#include "cuda/snowtypes.h"
 
 #include "glm/gtc/random.hpp"
 
@@ -43,32 +43,30 @@ struct Tri {
  * Moller, T, and Trumbore, B. Fast, Minimum Storage Ray/Triangle Intersection.
  */
 __device__ int intersectTri(const vec3 &v1, const vec3 &v2, const vec3 &v3,
-                                     const vec3 &O, const vec3 &D, float &t)
+                            const vec3 &O, const vec3 &D, float &t)
 {
-  vec3 e1, e2;  //Edge1, Edge2
-  vec3 P, Q, T;
-  float det, inv_det, u, v;
-  e1 = v2-v1;
-  e2 = v3-v1;
-  P = vec3::cross(D,e2);
-  det = vec3::dot(e1,P);
-  if(det > -1e-8 && det < 1e-8) return 0;
-  inv_det = 1.f / det;
-  T = O-v1;
-  u = vec3::dot(T, P) * inv_det;
-  if(u < 0.f || u > 1.f) return 0;
-  Q = vec3::cross(T, e1);
-  v = vec3::dot(D,Q)*inv_det;
-  if(v < 0.f || u + v  > 1.f) return 0;
-  t = vec3::dot(e2, Q) * inv_det;
-  if(t > 1e-8) { //ray intersection
-    return 1;
-  }
-  // No hit, no win
-  return 0;
+    vec3 e1, e2;  //Edge1, Edge2
+    vec3 P, Q, T;
+    float det, inv_det, u, v;
+    e1 = v2-v1;
+    e2 = v3-v1;
+    P = vec3::cross(D,e2);
+    det = vec3::dot(e1,P);
+    if(det > -1e-8 && det < 1e-8) return 0;
+    inv_det = 1.f / det;
+    T = O-v1;
+    u = vec3::dot(T, P) * inv_det;
+    if(u < 0.f || u > 1.f) return 0;
+    Q = vec3::cross(T, e1);
+    v = vec3::dot(D,Q)*inv_det;
+    if(v < 0.f || u + v  > 1.f) return 0;
+    t = vec3::dot(e2, Q) * inv_det;
+    if(t > 1e-8) { //ray intersection
+        return 1;
+    }
+    // No hit, no win
+    return 0;
 }
-
-
 
 
 __global__ void voxelizeMeshKernel( Tri *tris, int triCount, Grid grid, bool *flags )
@@ -194,6 +192,7 @@ void fillMesh( cudaGraphicsResource **resource, int triCount, const Grid &grid, 
     LOG( "Average %.2f particles per grid cell.", float(particleCount)/count );
     LOG( "Target Density: %.1f kg/m3 -> Particle Mass: %g kg", targetDensity, particleMass );
 
+
     // Randomly fill mesh voxels and copy back resulting particles
     curandState *devStates;
     checkCudaErrors( cudaMalloc(&devStates, particleCount*sizeof(curandState)) );
@@ -211,7 +210,6 @@ void fillMesh( cudaGraphicsResource **resource, int triCount, const Grid &grid, 
     default:
         break;
     }
-    printf("material preset %d applied \n", materialPreset);
 
     checkCudaErrors( cudaMemcpy(particles, devParticles, particleCount*sizeof(Particle), cudaMemcpyDeviceToHost) );
 

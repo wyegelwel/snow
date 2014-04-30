@@ -2,52 +2,53 @@
 **
 **   SNOW - CS224 BROWN UNIVERSITY
 **
-**   noise.cu
+**   snowtypes.h
 **   Authors: evjang, mliberma, taparson, wyegelwe
 **   Created: 27 Apr 2014
 **
 **************************************************************************/
 
-#ifndef MATERIAL_CU
-#define MATERIAL_CU
+#ifndef SNOWTYPES_H
+#define SNOWTYPES_H
 
 #include <cuda.h>
 #include <helper_functions.h>
 #include <helper_cuda.h>
 #include "math.h"
-#include "common/math.h"
-#include "cuda/vector.h"
 
 #define CUDA_INCLUDE
 
+#include "common/math.h"
 #include "cuda/noise.h"
+#include "cuda/vector.h"
 #include "sim/particle.h"
 #include "sim/material.h"
 
-// TODO - also copy MaterialConstants object from host to GPU so this can generate a distribution around that?
-// Nah, this will be fixed presets.
-// Presets override material settings unless we are on DEFAULT preset.
+/*
+ * theta_c, theta_s -> determine when snow starts breaking.
+ *          larger = chunky, wet. smaller = powdery, dry
+ *
+ * low xi, E0 = muddy. high xi, E0 = Icy
+ * low xi = ductile, high xi = brittle
+ *
+ */
+
 __global__ void applyChunky(Particle *particles, int particleCount)
 {
-    // TODO - use the chunkiness parameter here to mix
     // spatially varying constitutive parameters
-    // snowballs are harder and heavier on the outside (stiffer, crunchier)
-    // stiffness varied with noise fraction - chunky fracture.
     int tid = threadIdx.x + blockIdx.x * blockDim.x;
     if ( tid >= particleCount ) return;
     Particle &particle = particles[tid];
     vec3 pos = particle.position;
-
-    float fbm = fbm3(pos);
-    particle.material.lambda *= fbm;
-//    printf("b : %f\n", lambda);
-
-//    printf("a : %f\n", lambda);
-
-    //Particle particle = particles[tid];
-    //fbm3(particle.position);
+    float fbm = fbm3( pos * 20.0 ); // adjust the .5 to get desired frequency of chunks within fbm
+    Material mat;
+    mat.setYoungsAndPoissons( MIN_E0 + fbm*(MAX_E0-MIN_E0), POISSONS_RATIO );
+    mat.xi = MIN_XI + fbm*(MAX_XI-MIN_XI);
+    mat.setCriticalStrains( MAX_THETA_C, MAX_THETA_S );
+    particle.material = mat;
 }
 
+// hardening on the outside should be achieved with shells, so I guess this is the only spatially varying
 
 #endif
 
