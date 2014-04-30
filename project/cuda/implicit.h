@@ -376,7 +376,8 @@ __host__ void integrateNodeForces( Particle *particles, ParticleCache *pCaches, 
     const dim3 blocks( (numNodes+THREAD_COUNT-1)/THREAD_COUNT );
     static const dim3 threads( THREAD_COUNT );
 
-    LAUNCH( computeFeHat<<< (numParticles+THREAD_COUNT-1)/THREAD_COUNT, THREAD_COUNT >>>(particles, grid, dt, nodes, pCaches); );
+    // No need to sync because it can run in parallel with other kernels
+    computeFeHat<<< (numParticles+THREAD_COUNT-1)/THREAD_COUNT, THREAD_COUNT >>>(particles, grid, dt, nodes, pCaches);
 
     // Initialize conjugate residual method
     LAUNCH( initializeVKernel<<<blocks,threads>>>(nodes, nodeCaches, numNodes) );
