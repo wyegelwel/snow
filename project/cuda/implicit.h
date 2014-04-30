@@ -40,7 +40,7 @@
  * Called over particles
  **/
 __global__ void computedF( const Particle *particles, ParticleCache *pCaches,
-                           const Grid *grid, const Node *nodes, const NodeCache *nodeCaches,
+                           const Grid *grid, const NodeCache *nodeCaches,
                            NodeCache::Offset uOffset, float dt )
 {
     int particleIdx = blockIdx.x*blockDim.x + threadIdx.x;
@@ -57,10 +57,8 @@ __global__ void computedF( const Particle *particles, ParticleCache *pCaches,
     glm::ivec3 maxIndex = glm::clamp( glm::ivec3(gridMax), glm::ivec3(0,0,0), dim ),
                minIndex = glm::clamp( glm::ivec3(gridMin), glm::ivec3(0,0,0), dim );
 
-    mat3 dF(0.0f);
-    mat3 vGradient(0.0f);
-
     // Fill dF
+    mat3 dF(0.0f);
     int rowSize = dim.z+1;
     int pageSize = (dim.y+1)*rowSize;
     for ( int i = minIndex.x; i <= maxIndex.x; ++i ) {
@@ -82,52 +80,45 @@ __global__ void computedF( const Particle *particles, ParticleCache *pCaches,
                 vec3 du_j = dt * nodeCache[uOffset];
 
                 dF += mat3::outerProduct( du_j, wg );
-
-                vGradient += mat3::outerProduct( dt*nodes[rowOffset+k].velocity, wg );
             }
         }
     }
 
     pCache.dF = dF * particle.elasticF;
-
-    pCache.FeHat = mat3::addIdentity(vGradient) * particle.elasticF;
-    computePD( pCache.FeHat, pCache.ReHat, pCache.SeHat );
-
 }
 
 /** Currently computed in computedF, we could parallelize this and computedF but not sure what the time benefit would be*/
-//__global__ void computeFeHat(Particle *particles, Grid *grid, float dt, Node *nodes, ACache *ACaches){
-//    int particleIdx = blockIdx.x*blockDim.x + threadIdx.x;
+__global__ void computeFeHat(Particle *particles, Grid *grid, float dt, Node *nodes, ParticleCache *pCaches){
+    int particleIdx = blockIdx.x*blockDim.x + threadIdx.x;
 
-//       Particle &particle = particles[particleIdx];
-//       ACache &ACache = ACaches[particleIdx];
+       Particle &particle = particles[particleIdx];
+       ParticleCache &pCache = pCaches[particleIdx];
 
-//       vec3 particleGridPos = (particle.position - grid->pos) / grid->h;
-//       glm::ivec3 min = glm::ivec3(std::ceil(particleGridPos.x - 2), std::ceil(particleGridPos.y - 2), std::ceil(particleGridPos.z - 2));
-//       glm::ivec3 max = glm::ivec3(std::floor(particleGridPos.x + 2), std::floor(particleGridPos.y + 2), std::floor(particleGridPos.z + 2));
+       vec3 particleGridPos = (particle.position - grid->pos) / grid->h;
+       glm::ivec3 min = glm::ivec3(std::ceil(particleGridPos.x - 2), std::ceil(particleGridPos.y - 2), std::ceil(particleGridPos.z - 2));
+       glm::ivec3 max = glm::ivec3(std::floor(particleGridPos.x + 2), std::floor(particleGridPos.y + 2), std::floor(particleGridPos.z + 2));
 
-//       mat3 vGradient(0.0f);
+       mat3 vGradient(0.0f);
 
-//       // Apply particles contribution of mass, velocity and force to surrounding nodes
-//       min = glm::max(glm::ivec3(0.0f), min);
-//       max = glm::min(grid->dim, max);
-//       for (int i = min.x; i <= max.x; i++){
-//           for (int j = min.y; j <= max.y; j++){
-//               for (int k = min.z; k <= max.z; k++){
-//                   int currIdx = grid->getGridIndex(i, j, k, grid->dim+1);
-//                   Node &node = nodes[currIdx];
+       min = glm::max(glm::ivec3(0.0f), min);
+       max = glm::min(grid->dim, max);
+       for (int i = min.x; i <= max.x; i++){
+           for (int j = min.y; j <= max.y; j++){
+               for (int k = min.z; k <= max.z; k++){
+                   int currIdx = grid->getGridIndex(i, j, k, grid->dim+1);
+                   Node &node = nodes[currIdx];
 
-//                   vec3 wg;
-//                   weightGradient(particleGridPos - vec3(i, j, k), wg);
+                   vec3 wg;
+                   weightGradient(particleGridPos - vec3(i, j, k), wg);
 
-//                   vGradient += mat3::outerProduct(dt*node.velocity, wg);
-//               }
-//           }
-//       }
+                   vGradient += mat3::outerProduct(dt*node.velocity, wg);
+               }
+           }
+       }
 
-//       ACache.FeHat = mat3::addIdentity(vGradient) * particle.elasticF;
-//       computePD(ACache.FeHat, ACache.ReHat, ACache.SeHat);
-//}
+       pCache.FeHat = mat3::addIdentity(vGradient) * particle.elasticF;
+       computePD(pCache.FeHat, pCache.ReHat, pCache.SeHat);
+}
 
 /**
  * Computes dR
@@ -272,7 +263,7 @@ __host__ void computeEu( const Particle *particles, ParticleCache *pCaches, int 
 {
     static const int threadCount = 256;
 
-    computedF<<< (numParticles+threadCount-1)/threadCount, threadCount >>>( particles, pCaches, grid, nodes, nodeCaches, uOffset, dt );
+    computedF<<< (numParticles+threadCount-1)/threadCount, threadCount >>>( particles, pCaches, grid, nodeCaches, uOffset, dt );
     checkCudaErrors( cudaDeviceSynchronize() );
 
     computeAp<<< (numParticles+threadCount-1)/threadCount, threadCount >>>( particles, pCaches );
@@ -384,6 +375,8 @@ __host__ void integrateNodeForces( Particle *particles, ParticleCache *pCaches, 
 {
     const dim3 blocks( (numNodes+THREAD_COUNT-1)/THREAD_COUNT );
     static const dim3 threads( THREAD_COUNT );
+
+    LAUNCH( computeFeHat<<< (numParticles+THREAD_COUNT-1)/THREAD_COUNT, THREAD_COUNT >>>(particles, grid, dt, nodes, pCaches); );
 
     // Initialize conjugate residual method
     LAUNCH( initializeVKernel<<<blocks,threads>>>(nodes, nodeCaches, numNodes) );
