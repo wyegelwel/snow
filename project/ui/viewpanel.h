@@ -80,8 +80,6 @@ public slots:
     bool loadScene();
     bool saveScene();
 
-    // Demo Scenes
-    void teapotDemo();
 signals:
 
     void showMeshes();

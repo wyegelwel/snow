@@ -126,32 +126,6 @@ ViewPanel::initializeGL()
 }
 
 void
-ViewPanel::teapotDemo()
-{
-    /// TODO - this function is temporary and written for convenience
-    /// in the future, open() and save() will read/write from a file format
-
-    // call load on teapot
-    SceneNode *node = new SceneNode;
-    QList<Mesh*> meshes;
-    OBJParser::load( PROJECT_PATH "/data/models/teapot.obj", meshes );
-    // select teapot renderable so we can fill it
-    node->setRenderable( meshes[0] );
-    m_scene->root()->addChild( node );
-    // call fillSelectedMesh()
-
-    ParticleSystem *particles = new ParticleSystem;
-    meshes[0]->fill( *particles, 32*512, 0.1f, 200.f );
-    m_engine->addParticleSystem( *particles );
-    delete particles;
-
-    BBox box = meshes[0]->getBBox( glm::mat4(1.f) );
-    UiSettings::gridPosition() = box.min();
-    UiSettings::gridDimensions() = glm::ivec3( 128, 128, 128 );
-    UiSettings::gridResolution() = box.longestDimSize() / 128.f;
-}
-
-void
 ViewPanel::paintGL()
 {
     glClearColor( 0.20f, 0.225f, 0.25f, 1.f );
@@ -249,10 +223,7 @@ bool ViewPanel::startSimulation()
             if (!ok) // have not saved yet
                 ok = saveScene();
             if (ok)
-            {
-                QFileInfo sceneFileInfo(m_sceneIO->sceneFile());
-                m_engine->initExporter(sceneFileInfo.path());
-            }
+                m_engine->initExporter(sceneFileInfo.baseName());
         }
 
         return m_engine->start(exportVol);
@@ -563,14 +534,14 @@ ViewPanel::saveScene()
     {
         // filename not initialized yet
         QString filename = QFileDialog::getSaveFileName( this, "Choose Simulation File Path", PROJECT_PATH "/data/scenes/" );
+
         if (!filename.isNull())
         {
             m_sceneIO->setSceneFile(filename);
-            m_sceneIO->write(m_sceneIO->sceneFile(), m_scene, m_engine);
+            m_sceneIO->write(m_scene, m_engine);
         }
         else
         {
-            // cancelled
             QMessageBox msgBox;
             msgBox.setText("Error : Invalid Save Path");
             msgBox.exec();
@@ -579,7 +550,7 @@ ViewPanel::saveScene()
     }
     else
     {
-        m_sceneIO->write(m_sceneIO->sceneFile(),m_scene, m_engine);
+        m_sceneIO->write(m_scene, m_engine);
     }
 }
 
