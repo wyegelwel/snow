@@ -133,10 +133,6 @@ bool Engine::start( bool exportVolume )
 
         return true;
 
-//        update();
-//        stop();
-//        return false;
-
     } else {
 
         if ( m_particleSystem->size() == 0 ) {
@@ -217,7 +213,7 @@ void Engine::update()
         bool doShading = UiSettings::showParticlesMode() == UiSettings::PARTICLE_SHADED;
 
         updateParticles( m_params, devParticles, m_devParticleCaches, m_particleSystem->size(), m_devGrid,
-                         devNodes, m_devNodeCaches, m_grid.nodeCount(), m_devColliders, m_colliders.size(), m_devMaterial, doShading );
+                         devNodes, m_devNodeCaches, m_grid.nodeCount(), m_devColliders, m_colliders.size(), doShading );
 
 
         if (m_export && (m_time - m_exporter->getLastUpdateTime() >= m_exporter->getspf()))
@@ -288,8 +284,8 @@ void Engine::initializeCudaResources()
     LOG( "Allocating %.2f MB for implicit update particle caches.", particleCachesSize );
 
     // Material Constants - presently we are only using this for setting coeff friction from UI
-    checkCudaErrors(cudaMalloc( (void**)&m_devMaterial, sizeof(MaterialConstants) ));
-    checkCudaErrors(cudaMemcpy( m_devMaterial, &m_materialConstants, sizeof(MaterialConstants), cudaMemcpyHostToDevice ));
+    checkCudaErrors(cudaMalloc( (void**)&m_devMaterial, sizeof(Material) ));
+    checkCudaErrors(cudaMemcpy( m_devMaterial, &m_materialConstants, sizeof(Material), cudaMemcpyHostToDevice ));
 
     LOG( "Allocated %.2f MB in total", particlesSize + nodesSize + nodeCachesSize + particleCachesSize );
 

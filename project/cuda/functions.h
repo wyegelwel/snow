@@ -22,7 +22,7 @@ struct Node;
 struct NodeCache;
 struct ImplicitCollider;
 struct SimulationParameters;
-struct MaterialConstants;
+struct Material;
 
 extern "C"
 {
@@ -36,7 +36,6 @@ void updateParticles( const SimulationParameters &parameters,
                       Particle *particles, ParticleCache *pCaches, int numParticles,
                       Grid *grid, Node *nodes, NodeCache *nodeCache, int numNodes,
                       ImplicitCollider *colliders, int numColliders,
-                      MaterialConstants *mat,
                       bool doShading);
 
 

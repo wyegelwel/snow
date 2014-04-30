@@ -38,6 +38,7 @@ struct NodeCache
         case V: return v;
         case DF: return df;
         }
+        printf( "THIS SHOULDN'T HAPPEN\n" );
         return r;
     }
 
@@ -51,6 +52,7 @@ struct NodeCache
         case V: return v;
         case DF: return df;
         }
+        printf( "THIS SHOULDN'T HAPPEN\n" );
         return r;
     }
 

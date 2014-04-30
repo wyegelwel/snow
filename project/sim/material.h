@@ -8,7 +8,7 @@
 #include "cuda_runtime.h"
 
 
-struct MaterialConstants
+struct Material
 {
     float lambda; // first Lame parameter
     float mu; //second Lame paramter
@@ -19,7 +19,7 @@ struct MaterialConstants
 
     // Constants from paper
 
-    __host__ __device__ MaterialConstants()
+    __host__ __device__ Material()
     {
         lambda = (YOUNGS_MODULUS*POISSONS_RATIO)/((1+POISSONS_RATIO)*(1-2*POISSONS_RATIO));
         mu = YOUNGS_MODULUS/(2*(1+POISSONS_RATIO));
@@ -29,14 +29,14 @@ struct MaterialConstants
         criticalStretch = 1.0 + 7.5e-3;
     }
 
-    __host__ __device__ MaterialConstants(float critCompress,
-                                          float critStretch,
-                                          float hardeningCoeff,
-                                          float coeffFriction,
-                                          float youngsModulus)
-    : criticalCompression(criticalCompression),
-      criticalStretch(critStretch),
-      xi(hardeningCoeff)
+    __host__ __device__ Material( float critCompress,
+                                  float critStretch,
+                                  float hardeningCoeff,
+                                  float coeffFriction,
+                                  float youngsModulus)
+        : criticalCompression(criticalCompression),
+          criticalStretch(critStretch),
+          xi(hardeningCoeff)
     {
         // young's modulus is approximation for stiffness of material.
         lambda = (youngsModulus*POISSONS_RATIO)/((1-POISSONS_RATIO)*(1-2*POISSONS_RATIO));

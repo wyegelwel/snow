@@ -33,30 +33,9 @@
 
 #define BETA 0.5f
 #define MAX_ITERATIONS 15
-#define RESIDUAL_THRESHOLD 1e-12
+#define RESIDUAL_THRESHOLD 1e-6
 
 #define LAUNCH( ... ) { __VA_ARGS__; checkCudaErrors( cudaDeviceSynchronize() ); }
-
-__global__ void checkCacheKernel( NodeCache *nodeCaches, NodeCache::Offset offset, int numNodes, const char *msg )
-{
-    int tid = blockDim.x*blockIdx.x + threadIdx.x;
-    if ( tid >= numNodes ) return;
-    const NodeCache &nodeCache = nodeCaches[tid];
-    const vec3 &v = nodeCache[offset];
-    if ( !v.valid() ) printf( "%s: %d invalid (%f %f %f).\n", msg, tid, v.x, v.y, v.z );
-}
-
-
-__host__ void checkCache( NodeCache *nodeCaches, NodeCache::Offset offset, int numNodes, const char *msg )
-{
-    LOG( "checkCache(\"%s\")", msg );
-    char *s;
-    cudaMalloc( (void**)&s, 256*sizeof(char) );
-    cudaMemcpy( s, msg, (strlen(msg)+1)*sizeof(char), cudaMemcpyHostToDevice );
-    checkCacheKernel<<< (numNodes+255)/256, 256 >>>( nodeCaches, offset, numNodes, s );
-    cudaDeviceSynchronize();
-    cudaFree( s );
-}
 
 /**
  * Called over particles
@@ -219,14 +198,15 @@ __device__ void compute_dJF_invTrans( const mat3 &F, const mat3 &dF, mat3 &dJF_i
     dJF_invTrans[8] = F[0]*dF[4] - F[1]*dF[1] + F[4]*dF[0] - F[3]*dF[3];
 }
 
-
 /**
  * Called over particles
  **/
-__global__ void computeAp( const Particle *particles, const MaterialConstants *material, ParticleCache *pCaches )
+__global__ void computeAp( const Particle *particles, ParticleCache *pCaches )
 {
     int particleIdx =  blockIdx.x*blockDim.x + threadIdx.x;
     const Particle &particle = particles[particleIdx];
+    const Material &material = particle.material;
+
     ParticleCache &pCache = pCaches[particleIdx];
     mat3 dF = pCache.dF;
 
@@ -236,8 +216,8 @@ __global__ void computeAp( const Particle *particles, const MaterialConstants *m
     float Jpp = mat3::determinant(Fp);
     float Jep = mat3::determinant(Fe);
 
-    float muFp = material->mu*__expf(material->xi*(1-Jpp));
-    float lambdaFp = material->lambda*__expf(material->xi*(1-Jpp));
+    float muFp = material.mu*__expf(material.xi*(1-Jpp));
+    float lambdaFp = material.lambda*__expf(material.xi*(1-Jpp));
 
     mat3 &Re = pCache.ReHat;
     mat3 &Se = pCache.SeHat;
@@ -291,15 +271,14 @@ __global__ void computeEuResult( const Node *nodes, NodeCache *nodeCaches, int n
  */
 __host__ void computeEu( const Particle *particles, ParticleCache *pCaches, int numParticles,
                          const Grid *grid, const Node *nodes, NodeCache *nodeCaches, int numNodes,
-                         NodeCache::Offset uOffset, NodeCache::Offset resultOffset,
-                         float dt, const MaterialConstants *material )
+                         NodeCache::Offset uOffset, NodeCache::Offset resultOffset, float dt )
 {
     static const int threadCount = 256;
 
     computedF<<< (numParticles+threadCount-1)/threadCount, threadCount >>>( particles, pCaches, grid, nodes, nodeCaches, uOffset, dt );
     checkCudaErrors( cudaDeviceSynchronize() );
 
-    computeAp<<< (numParticles+threadCount-1)/threadCount, threadCount >>>( particles, material, pCaches );
+    computeAp<<< (numParticles+threadCount-1)/threadCount, threadCount >>>( particles, pCaches );
     checkCudaErrors( cudaDeviceSynchronize() );
 
     dim3 blocks = dim3( numParticles/threadCount, 64 );
@@ -333,7 +312,8 @@ __global__ void finishConjugateResidualKernel( Node *nodes, const NodeCache *nod
     if ( tid >= numNodes ) return;
     nodes[tid].velocity = nodeCaches[tid].v;
     // Update the velocity change. It is assumed to be set as the pre-update velocity
-    nodes[tid].velocityChange = nodes[tid].velocity - nodes[tid].velocityChange;
+//    nodes[tid].velocityChange = nodes[tid].velocity - nodes[tid].velocityChange;
+    nodes[tid].velocityChange = vec3(0,0,0);
 }
 
 __global__ void updateVRKernel( NodeCache *nodeCaches, int numNodes, float alpha )
@@ -392,7 +372,7 @@ __host__ float innerProduct( NodeCache *nodeCaches, int numNodes, NodeCache::Off
 
 __host__ void updateNodeVelocitiesImplicit( Particle *particles, ParticleCache *pCaches, int numParticles,
                                             Grid *grid, Node *nodes, NodeCache *nodeCaches, int numNodes,
-                                            float dt, const MaterialConstants *material )
+                                            float dt )
 {
     static const int threadCount = 128;
     static const dim3 blocks( (numNodes+threadCount-1)/threadCount );
@@ -400,10 +380,10 @@ __host__ void updateNodeVelocitiesImplicit( Particle *particles, ParticleCache *
 
     // Initialize conjugate residual method
     LAUNCH( initializeVKernel<<<blocks,threads>>>(nodes, nodeCaches, numNodes) );
-    computeEu( particles, pCaches, numParticles, grid, nodes, nodeCaches, numNodes, NodeCache::V, NodeCache::R, dt, material );
+    computeEu( particles, pCaches, numParticles, grid, nodes, nodeCaches, numNodes, NodeCache::V, NodeCache::R, dt );
     LAUNCH( initializeRPKernel<<<blocks,threads>>>(nodeCaches, numNodes) );
-    computeEu( particles, pCaches, numParticles, grid, nodes, nodeCaches, numNodes, NodeCache::P, NodeCache::AP, dt, material );
-    computeEu( particles, pCaches, numParticles, grid, nodes, nodeCaches, numNodes, NodeCache::R, NodeCache::AR, dt, material );
+    computeEu( particles, pCaches, numParticles, grid, nodes, nodeCaches, numNodes, NodeCache::P, NodeCache::AP, dt );
+    computeEu( particles, pCaches, numParticles, grid, nodes, nodeCaches, numNodes, NodeCache::R, NodeCache::AR, dt );
 
     int k = 0;
     float residual = 1e-7;
@@ -415,7 +395,7 @@ __host__ void updateNodeVelocitiesImplicit( Particle *particles, ParticleCache *
 
         float betaDen = innerProduct( nodeCaches, numNodes, NodeCache::R, NodeCache::AR );
         LAUNCH( updateVRKernel<<<blocks,threads>>>( nodeCaches, numNodes, alpha ) );
-        computeEu( particles, pCaches, numParticles, grid, nodes, nodeCaches, numNodes, NodeCache::R, NodeCache::AR, dt, material );
+        computeEu( particles, pCaches, numParticles, grid, nodes, nodeCaches, numNodes, NodeCache::R, NodeCache::AR, dt );
         float betaNum = innerProduct( nodeCaches, numNodes, NodeCache::R, NodeCache::AR );
         float beta = ( fabsf(betaDen) > 0.f ) ? betaNum/betaDen : 0.f;
 

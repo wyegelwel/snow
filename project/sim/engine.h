@@ -93,7 +93,7 @@ private:
     ParticleGrid *m_particleGrid;
     Grid m_grid;
     QVector<ImplicitCollider> m_colliders;
-    MaterialConstants m_materialConstants;
+    Material m_materialConstants;
 
     // CUDA pointers
     cudaGraphicsResource *m_particlesResource; // Particles
@@ -104,7 +104,7 @@ private:
     ParticleCache *m_devParticleCaches;
 
     ImplicitCollider *m_devColliders;
-    MaterialConstants *m_devMaterial;
+    Material *m_devMaterial;
 
     SimulationParameters m_params;
     float m_time;
