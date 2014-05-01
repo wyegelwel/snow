@@ -108,6 +108,9 @@ public:
 
     virtual void render();
     virtual void renderForPicker();
+    virtual void renderVelForPicker();
+
+    virtual void updateMeshVel(){deleteVelVBO();}
 
     virtual BBox getBBox( const glm::mat4 &ctm );
     virtual vec3 getCentroid( const glm::mat4 &ctm );
@@ -130,17 +133,26 @@ private:
     QVector<Normal> m_normals;
 
     // OpenGL stuff
-    GLuint m_glVBO;
+    GLuint m_glVBO,m_velVBO;
     cudaGraphicsResource *m_cudaVBO;
 
     Color m_color;
+
+    int m_velVBOSize;
 
     bool hasVBO() const;
     void buildVBO();
     void deleteVBO();
 
     void renderVBO();
+    void renderCenter() const;
+    void renderArrow() const;
 
+    bool hasVelVBO() const;
+    void buildVelVBO();
+    void deleteVelVBO();
+
+    void renderVelVBO();
 };
 
 #endif // MESH_H

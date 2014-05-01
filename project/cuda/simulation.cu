@@ -358,7 +358,7 @@ __host__ void updateParticles( Particle *particles, ParticleCache *pCaches, int 
 
     LAUNCH( updateNodeVelocities<<<nBlocks1D,threads1D>>>(nodes,numNodes,timeStep,colliders,numColliders,grid,!implicitUpdate) );
 
-    if ( implicitUpdate ) integrateNodeForces( particles, pCaches, numParticles, grid, nodes, nodeCaches, numNodes, timeStep );
+//    if ( implicitUpdate ) integrateNodeForces( particles, pCaches, numParticles, grid, nodes, nodeCaches, numNodes, timeStep );
 
     LAUNCH( updateParticlesFromGrid<<<pBlocks1D,threads1D>>>(particles,grid,nodes,timeStep,colliders,numColliders) );
 }

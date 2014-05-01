@@ -185,6 +185,8 @@ void MainWindow::setupUI()
     ui->toolButtonGroup->setId( ui->moveToolButton, Tool::MOVE );
     ui->toolButtonGroup->setId( ui->rotateToolButton, Tool::ROTATE );
     ui->toolButtonGroup->setId( ui->scaleToolButton, Tool::SCALE );
+    ui->toolButtonGroup->addButton(ui->velocityToolButton);
+    ui->toolButtonGroup->setId( ui->velocityToolButton, Tool::VELOCITY);
     assert( connect(ui->toolButtonGroup, SIGNAL(buttonClicked(int)), ui->viewPanel, SLOT(setTool(int))) );
     ui->selectionToolButton->click();
 

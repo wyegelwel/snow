@@ -111,12 +111,14 @@ protected:
     bool hasGridVBO() const;
     void buildGridVBO();
     void deleteGridVBO();
+    void addParticleSystem(ParticleSystem &particles);
 
     friend class Tool;
     friend class SelectionTool;
     friend class MoveTool;
     friend class RotateTool;
     friend class ScaleTool;
+    friend class VelocityTool;
 
     //friend class SceneIO;
 

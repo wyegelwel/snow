@@ -46,6 +46,7 @@ SOURCES += \
     ui/collapsiblebox.cpp \
     scene/scenecollider.cpp \
     sim/implicitcollider.cpp \
+    ui/tools/velocitytool.cpp
 
 
 HEADERS  += \
@@ -100,7 +101,8 @@ HEADERS  += \
     scene/scenecollider.h \
     sim/implicitcollider.h \
     cuda/snowtypes.h \
-    cuda/helpers.h
+    cuda/helpers.h \
+    ui/tools/velocitytool.h
 
 FORMS    += ui/mainwindow.ui
 

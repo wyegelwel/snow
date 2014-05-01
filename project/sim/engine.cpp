@@ -59,6 +59,11 @@ void Engine::setGrid(const Grid &grid)
 
 void Engine::addParticleSystem( const ParticleSystem &particles )
 {
+    QVector<Particle> parts = particles.getParticles();
+//    for(int i = 0; i < parts.size(); i++)  {
+//        std::cout << "velocity in engine: " << mag << std::endl;
+//        parts[i].velocity = vel*mag;
+//    }
     *m_particleSystem += particles;
 }
 
@@ -80,7 +85,7 @@ void Engine::initExporter( QString fprefix )
 bool Engine::start( bool exportVolume )
 {
     if ( m_particleSystem->size() > 0 && !m_grid.empty() && !m_running ) {
-
+        std::cout << "vel mag: " << m_particleSystem->getVelMag() << std::endl;
         if ( (m_export = exportVolume) ) m_exporter->reset( m_grid );
 
         initializeCudaResources();

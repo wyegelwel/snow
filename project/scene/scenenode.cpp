@@ -14,6 +14,7 @@
     #define GLM_FORCE_RADIANS
 #endif
 #include "glm/gtc/type_ptr.hpp"
+#include <glm/gtx/string_cast.hpp>
 
 #include "common/common.h"
 #include "common/renderable.h"
@@ -101,6 +102,10 @@ SceneNode::applyTransformation( const glm::mat4 &transform )
 {
     m_transform = transform * m_transform;
     setCTMDirty();
+    if(this->hasRenderable()) {
+        getCTM();
+        this->getRenderable()->setCTM(m_ctm);
+    }
 }
 
 glm::mat4

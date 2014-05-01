@@ -13,11 +13,15 @@
 #include "scene/scenecollider.h"
 #include "sim/implicitcollider.h"
 #include "io/objparser.h"
+#include <qgl.h>
 
 SceneCollider::SceneCollider( ImplicitCollider *collider )
     : m_collider(collider)
 {
     initializeMesh();
+    m_velVec = vec3(0,1,0);
+    m_velMag = 1;
+    updateMeshVel();
 }
 
 SceneCollider::~SceneCollider()
@@ -30,9 +34,25 @@ void SceneCollider::render()
     m_mesh->render();
 }
 
+void SceneCollider::setCTM(const glm::mat4 &ctm) {
+    m_mesh->setCTM(ctm);
+}
+
 void SceneCollider::renderForPicker()
 {
     m_mesh->renderForPicker();
+}
+
+void SceneCollider::renderVelForPicker()
+{
+    updateMeshVel();
+    m_mesh->renderVelForPicker();
+}
+
+void SceneCollider::updateMeshVel() {
+    m_mesh->setVelMag(m_velMag);
+    m_mesh->setVelVec(m_velVec);
+    m_mesh->updateMeshVel();
 }
 
 BBox

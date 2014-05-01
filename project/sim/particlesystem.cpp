@@ -187,4 +187,11 @@ ParticleSystem::shader()
     return SHADER;
 }
 
+void
+ParticleSystem::setVelocity()  {
+    for(int i = 0; i < m_particles.size(); i++)  {
+        m_particles[i].velocity = m_velVec*m_velMag;
+    }
+}
+
 

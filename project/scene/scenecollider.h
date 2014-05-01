@@ -26,8 +26,12 @@ public:
 
     virtual void render();
     virtual void renderForPicker();
+    virtual void renderVelForPicker();
+    virtual void updateMeshVel();
 
-    static constexpr float SphereRadius() { return .05f; }
+//    virtual void setVelMag(const float m){m_mesh->setVelMag(m)};
+
+    static constexpr float SphereRadius() { return .01f; }
 
     virtual BBox getBBox( const glm::mat4 &ctm );
     virtual vec3 getCentroid( const glm::mat4 &ctm );
@@ -35,6 +39,8 @@ public:
     void initializeMesh();
 
     virtual void setSelected( bool selected );
+
+    virtual void setCTM(const glm::mat4 &ctm);
 
     ImplicitCollider* getImplicitCollider() { return m_collider; }
 

@@ -81,9 +81,9 @@
        <property name="geometry">
         <rect>
          <x>0</x>
-         <y>-358</y>
-         <width>282</width>
-         <height>1037</height>
+         <y>0</y>
+         <width>280</width>
+         <height>1054</height>
         </rect>
        </property>
        <layout class="QGridLayout" name="gridLayout_2">
@@ -300,6 +300,38 @@
              <attribute name="buttonGroup">
               <string notr="true">toolButtonGroup</string>
              </attribute>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="velocityToolButton">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="minimumSize">
+              <size>
+               <width>40</width>
+               <height>40</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>40</width>
+               <height>40</height>
+              </size>
+             </property>
+             <property name="text">
+              <string/>
+             </property>
+             <property name="icon">
+              <iconset>
+               <normaloff>../../../../../../../../../../home/taparson/course/cs224/snow/snow/project/resources/icons/placeholder.jpg</normaloff>../../../../../../../../../../home/taparson/course/cs224/snow/snow/project/resources/icons/placeholder.jpg</iconset>
+             </property>
+             <property name="checkable">
+              <bool>true</bool>
+             </property>
             </widget>
            </item>
            <item>
@@ -1296,7 +1328,7 @@
      <x>0</x>
      <y>0</y>
      <width>1012</width>
-     <height>26</height>
+     <height>29</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">

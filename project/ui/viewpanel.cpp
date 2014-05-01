@@ -34,6 +34,7 @@
 #include "ui/picker.h"
 #include "ui/tools/Tools.h"
 #include "ui/uisettings.h"
+#include "ui/tools/velocitytool.h"
 
 #ifndef GLM_FORCE_RADIANS
     #define GLM_FORCE_RADIANS
@@ -41,6 +42,7 @@
 #include "glm/mat4x4.hpp"
 #include "glm/gtc/matrix_transform.hpp"
 #include "glm/gtc/type_ptr.hpp"
+#include <glm/gtx/string_cast.hpp>
 
 #include <QFileDialog>
 #include <QMessageBox>
@@ -347,6 +349,8 @@ void ViewPanel::addCollider( int colliderType )
     SceneCollider *sceneCollider = new SceneCollider( collider );
 
     node->setRenderable( sceneCollider );
+    glm::mat4 ctm = node->getCTM();
+    sceneCollider->setCTM(ctm);
     m_scene->root()->addChild( node );
 
     clearSelection();
@@ -370,6 +374,9 @@ void ViewPanel::setTool( int tool )
         break;
     case Tool::SCALE:
         m_tool = new ScaleTool(this);
+        break;
+    case Tool::VELOCITY:
+        m_tool = new VelocityTool(this);
         break;
     }
     if ( m_tool ) m_tool->update();
@@ -485,7 +492,8 @@ ViewPanel::deleteGridVBO()
 void ViewPanel::fillSelectedMesh()
 {
     Mesh *mesh = new Mesh;
-
+    glm::vec3 currentVel;
+    float currentMag;
     for ( SceneNodeIterator it = m_scene->begin(); it.isValid(); ++it ) {
         if ( (*it)->hasRenderable() &&
              (*it)->getType() == SceneNode::SNOW_CONTAINER &&
@@ -495,6 +503,9 @@ void ViewPanel::fillSelectedMesh()
             copy->applyTransformation( transformation );
             mesh->append( *copy );
             delete copy;
+
+            currentVel = (*it)->getRenderable()->getVelVec();
+            currentMag = (*it)->getRenderable()->getVelMag();
         }
     }
 
@@ -504,7 +515,12 @@ void ViewPanel::fillSelectedMesh()
         makeCurrent();
 
         ParticleSystem *particles = new ParticleSystem;
+        particles->setVelMag(currentMag);
+        particles->setVelVec(currentVel);
         mesh->fill( *particles, UiSettings::fillNumParticles(), UiSettings::fillResolution(), UiSettings::fillDensity() );
+        std::cout << "vel here: " << particles->getVelMag() << std::endl;
+        std::cout << "vel vector here: " << glm::to_string(particles->getVelVec()) << std::endl;
+        particles->setVelocity();
         m_engine->addParticleSystem( *particles );
         delete particles;
 
