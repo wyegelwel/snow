@@ -17,7 +17,6 @@
 #include <QFile>
 #include <QDir>
 #include "geometry/mesh.h"
-#include "sim/collider.h"
 
 class InfoPanel;
 class Viewport;
@@ -67,7 +66,7 @@ public slots:
 
     void loadMesh( const QString &filename );
 
-    void addCollider(ColliderType c);
+    void addCollider(int colliderType);
 
     void setTool( int tool );
 
@@ -110,12 +109,14 @@ protected:
     bool hasGridVBO() const;
     void buildGridVBO();
     void deleteGridVBO();
+    void addParticleSystem(ParticleSystem &particles);
 
     friend class Tool;
     friend class SelectionTool;
     friend class MoveTool;
     friend class RotateTool;
     friend class ScaleTool;
+    friend class VelocityTool;
 
     //friend class SceneIO;
 

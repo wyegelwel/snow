@@ -17,7 +17,7 @@
 #include "sim/particlesystem.h"
 #include "scene/scene.h"
 #include "scene/scenenodeiterator.h"
-
+#include "geometry/mesh.h"
 #include "ui/uisettings.h"
 #include "cuda/vector.h"
 
@@ -61,15 +61,14 @@ bool SceneIO::read(QString filename, Scene *scene, Engine *engine)
         return false;
     }
 
-    applySimulationParameters(engine);
+    applySimulationParameters();
     applyExportSettings();
     applyParticleSystem(scene);
-// how to set uisettings without infinite loop?
-    applyGrid(engine);
-//    applyColliders(engine);
+    applyGrid(scene);
+//    applyColliders(scene);
 }
 
-void SceneIO::applySimulationParameters(Engine *engine)
+void SceneIO::applySimulationParameters()
 {
     QDomNodeList nlist = m_document.elementsByTagName("SimulationParameters");
     QDomElement sNode = nlist.at(0).toElement();
@@ -80,11 +79,10 @@ void SceneIO::applySimulationParameters(Engine *engine)
 
         if (n.attribute("name").compare("timeStep") == 0)
         {
-            SimulationParameters &params = engine->parameters();
             bool ok;
             float ts = n.attribute("value").toFloat(&ok);
             if (ok)
-                params.timeStep = ts;
+                UiSettings::timeStep() = ts;
         }
     }
 }
@@ -147,7 +145,7 @@ void SceneIO::applyParticleSystem(Scene *scene)
     }
 }
 
-void SceneIO::applyGrid(Engine *engine)
+void SceneIO::applyGrid(Scene * scene)
 {
     Grid grid;
     QDomNodeList list = m_document.elementsByTagName("Grid");
@@ -169,10 +167,10 @@ void SceneIO::applyGrid(Engine *engine)
             UiSettings::gridResolution() = e.attribute("value").toFloat();
         }
     }
-    engine->setGrid(UiSettings::buildGrid(glm::mat4(1.f)));
+    scene->updateSceneGrid();
 }
 
-void SceneIO::applyColliders(Engine *engine)
+void SceneIO::applyColliders(Scene * scene)
 {
     /// TODO - call ViewPanel::addCollider so it also shows up in the scene.
     // for each collider, need to import it into the scene
@@ -216,7 +214,7 @@ bool SceneIO::write(Scene *scene, Engine *engine)
     QDomElement root = m_document.createElement("SnowSimulation"); // root node of the scene
     m_document.appendChild(root);
 
-    appendSimulationParameters(root, engine->parameters());
+    appendSimulationParameters(root, UiSettings::timeStep());
     appendExportSettings(root);
     appendParticleSystem(root, scene);
     appendGrid(root, scene);
@@ -306,11 +304,10 @@ void SceneIO::appendParticleSystem(QDomElement root, Scene * scene)
     root.appendChild(pNode);
 }
 
-
-void SceneIO::appendSimulationParameters(QDomElement root, SimulationParameters params)
+void SceneIO::appendSimulationParameters(QDomElement root, float timeStep)
 {
     QDomElement spNode = m_document.createElement("SimulationParameters");
-    appendFloat(spNode, "timeStep", params.timeStep);
+    appendFloat(spNode, "timeStep", timeStep);
     root.appendChild(spNode);
 }
 

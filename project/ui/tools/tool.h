@@ -29,7 +29,8 @@ public:
         SELECTION,
         MOVE,
         ROTATE,
-        SCALE
+        SCALE,
+        VELOCITY
     };
 
     Tool( ViewPanel *panel ) : m_panel(panel), m_mouseDown(false) {}

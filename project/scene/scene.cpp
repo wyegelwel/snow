@@ -52,6 +52,13 @@ Scene::~Scene()
 }
 
 void
+Scene::reset()
+{
+    SAFE_DELETE(m_root);
+    m_root = new SceneNode;
+}
+
+void
 Scene::initSceneGrid()
 {
     // Add scene grid
@@ -61,16 +68,19 @@ Scene::initSceneGrid()
     grid.dim = UiSettings::gridDimensions();
     grid.h = UiSettings::gridResolution();
     gridNode->setRenderable( new SceneGrid(grid) );
-    glm::mat4 transform = glm::translate( glm::mat4(1.f), glm::vec3(UiSettings::gridPosition().x,UiSettings::gridPosition().y,UiSettings::gridPosition().z) );
-    gridNode->applyTransformation( transform );
     m_root->addChild( gridNode );
 }
 
 void
-Scene::reset()
+Scene::updateSceneGrid()
 {
-    SAFE_DELETE(m_root);
-    m_root = new SceneNode;
+    SceneNode *gridNode = getSceneGridNode();
+    if ( gridNode ) {
+        SceneGrid *grid = dynamic_cast<SceneGrid*>( gridNode->getRenderable() );
+        grid->setGrid( UiSettings::buildGrid(glm::mat4(1.f)) );
+        gridNode->setBBoxDirty();
+        gridNode->setCentroidDirty();
+    }
 }
 
 void

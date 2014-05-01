@@ -14,12 +14,12 @@
     #define GLM_FORCE_RADIANS
 #endif
 #include "glm/gtc/type_ptr.hpp"
+#include <glm/gtx/string_cast.hpp>
 
 #include "common/common.h"
 #include "common/renderable.h"
 #include "scene/scenenode.h"
-
-#include "sim/collider.h"
+#include "scene/scenecollider.h"
 
 SceneNode::SceneNode( Type type )
     : m_parent(NULL),
@@ -77,19 +77,6 @@ void
 SceneNode::renderOpaque()
 {
     glMatrixMode( GL_MODELVIEW );
-
-// debugging collider stuff
-//    if (m_type == IMPLICIT_COLLIDER)  {
-//        ImplicitCollider *col = dynamic_cast<Collider*>(getRenderable())->getImplicitCollider();
-//        if (col->type == HALF_PLANE) {
-//            glLineWidth(5.0f);
-//            glBegin(GL_LINES);
-//                glVertex3f(col->center.x,col->center.y,col->center.z);
-//                glVertex3f(col->center.x+col->param.x,col->center.y+col->param.y,col->center.z+col->param.z);
-//            glEnd();
-//            glLineWidth(1.0f);
-//        }
-//    }
     glPushMatrix();
     glMultMatrixf( glm::value_ptr(getCTM()) );
     if ( m_renderable && !isTransparent() ) m_renderable->render();
@@ -115,6 +102,10 @@ SceneNode::applyTransformation( const glm::mat4 &transform )
 {
     m_transform = transform * m_transform;
     setCTMDirty();
+    if(this->hasRenderable()) {
+        getCTM();
+        this->getRenderable()->setCTM(m_ctm);
+    }
 }
 
 glm::mat4

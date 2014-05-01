@@ -30,7 +30,6 @@ SOURCES += \
     scene/scene.cpp \
     scene/scenenode.cpp \
     tests/tests.cpp \
-    sim/collider.cpp \
     geometry/bbox.cpp \
     sim/engine.cpp \
     io/sceneio.cpp \
@@ -44,7 +43,10 @@ SOURCES += \
     ui/tools/rotatetool.cpp \
     ui/tools/scaletool.cpp \
     ui/tools/tool.cpp \
-    ui/collapsiblebox.cpp
+    ui/collapsiblebox.cpp \
+    scene/scenecollider.cpp \
+    sim/implicitcollider.cpp \
+    ui/tools/velocitytool.cpp
 
 
 HEADERS  += \
@@ -65,7 +67,6 @@ HEADERS  += \
     common/renderable.h \
     common/types.h \
     tests/tests.h \
-    sim/collider.h \
     geometry/bbox.h \
     common/math.h \
     geometry/grid.h \
@@ -74,7 +75,6 @@ HEADERS  += \
     ui/databinding.h \
     ui/uisettings.h \
     sim/material.h \
-    sim/parameters.h \
     sim/particlegridnode.h \
     ui/picker.h \
     scene/scenenodeiterator.h \
@@ -98,7 +98,11 @@ HEADERS  += \
     cuda/quaternion.h \
     cuda/weighting.h \
     cuda/noise.h \
-    cuda/material.h \
+    scene/scenecollider.h \
+    sim/implicitcollider.h \
+    cuda/snowtypes.h \
+    cuda/helpers.h \
+    ui/tools/velocitytool.h
 
 FORMS    += ui/mainwindow.ui
 
@@ -114,7 +118,8 @@ CUDA_SOURCES += cuda/snow.cu \
 #    cuda/tim.cu \
 #    cuda/eric.cu \
 #    cuda/wil_tests.cu \
-    cuda/simulation.cu
+    cuda/simulation.cu \
+    cuda/cr_tests.cu
 
 CUDA_DIR = /contrib/projects/cuda5-toolkit
 INCLUDEPATH += $$CUDA_DIR/include
@@ -133,6 +138,7 @@ OTHER_FILES += \
     cuda/eric.cu \
     cuda/wil_tests.cu \
     cuda/simulation.cu \
+    cuda/cr_tests.cu \
     resources/shaders/particlesystem.vert \
     resources/shaders/particlesystem.frag \
     resources/shaders/particlegrid.frag \

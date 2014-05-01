@@ -66,7 +66,7 @@ ParticleGrid::render()
         }
 
         glPushAttrib( GL_DEPTH_BUFFER_BIT );
-        glDisable( GL_DEPTH_TEST );
+        glDepthMask( false );
 
         glPushAttrib( GL_COLOR_BUFFER_BIT );
         glEnable( GL_BLEND );

@@ -114,7 +114,7 @@ ParticleSystem::buildBuffers()
 
     // lambda (stiffness) attribute
     glEnableVertexAttribArray(4);
-    glVertexAttribPointer( 4,1, GL_FLOAT, GL_FALSE, sizeof(Particle), (void*)offset);
+    glVertexAttribPointer( 4, 1, GL_FLOAT, GL_FALSE, sizeof(Particle), (void*)offset);
     offset += sizeof(GLfloat);
 
     glBindVertexArray( 0 );
@@ -176,7 +176,7 @@ ParticleSystem::shader()
             SHADER->bindAttributeLocation( "particleVelocity", 1 );
             SHADER->bindAttributeLocation( "particleMass", 2 );
             SHADER->bindAttributeLocation( "particleVolume", 3 );
-            SHADER->bindAttributeLocation( "particleStiffness",4 );
+            SHADER->bindAttributeLocation( "particleStiffness", 4 );
             glBindFragDataLocation( SHADER->programId(), 0, "fragmentColor" );
             if ( !SHADER->link() ) {
                 LOG( "ParticleSystem::shader() : Link error: \n%s\n", STR(SHADER->log().trimmed()) );
@@ -185,6 +185,13 @@ ParticleSystem::shader()
         }
     }
     return SHADER;
+}
+
+void
+ParticleSystem::setVelocity()  {
+    for(int i = 0; i < m_particles.size(); i++)  {
+        m_particles[i].velocity = m_velVec*m_velMag;
+    }
 }
 
 

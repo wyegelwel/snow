@@ -27,7 +27,7 @@ struct NodeCache
     vec3 Ap;
     vec3 v;
     vec3 df;
-    float scratch;
+    double scratch;
     __host__ __device__ vec3& operator [] ( Offset i )
     {
         switch ( i ) {

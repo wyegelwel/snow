@@ -115,6 +115,7 @@ private:
     DEFINE_SETTING( float, gridResolution )
 
     DEFINE_SETTING( float, timeStep )
+    DEFINE_SETTING( bool, implicit )
     DEFINE_SETTING( int, materialPreset )
 
     DEFINE_SETTING( bool, showContainers )

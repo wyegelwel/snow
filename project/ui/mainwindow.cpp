@@ -24,8 +24,6 @@
 #include "ui/viewpanel.h"
 #include "ui/tools/tool.h"
 
-#include "sim/collider.h"
-
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
@@ -64,21 +62,7 @@ void MainWindow::importMesh()
 
 void MainWindow::addCollider()
 {
-
-    QString colliderType = ui->chooseCollider->currentText();
-    bool isType = true;
-    ColliderType c;
-    if(colliderType == "Sphere") {
-        c = SPHERE;
-    }
-    else if(colliderType == "Half-Plane")  {
-        c = HALF_PLANE;
-    }
-    else {isType = false;}
-    if(isType)  {
-        ui->viewPanel->addCollider(c);
-    }
-
+    ui->viewPanel->addCollider( ui->chooseCollider->currentIndex() );
 }
 
 void MainWindow::startSimulation()
@@ -165,6 +149,7 @@ void MainWindow::setupUI()
     assert( connect(ui->gridZSpinbox, SIGNAL(valueChanged(int)), ui->viewPanel, SLOT(updateSceneGrid())) );
     assert( connect(ui->gridResolutionSpinbox, SIGNAL(valueChanged(double)), ui->viewPanel, SLOT(updateSceneGrid())) );
     FloatBinding::bindSpinBox( ui->timeStepSpinbox, UiSettings::timeStep(), this );
+    BoolBinding::bindCheckBox( ui->implicitCheckbox, UiSettings::implicit(), this );
     //assert( connect(ui->snowMaterialCombo, SIGNAL(currentIndexChanged(int)), ui->viewPanel, SLOT(applyMaterials())) );
 
     // exporting
@@ -173,9 +158,8 @@ void MainWindow::setupUI()
     IntBinding::bindSpinBox(ui->exportFPSSpinBox, UiSettings::exportFPS(), this);
     FloatBinding::bindSpinBox(ui->maxTimeSpinBox, UiSettings::maxTime(),this);
 
-    // Collider
-    assert( connect(ui->colliderAddButton, SIGNAL(clicked()), this, SLOT(addCollider())));
-    // Connect values to settings - not sure how to do this with combo box.
+    // SceneCollider
+    assert( connect(ui->colliderAddButton, SIGNAL(clicked()), this, SLOT(addCollider())) );
 
     // View Panel
     assert( connect(ui->showContainersCheckbox, SIGNAL(toggled(bool)), ui->showContainersCombo, SLOT(setEnabled(bool))) );
@@ -201,6 +185,8 @@ void MainWindow::setupUI()
     ui->toolButtonGroup->setId( ui->moveToolButton, Tool::MOVE );
     ui->toolButtonGroup->setId( ui->rotateToolButton, Tool::ROTATE );
     ui->toolButtonGroup->setId( ui->scaleToolButton, Tool::SCALE );
+    ui->toolButtonGroup->addButton(ui->velocityToolButton);
+    ui->toolButtonGroup->setId( ui->velocityToolButton, Tool::VELOCITY);
     assert( connect(ui->toolButtonGroup, SIGNAL(buttonClicked(int)), ui->viewPanel, SLOT(setTool(int))) );
     ui->selectionToolButton->click();
 

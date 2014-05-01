@@ -56,15 +56,15 @@ private:
 
     void readExportSettings();
 
-    void applySimulationParameters(Engine * engine);
+    void applySimulationParameters();
     void applyExportSettings();
     void applyParticleSystem(Scene * scene);
-    void applyGrid(Engine * engine);
-    void applyColliders(Engine * engine);
+    void applyGrid(Scene * scene);
+    void applyColliders(Scene * scene);
 
     /// export functions
 
-    void appendSimulationParameters(QDomElement root, SimulationParameters params);
+    void appendSimulationParameters(QDomElement root, float timeStep);
     void appendParticleSystem(QDomElement root, Scene * scene);
     void appendGrid(QDomElement root, Scene * scene);
     void appendColliders(QDomElement root, QVector<ImplicitCollider> colliders);

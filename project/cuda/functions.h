@@ -22,7 +22,7 @@ struct Node;
 struct NodeCache;
 struct ImplicitCollider;
 struct SimulationParameters;
-struct MaterialConstants;
+struct Material;
 
 extern "C"
 {
@@ -32,16 +32,10 @@ void registerVBO( cudaGraphicsResource **resource, GLuint vbo );
 void unregisterVBO( cudaGraphicsResource *resource );
 
 // Particle simulation
-void updateParticles( const SimulationParameters &parameters,
-                      Particle *particles, ParticleCache *pCaches, int numParticles,
+void updateParticles( Particle *particles, ParticleCache *pCaches, int numParticles,
                       Grid *grid, Node *nodes, NodeCache *nodeCache, int numNodes,
                       ImplicitCollider *colliders, int numColliders,
-                      MaterialConstants *mat);
-
-
-// normal approximation for shading
-void updateParticleNormals( Particle *particles, int numParticles,
-                            Grid *grid, Node *nodes, int numNodes );
+                      float timeStep, bool implicitUpdate );
 
 // Mesh filling
 void fillMesh( cudaGraphicsResource **resource, int triCount, const Grid &grid, Particle *particles, int particleCount, float targetDensity, int materialPreset);

@@ -2,28 +2,27 @@
 **
 **   SNOW - CS224 BROWN UNIVERSITY
 **
-**   noise.cu
+**   snowtypes.h
 **   Authors: evjang, mliberma, taparson, wyegelwe
 **   Created: 27 Apr 2014
 **
 **************************************************************************/
 
-#ifndef MATERIAL_CU
-#define MATERIAL_CU
+#ifndef SNOWTYPES_H
+#define SNOWTYPES_H
 
 #include <cuda.h>
 #include <helper_functions.h>
 #include <helper_cuda.h>
 #include "math.h"
-#include "common/math.h"
-#include "cuda/vector.h"
 
 #define CUDA_INCLUDE
 
+#include "common/math.h"
 #include "cuda/noise.h"
+#include "cuda/vector.h"
 #include "sim/particle.h"
 #include "sim/material.h"
-
 
 /*
  * theta_c, theta_s -> determine when snow starts breaking.
@@ -41,8 +40,11 @@ __global__ void applyChunky(Particle *particles, int particleCount)
     if ( tid >= particleCount ) return;
     Particle &particle = particles[tid];
     vec3 pos = particle.position;
-    float fbm = fbm3(pos*.5); // adjust the .5 to get desired frequency of chunks within fbm
-    MaterialConstants mat(MAX_THETA_C,MAX_THETA_S,MIN_XI+fbm*(MAX_XI-MIN_XI),0.2,MIN_E0+fbm*(MAX_E0-MIN_E0));
+    float fbm = fbm3( pos * 20.0 ); // adjust the .5 to get desired frequency of chunks within fbm
+    Material mat;
+    mat.setYoungsAndPoissons( MIN_E0 + fbm*(MAX_E0-MIN_E0), POISSONS_RATIO );
+    mat.xi = MIN_XI + fbm*(MAX_XI-MIN_XI);
+    mat.setCriticalStrains( MAX_THETA_C, MAX_THETA_S );
     particle.material = mat;
 }
 

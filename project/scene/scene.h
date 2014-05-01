@@ -39,9 +39,9 @@ public:
 
     void loadMesh(const QString &filename, glm::mat4 CTM=glm::mat4());
 
-    // deletes all sceneNodes, including the SceneGrid
     void reset();
     void initSceneGrid();
+    void updateSceneGrid();
 
 private:
 
