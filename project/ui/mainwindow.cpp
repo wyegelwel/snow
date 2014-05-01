@@ -123,7 +123,7 @@ void MainWindow::fillNumParticleFinishedEditing()
 void MainWindow::setupUI()
 {
     assert( connect(ui->actionSave_Mesh, SIGNAL(triggered()), ui->viewPanel, SLOT(saveSelectedMesh())) );
-    assert( connect(ui->actionLoad_Scene, SIGNAL(triggered()), ui->viewPanel, SLOT(loadScene())));
+    assert( connect(ui->actionOpen_Scene, SIGNAL(triggered()), ui->viewPanel, SLOT(openScene())));
     assert( connect(ui->actionSave_Scene, SIGNAL(triggered()), ui->viewPanel, SLOT(saveScene())));
 
     // Mesh Filling

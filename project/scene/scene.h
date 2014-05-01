@@ -11,10 +11,13 @@
 #ifndef SCENE_H
 #define SCENE_H
 
+#include "glm/mat4x4.hpp"
+
 class ParticleSystem;
 class Renderable;
 class SceneNode;
 class SceneNodeIterator;
+class QString;
 
 class Scene
 {
@@ -35,6 +38,12 @@ public:
     SceneNodeIterator begin() const;
 
     void deleteSelectedNodes();
+
+    void loadMesh(const QString &filename, glm::mat4 CTM=glm::mat4());
+
+    void reset();
+    void initSceneGrid();
+    void updateSceneGrid();
 
 private:
 

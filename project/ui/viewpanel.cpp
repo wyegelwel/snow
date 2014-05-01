@@ -132,32 +132,6 @@ ViewPanel::initializeGL()
 }
 
 void
-ViewPanel::teapotDemo()
-{
-    /// TODO - this function is temporary and written for convenience
-    /// in the future, open() and save() will read/write from a file format
-
-    // call load on teapot
-    SceneNode *node = new SceneNode;
-    QList<Mesh*> meshes;
-    OBJParser::load( PROJECT_PATH "/data/models/teapot.obj", meshes );
-    // select teapot renderable so we can fill it
-    node->setRenderable( meshes[0] );
-    m_scene->root()->addChild( node );
-    // call fillSelectedMesh()
-
-    ParticleSystem *particles = new ParticleSystem;
-    meshes[0]->fill( *particles, 32*512, 0.1f, 200.f );
-    m_engine->addParticleSystem( *particles );
-    delete particles;
-
-    BBox box = meshes[0]->getBBox( glm::mat4(1.f) );
-    UiSettings::gridPosition() = box.min();
-    UiSettings::gridDimensions() = glm::ivec3( 128, 128, 128 );
-    UiSettings::gridResolution() = box.longestDimSize() / 128.f;
-}
-
-void
 ViewPanel::paintGL()
 {
     glClearColor( 0.20f, 0.225f, 0.25f, 1.f );
@@ -282,10 +256,7 @@ bool ViewPanel::startSimulation()
             if (!ok) // have not saved yet
                 ok = saveScene();
             if (ok)
-            {
-                QFileInfo sceneFileInfo(m_sceneIO->sceneFile());
-                m_engine->initExporter(sceneFileInfo.path());
-            }
+                m_engine->initExporter(m_sceneIO->sceneFile());
         }
 
         return m_engine->start(exportVol);
@@ -353,8 +324,7 @@ void ViewPanel::loadMesh( const QString &filename )
 
 }
 
-void ViewPanel::addCollider( int colliderType )
-{
+void ViewPanel::addCollider(int colliderType)  {
     vec3 parameter;
     SceneNode *node = new SceneNode( SceneNode::IMPLICIT_COLLIDER );
     float r;
@@ -422,13 +392,14 @@ ViewPanel::clearSelection()
 
 void ViewPanel::updateSceneGrid()
 {
-    SceneNode *gridNode = m_scene->getSceneGridNode();
-    if ( gridNode ) {
-        SceneGrid *grid = dynamic_cast<SceneGrid*>( gridNode->getRenderable() );
-        grid->setGrid( UiSettings::buildGrid(glm::mat4(1.f)) );
-        gridNode->setBBoxDirty();
-        gridNode->setCentroidDirty();
-    }
+//    SceneNode *gridNode = m_scene->getSceneGridNode();
+//    if ( gridNode ) {
+//        SceneGrid *grid = dynamic_cast<SceneGrid*>( gridNode->getRenderable() );
+//        grid->setGrid( UiSettings::buildGrid(glm::mat4(1.f)) );
+//        gridNode->setBBoxDirty();
+//        gridNode->setCentroidDirty();
+//    }
+    m_scene->updateSceneGrid();
     if ( m_tool ) m_tool->update();
     update();
 }
@@ -525,7 +496,12 @@ void ViewPanel::fillSelectedMesh()
         if ( (*it)->hasRenderable() &&
              (*it)->getType() == SceneNode::SNOW_CONTAINER &&
              (*it)->getRenderable()->isSelected() ) {
-            Mesh *copy = new Mesh( *dynamic_cast<Mesh*>((*it)->getRenderable()) );
+            Mesh * original = dynamic_cast<Mesh*>((*it)->getRenderable());
+
+            original->setParticleCount(UiSettings::fillNumParticles());
+            original->setMaterialPreset(UiSettings::materialPreset());
+
+            Mesh *copy = new Mesh( *original );
             const glm::mat4 transformation = (*it)->getCTM();
             copy->applyTransformation( transformation );
             mesh->append( *copy );
@@ -615,29 +591,33 @@ ViewPanel::saveSelectedMesh()
 }
 
 bool
-ViewPanel::loadScene()
+ViewPanel::openScene()
 {
     // call file dialog
-    QString str;
-    m_sceneIO->read(str, m_scene, m_engine);
+    QString filename = QFileDialog::getOpenFileName(this, "Choose Scene File Path", PROJECT_PATH "/data/scenes/");
+    if (!filename.isNull())
+        m_sceneIO->read(filename, m_scene, m_engine);
+    else
+        LOG("could not open file \n");
 }
 
 bool
 ViewPanel::saveScene()
 {
     // this is enforced if engine->start is called and export is not checked
+    QString foo = m_sceneIO->sceneFile();
     if (m_sceneIO->sceneFile().isNull())
     {
         // filename not initialized yet
-        QString filename = QFileDialog::getSaveFileName( this, "Choose Simulation File Path", PROJECT_PATH "/data/scenes/" );
+        QString filename = QFileDialog::getSaveFileName( this, "Choose Scene File Path", PROJECT_PATH "/data/scenes/" );
+
         if (!filename.isNull())
         {
             m_sceneIO->setSceneFile(filename);
-            m_sceneIO->write(m_sceneIO->sceneFile(), m_scene, m_engine);
+            m_sceneIO->write(m_scene, m_engine);
         }
         else
         {
-            // cancelled
             QMessageBox msgBox;
             msgBox.setText("Error : Invalid Save Path");
             msgBox.exec();
@@ -646,7 +626,7 @@ ViewPanel::saveScene()
     }
     else
     {
-        m_sceneIO->write(m_sceneIO->sceneFile(),m_scene, m_engine);
+        m_sceneIO->write(m_scene, m_engine);
     }
 }
 

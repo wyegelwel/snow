@@ -82,15 +82,15 @@ void MitsubaExporter::exportScene(float t)
     m_busy = false;
 }
 
-void MitsubaExporter::exportDensityData(float t)
+void MitsubaExporter::writeVOLHeader(std::ofstream &os, const int channels)
 {
-    QString fname = QString("%1_%2.vol").arg(m_fileprefix, QString("%1").arg(m_frame,4,'d',0,'0'));
-    std::ofstream os(fname.toStdString().c_str());
+    // header for VOL data
 
     int xres,yres,zres;
     xres = m_grid.nodeDim().x;
     yres = m_grid.nodeDim().y;
     zres = m_grid.nodeDim().z;
+    const float h = m_grid.h;
 
     os.write("VOL", 3);
     char version = 3;
@@ -100,27 +100,21 @@ void MitsubaExporter::exportDensityData(float t)
     os.write((char *) &xres, sizeof(int));
     os.write((char *) &yres, sizeof(int));
     os.write((char *) &zres, sizeof(int));
-    int channels = 1;      // number of channels
     os.write((char *) &channels, sizeof(int));
 
-//    float minX = m_bbox.min().x;
-//    float minY = m_bbox.min().y;
-//    float minZ = m_bbox.min().z;
-//    float maxX = m_bbox.max().x;
-//    float maxY = m_bbox.max().y;
-//    float maxZ = m_bbox.max().z;
+    // the bounding box corresponds exactly where the heterogenous medium
+    // will be positioned in MitexportVolsuba scene world space. If box is not
+    // same size, stretching will occur. This is annoying when setting
+    // up for arbitrary scenes, so the blender plugin will support re-writing these values
+    // before rendering.
 
-    // the bounding box of the snow volume
-    // corresponds to exactly where the heterogenous medium
-    // will be positioned in the scene. irrelevant to everything else.
-    // note, will warp if not proportional to simulation space
+    float minX = m_grid.pos.x;
+    float minY = m_grid.pos.y;
+    float minZ = m_grid.pos.z;
+    float maxX = minX + h*m_grid.dim.x;
+    float maxY = minY + h*m_grid.dim.y;
+    float maxZ = minZ + h*m_grid.dim.z;
 
-    float minX=-.5;
-    float maxX=.5;
-    float minY=0;
-    float maxY=1;
-    float minZ=-.5;
-    float maxZ=.5;
     // bounding box
     os.write((char *) &minX, sizeof(float));
     os.write((char *) &minY, sizeof(float));
@@ -128,16 +122,29 @@ void MitsubaExporter::exportDensityData(float t)
     os.write((char *) &maxX, sizeof(float));
     os.write((char *) &maxY, sizeof(float));
     os.write((char *) &maxZ, sizeof(float));
+}
+
+void MitsubaExporter::exportDensityData(float t)
+{
+    QString fname = QString("%1_%2.vol").arg(m_fileprefix, QString("%1").arg(m_frame,4,'d',0,'0'));
+    std::ofstream os(fname.toStdString().c_str());
+
+    writeVOLHeader(os, 1);
+
+    int xres,yres,zres;
+    xres = m_grid.nodeDim().x;
+    yres = m_grid.nodeDim().y;
+    zres = m_grid.nodeDim().z;
 
     float h = m_grid.h;
     float v = h*h*h;
 
-    for ( int k = 0, mIndex = 0; k < zres; ++k ) {
+    for ( int k = 0; k < zres; ++k ) {
         for ( int j = 0; j < yres; ++j ) {
-            for ( int i = 0; i < xres; ++i, ++mIndex ) {
+            for ( int i = 0; i < xres; ++i ) {
                 int gIndex = (i*yres + j)*zres + k;
                 float density = m_nodes[gIndex].mass / v;
-                density *= 10000;
+                density *= 10000;                    // TODO, fix this when we have more particles.
                 density = std::min(1.f,density);
                 os.write((char *) &density, sizeof(float));
             }
@@ -148,7 +155,32 @@ void MitsubaExporter::exportDensityData(float t)
 
 void MitsubaExporter::exportVelocityData(float t)
 {
-    // TODO
+    QString fname = QString("%1_%2.vol").arg(m_fileprefix, QString("%1").arg(m_frame,4,'d',0,'0'));
+    std::ofstream os(fname.toStdString().c_str());
+
+    writeVOLHeader(os, 3);
+
+    int xres,yres,zres;
+    xres = m_grid.nodeDim().x;
+    yres = m_grid.nodeDim().y;
+    zres = m_grid.nodeDim().z;
+
+    float h = m_grid.h;
+    float v = h*h*h;
+
+    for ( int k = 0; k < zres; ++k ) {
+        for ( int j = 0; j < yres; ++j ) {
+            for ( int i = 0; i < xres; ++i ) {
+                int gIndex = (i*yres + j)*zres + k;
+                vec3 velocity = vec3::min(vec3(1), vec3::abs(m_nodes[gIndex].velocity));
+                for (int c=0; c < 3; ++c) // RGB color channels
+                {
+                    os.write((char *) &velocity[c], sizeof(float));
+                }
+            }
+        }
+    }
+    os.close();
 }
 
 Node * MitsubaExporter::getNodesPtr()

@@ -67,7 +67,7 @@ public slots:
 
     void loadMesh( const QString &filename );
 
-    void addCollider( int colliderType );
+    void addCollider(int colliderType);
 
     void setTool( int tool );
 
@@ -77,7 +77,7 @@ public slots:
     void fillSelectedMesh();
     void saveSelectedMesh();
 
-    bool loadScene();
+    bool openScene();
     bool saveScene();
 
     void zeroVelOfSelected();

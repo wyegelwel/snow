@@ -62,6 +62,8 @@ public:
     void setGrid( const Grid &grid );
     void clearParticleGrid();
 
+    Grid getGrid() {return m_grid; }
+
     void initParticleMaterials( int preset );
 
     void addCollider( const ImplicitCollider &collider ) { m_colliders += collider; }

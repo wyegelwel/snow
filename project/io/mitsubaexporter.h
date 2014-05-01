@@ -54,7 +54,12 @@ private:
     void exportVelocityData(float t);
     void init();
 
+    void writeVOLHeader(std::ofstream &os, const int channels);
+
+    // file format prefix this is written to, i.e. m_fileprefix = /home/evjang/teapot
+    //
     QString m_fileprefix;
+
     float m_lastUpdateTime;
     int m_fps; // number of frames to export every second of simulation
     float m_spf; // seconds per frame

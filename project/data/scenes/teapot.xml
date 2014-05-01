@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<SnowSimulation>
+ <SimulationParameters>
+  <float value="5e-05" name="timeStep"/>
+ </SimulationParameters>
+ <ExportSettings>
+  <string value="/gpfs/main/home/evjang/course/cs224/group_final/snow/project/data/scenes/teapot" name="filePrefix"/>
+  <int value="3" name="maxTime"/>
+  <int value="24" name="exportFPS"/>
+  <int value="0" name="exportDensity"/>
+  <int value="0" name="exportVelocity"/>
+ </ExportSettings>
+ <ParticleSystem>
+  <SnowContainer>
+   <string value="/gpfs/main/home/evjang/course/cs224/group_final/snow/project/data/models/teapot.obj" name="filename"/>
+   <string value="8747424" name="materialPreset"/>
+   <int value="0" name="numParticles"/>
+   <matrix value="1.000000 0.000000 0.000000 0.000000 0.000000 1.000000 0.000000 0.000000 0.000000 0.000000 1.000000 0.000000 0.000000 0.000000 0.000000 1.000000" name="CTM"/>
+  </SnowContainer>
+ </ParticleSystem>
+ <Grid>
+  <dim x="128" y="128" z="129" name="gridDim"/>
+  <vector x="-0.0554444" y="0" z="-0.0679235" name="pos"/>
+  <float value="0.004" name="h"/>
+ </Grid>
+</SnowSimulation>
