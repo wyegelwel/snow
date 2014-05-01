@@ -32,8 +32,8 @@
 
 #define SCALE 0.01f
 
-ScaleTool::ScaleTool( ViewPanel *panel )
-    : SelectionTool(panel),
+ScaleTool::ScaleTool( ViewPanel *panel,Type t )
+    : SelectionTool(panel,t),
       m_axisSelection(Picker::NO_PICK),
       m_active(false),
       m_scaling(false),

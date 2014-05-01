@@ -26,6 +26,8 @@ public:
 
     virtual void render();
 
+    virtual void renderVelocity(bool velTool);
+
     SceneNode* root() { return m_root; }
 
     SceneNode* getSceneGridNode();

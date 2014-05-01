@@ -30,8 +30,8 @@
 #include "viewport/camera.h"
 #include "viewport/viewport.h"
 
-MoveTool::MoveTool( ViewPanel *panel )
-    : SelectionTool(panel),
+MoveTool::MoveTool( ViewPanel *panel,Type t )
+    : SelectionTool(panel,t),
       m_axisSelection(Picker::NO_PICK),
       m_active(false),
       m_moving(false),

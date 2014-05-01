@@ -19,8 +19,8 @@ SceneCollider::SceneCollider( ImplicitCollider *collider )
     : m_collider(collider)
 {
     initializeMesh();
-    m_velVec = vec3(0,1,0);
-    m_velMag = 1;
+//    m_velVec = vec3(0,1,0);
+//    m_velMag = 1;
     updateMeshVel();
 }
 
@@ -36,6 +36,10 @@ void SceneCollider::render()
 
 void SceneCollider::setCTM(const glm::mat4 &ctm) {
     m_mesh->setCTM(ctm);
+}
+
+void SceneCollider::renderVelocity(bool velTool)  {
+    m_mesh->renderVelocity(velTool);
 }
 
 void SceneCollider::renderForPicker()

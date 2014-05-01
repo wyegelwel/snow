@@ -166,8 +166,14 @@ ViewPanel::paintGL()
     glPushAttrib( GL_TRANSFORM_BIT );
     glEnable( GL_NORMALIZE );
 
+//    bool velTool;
+//    if((m_tool->getType()) == VelocityTool) {
+//        velTool = true;
+//    }
+
     m_viewport->push(); {
         m_scene->render();
+        m_scene->renderVelocity(true);
         m_engine->render();
         paintGrid();
         if ( m_tool ) m_tool->render();
@@ -181,9 +187,27 @@ ViewPanel::paintGL()
         m_infoPanel->setInfo( "Sim Time", QString::number(m_engine->getSimulationTime(), 'f', 3)+" s", false );
     }
 
+
+    float currTime = m_engine->getSimulationTime();
+    updateColliders(currTime - m_prevTime);
+    m_prevTime = currTime;
+
+
     m_infoPanel->render();
 
     glPopAttrib();
+}
+
+void ViewPanel::updateColliders(float timestep) {
+    for ( SceneNodeIterator it = m_scene->begin(); it.isValid(); ++it ) {
+        if ( (*it)->hasRenderable() ) {
+            if ( (*it)->getType() == SceneNode::IMPLICIT_COLLIDER ) {
+                SceneCollider* c = dynamic_cast<SceneCollider*>((*it)->getRenderable());
+                glm::mat4 transform = glm::translate(glm::mat4(),c->getVelVec()*c->getVelMag()*timestep);
+                (*it)->applyTransformation(transform);
+            }
+        }
+    }
 }
 
 void
@@ -245,6 +269,8 @@ bool ViewPanel::startSimulation()
                     SceneCollider *sceneCollider = dynamic_cast<SceneCollider*>((*it)->getRenderable());
                     ImplicitCollider collider( *(sceneCollider->getImplicitCollider()) );
                     collider.applyTransformation( (*it)->getCTM() );
+                    collider.velocity = (*it)->getRenderable()->getVelMag()*(*it)->getRenderable()->getVelVec();
+                    std::cout << "collider vel here is: " << collider.velocity.y << std::endl;
                     m_engine->addCollider( collider );
                 }
             }
@@ -362,21 +388,22 @@ void ViewPanel::addCollider( int colliderType )
 void ViewPanel::setTool( int tool )
 {
     SAFE_DELETE( m_tool );
-    switch ( (Tool::Type)tool ) {
+    Tool::Type t = (Tool::Type)tool;
+    switch ( t ) {
     case Tool::SELECTION:
-        m_tool = new SelectionTool(this);
+        m_tool = new SelectionTool(this,t);
         break;
     case Tool::MOVE:
-        m_tool = new MoveTool(this);
+        m_tool = new MoveTool(this,t);
         break;
     case Tool::ROTATE:
-        m_tool = new RotateTool(this);
+        m_tool = new RotateTool(this,t);
         break;
     case Tool::SCALE:
-        m_tool = new ScaleTool(this);
+        m_tool = new ScaleTool(this,t);
         break;
     case Tool::VELOCITY:
-        m_tool = new VelocityTool(this);
+        m_tool = new VelocityTool(this,t);
         break;
     }
     if ( m_tool ) m_tool->update();
@@ -530,6 +557,30 @@ void ViewPanel::fillSelectedMesh()
     delete mesh;
 
     if ( !UiSettings::showParticles() ) emit showParticles();
+}
+
+void ViewPanel::giveVelToSelected() {
+    for ( SceneNodeIterator it = m_scene->begin(); it.isValid(); ++it ) {
+        if ( (*it)->hasRenderable() &&
+             (*it)->getType() != SceneNode::SIMULATION_GRID &&
+             (*it)->getRenderable()->isSelected() ) {
+            (*it)->getRenderable()->setVelMag(1.0f);
+            (*it)->getRenderable()->setVelVec(glm::vec3(0,1,0));
+            (*it)->getRenderable()->updateMeshVel();
+        }
+    }
+}
+
+void ViewPanel::zeroVelOfSelected()  {
+    for ( SceneNodeIterator it = m_scene->begin(); it.isValid(); ++it ) {
+        if ( (*it)->hasRenderable() &&
+             (*it)->getType() != SceneNode::SIMULATION_GRID &&
+             (*it)->getRenderable()->isSelected() ) {
+            (*it)->getRenderable()->setVelMag(0.0f);
+            (*it)->getRenderable()->setVelVec(glm::vec3(0,0,0));
+            (*it)->getRenderable()->updateMeshVel();
+        }
+    }
 }
 
 void

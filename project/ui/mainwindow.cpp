@@ -134,6 +134,8 @@ void MainWindow::setupUI()
     assert( connect(ui->fillNumParticlesSpinbox, SIGNAL(editingFinished()), this, SLOT(fillNumParticleFinishedEditing())) );
     FloatBinding::bindSpinBox( ui->densitySpinbox, UiSettings::fillDensity(), this );
     ComboIntAttribute::bindInt(ui->snowMaterialCombo, &UiSettings::materialPreset(), this);
+    assert( connect(ui->meshGiveVelocityButton, SIGNAL(clicked()), ui->viewPanel,SLOT(giveVelToSelected())));
+    assert( connect(ui->MeshZeroVelocityButton, SIGNAL(clicked()), ui->viewPanel,SLOT(zeroVelOfSelected())));
 
     // Simulation
     assert( connect(ui->startButton, SIGNAL(clicked()), this, SLOT(startSimulation())) );
@@ -160,6 +162,8 @@ void MainWindow::setupUI()
 
     // SceneCollider
     assert( connect(ui->colliderAddButton, SIGNAL(clicked()), this, SLOT(addCollider())) );
+    assert( connect(ui->ColliderVelocityButton, SIGNAL(clicked()), ui->viewPanel,SLOT(giveVelToSelected())));
+    assert( connect(ui->colliderZeroButton, SIGNAL(clicked()), ui->viewPanel,SLOT(zeroVelOfSelected())));
 
     // View Panel
     assert( connect(ui->showContainersCheckbox, SIGNAL(toggled(bool)), ui->showContainersCombo, SLOT(setEnabled(bool))) );

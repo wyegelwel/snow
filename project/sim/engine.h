@@ -66,6 +66,7 @@ public:
 
     void addCollider( const ImplicitCollider &collider ) { m_colliders += collider; }
     void clearColliders() { m_colliders.clear(); }
+//    void updateColliders();
     QVector<ImplicitCollider>& colliders() { return m_colliders; }
 
     void initExporter( QString fprefix );

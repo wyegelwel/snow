@@ -55,6 +55,8 @@ public:
 
     virtual void updateMeshVel(){}
 
+    virtual void renderVelocity(bool velTool){}
+
     virtual float getVelMag() {return m_velMag;}
 
     virtual glm::vec3 getVelVec() {return m_velVec;}

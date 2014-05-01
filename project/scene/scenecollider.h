@@ -42,6 +42,8 @@ public:
 
     virtual void setCTM(const glm::mat4 &ctm);
 
+    virtual void renderVelocity(bool velTool);
+
     ImplicitCollider* getImplicitCollider() { return m_collider; }
 
 private:

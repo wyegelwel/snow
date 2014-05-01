@@ -334,6 +334,19 @@ __global__ void updateParticlesFromGrid( Particle *particles, const Grid *grid, 
     particle.position += timeStep * ( particle.velocity );
 }
 
+__global__ void updateColliderPositions(ImplicitCollider *colliders, int numColliders,float timestep)  {
+
+    ImplicitCollider &collider = colliders[0];
+
+//    printf("collider vol %f \n", collider.velocity.y);
+
+    for(int i = 0; i < numColliders; i++)  {
+        ImplicitCollider &collider = colliders[i];
+        collider.center += collider.velocity*timestep;
+//        printf("collider vel is: %d",colliders[i].velocity.y);
+    }
+}
+
 __host__ void updateParticles( Particle *particles, ParticleCache *pCaches, int numParticles,
                                Grid *grid, Node *nodes, NodeCache *nodeCaches, int numNodes,
                                ImplicitCollider *colliders, int numColliders,
@@ -351,6 +364,10 @@ __host__ void updateParticles( Particle *particles, ParticleCache *pCaches, int 
     const dim3 threads1D( THREAD_COUNT );
     const dim3 pBlocks2D( (numParticles+THREAD_COUNT-1)/THREAD_COUNT, 64 );
     const dim3 threads2D( THREAD_COUNT/64, 64 );
+
+//    updateColliderPositions(colliders,numColliders,timeStep);
+
+    LAUNCH( updateColliderPositions<<<1,1>>>(colliders,numColliders,timeStep));
 
     LAUNCH( computeSigma<<<pBlocks1D,threads1D>>>(particles,pCaches,grid) );
 

@@ -98,6 +98,17 @@ SceneNode::renderTransparent()
 }
 
 void
+SceneNode::renderVelocity(bool velTool)  {
+    glMatrixMode( GL_MODELVIEW );
+    glPushMatrix();
+    glMultMatrixf( glm::value_ptr(getCTM()) );
+    if ( m_renderable ) m_renderable->renderVelocity(velTool);
+    glPopMatrix();
+    for ( int i = 0; i < m_children.size(); ++i )
+        m_children[i]->renderVelocity(velTool);
+}
+
+void
 SceneNode::applyTransformation( const glm::mat4 &transform )
 {
     m_transform = transform * m_transform;

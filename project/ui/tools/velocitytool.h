@@ -27,7 +27,7 @@ class VelocityTool : public SelectionTool
 
 public:
 
-    VelocityTool( ViewPanel *panel );
+    VelocityTool( ViewPanel *panel,Type t );
     virtual ~VelocityTool();
 
     virtual void mousePressed();

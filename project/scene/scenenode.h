@@ -60,6 +60,8 @@ public:
     // Render the node's renderable if it is transparent
     virtual void renderTransparent();
 
+    virtual void renderVelocity(bool velTool);
+
     glm::mat4 getCTM();
     // Indicate that the CTM needs recomputing
     void setCTMDirty();

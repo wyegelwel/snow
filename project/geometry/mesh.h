@@ -110,6 +110,8 @@ public:
     virtual void renderForPicker();
     virtual void renderVelForPicker();
 
+    virtual void renderVelocity(bool velTool);
+
     virtual void updateMeshVel(){deleteVelVBO();}
 
     virtual BBox getBBox( const glm::mat4 &ctm );
@@ -146,7 +148,7 @@ private:
 
     void renderVBO();
     void renderCenter() const;
-    void renderArrow() const;
+    void renderArrow();
 
     bool hasVelVBO() const;
     void buildVelVBO();

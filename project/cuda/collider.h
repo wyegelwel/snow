@@ -92,6 +92,7 @@ __device__ void checkForAndHandleCollisions( const ImplicitCollider *colliders, 
 {
     for ( int i = 0; i < numColliders; ++i ) {
         const ImplicitCollider &collider = colliders[i];
+//        collider.center += velocity*timestep;
         if ( isColliding(collider, position) ){
             vec3 vRel = velocity - collider.velocity;
             vec3 normal;
@@ -110,5 +111,12 @@ __device__ void checkForAndHandleCollisions( const ImplicitCollider *colliders, 
         }
     }
 }
+//__device__ void updateColliderPositions(ImplicitCollider *colliders, int numColliders, float timestep)
+//{
+//    for ( int i = 0; i < numColliders; ++i ) {
+//        ImplicitCollider &collider = colliders[i];
+//        collider.center += collider.velocity*timestep;
+//    }
+//}
 
 #endif // CUDACOLLIDER_H

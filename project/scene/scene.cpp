@@ -66,6 +66,11 @@ Scene::render()
 }
 
 void
+Scene::renderVelocity(bool velTool) {
+    m_root->renderVelocity(velTool);
+}
+
+void
 Scene::setupLights()
 {
     glm::vec4 diffuse = glm::vec4( 0.5f, 0.5f, 0.5f, 1.f );

@@ -32,8 +32,8 @@
 
 #include <iostream>
 
-VelocityTool::VelocityTool( ViewPanel *panel )
-    : SelectionTool(panel),
+VelocityTool::VelocityTool( ViewPanel *panel,Type t )
+    : SelectionTool(panel,t),
       m_axisSelection(Picker::NO_PICK),
       m_vecSelection(Picker::NO_PICK),
       m_active(false),

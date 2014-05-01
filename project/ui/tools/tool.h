@@ -33,7 +33,7 @@ public:
         VELOCITY
     };
 
-    Tool( ViewPanel *panel ) : m_panel(panel), m_mouseDown(false) {}
+    Tool( ViewPanel *panel,Type t ) : m_panel(panel), m_mouseDown(false),m_type(t) {}
     virtual ~Tool() {}
 
     virtual void mousePressed() { m_mouseDown = true; }
@@ -55,6 +55,7 @@ protected:
 
     float getHandleSize( const vec3 &center ) const;
 
+    Type m_type;
 };
 
 #endif // TOOL_H

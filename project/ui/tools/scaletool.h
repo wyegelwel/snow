@@ -27,7 +27,7 @@ class ScaleTool : public SelectionTool
 
 public:
 
-    ScaleTool( ViewPanel *panel );
+    ScaleTool( ViewPanel *panel,Type t );
     virtual ~ScaleTool();
 
     virtual void mousePressed();

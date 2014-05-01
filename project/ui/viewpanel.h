@@ -63,6 +63,7 @@ public slots:
     void resumeSimulation();
     void pauseDrawing();
     void resumeDrawing();
+    void updateColliders(float timestep);
 
     void loadMesh( const QString &filename );
 
@@ -78,6 +79,9 @@ public slots:
 
     bool loadScene();
     bool saveScene();
+
+    void zeroVelOfSelected();
+    void giveVelToSelected();
 
     // Demo Scenes
     void teapotDemo();
@@ -105,6 +109,7 @@ protected:
     int m_minorSize;
     bool m_draw;
     float m_fps;
+    float m_prevTime;
 
     void paintGrid();
 

@@ -84,6 +84,10 @@ void Engine::initExporter( QString fprefix )
 
 bool Engine::start( bool exportVolume )
 {
+    for(int i = 0; i < m_colliders.size();i++)  {
+        std::cout << "in engine: " << m_colliders[i].velocity.y << std::endl;
+    }
+
     if ( m_particleSystem->size() > 0 && !m_grid.empty() && !m_running ) {
         std::cout << "vel mag: " << m_particleSystem->getVelMag() << std::endl;
         if ( (m_export = exportVolume) ) m_exporter->reset( m_grid );
@@ -178,6 +182,8 @@ void Engine::update()
                          devNodes, m_devNodeCaches, m_grid.nodeCount(), m_devColliders, m_colliders.size(),
                          UiSettings::timeStep(), UiSettings::implicit() );
 
+//        updateColliders(); //updating collider positions on cpu side
+
         if (m_export && (m_time - m_exporter->getLastUpdateTime() >= m_exporter->getspf()))
         {
             cudaMemcpy(m_exporter->getNodesPtr(), devNodes, m_grid.nodeCount() * sizeof(Node), cudaMemcpyDeviceToHost);
@@ -210,6 +216,15 @@ void Engine::update()
     }
 }
 
+//void Engine::updateColliders()  {
+//    float timestep = UiSettings::timeStep();
+//    for(int i = 0; i < m_colliders.size(); i++)  {
+//        ImplicitCollider &col = m_colliders[i];
+//        col.center += col.velocity*timestep;
+//        std::cout << "col vel: " << col.velocity.y << std::endl;
+//    }
+//}
+
 void Engine::initializeCudaResources()
 {
     LOG( "Initializing CUDA resources..." );
@@ -229,6 +244,10 @@ void Engine::initializeCudaResources()
     // Grid
     checkCudaErrors(cudaMalloc( (void**)&m_devGrid, sizeof(Grid) ));
     checkCudaErrors(cudaMemcpy( m_devGrid, &m_grid, sizeof(Grid), cudaMemcpyHostToDevice ));
+
+    for(int i = 0; i < m_colliders.size(); i++)  {
+        std::cout << "last chance: " << m_colliders[i].velocity.y << std::endl;
+    }
 
     // Colliders
     checkCudaErrors(cudaMalloc( (void**)&m_devColliders, m_colliders.size()*sizeof(ImplicitCollider) ));

@@ -36,8 +36,8 @@ Mesh::Mesh()
     : m_glVBO(0),
       m_color(0.4f, 0.4f, 0.4f, 1.f)
 {
-    m_velMag = 1.0f;
-    m_velVec = glm::vec3(0,1,0);
+//    m_velMag = 1.0f;
+//    m_velVec = glm::vec3(0,1,0);
 }
 
 Mesh::Mesh( const QVector<Vertex> &vertices,
@@ -170,30 +170,49 @@ Mesh::render()
             glPopAttrib();
         }
 
-        if(m_selected)  {
-            if(!hasVelVBO())
-                buildVelVBO();
+        glPopAttrib();
+        glPopAttrib();
 
-            glPushAttrib( GL_DEPTH_BUFFER_BIT );
-            glDisable( GL_DEPTH_TEST );
-            glPushAttrib( GL_LIGHTING_BIT );
-            glDisable( GL_LIGHTING );
-            glPushAttrib( GL_COLOR_BUFFER_BIT );
-            glEnable( GL_BLEND );
-            glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
-            glEnable( GL_LINE_SMOOTH );
-            glHint( GL_LINE_SMOOTH_HINT, GL_NICEST );
+    }
+}
+
+void Mesh::renderVelocity(bool velTool)  {
+    glPushAttrib( GL_DEPTH_TEST );
+    glEnable( GL_DEPTH_TEST );
+
+    glEnable( GL_LINE_SMOOTH );
+    glHint( GL_LINE_SMOOTH_HINT, GL_NICEST );
+
+    glPushAttrib( GL_COLOR_BUFFER_BIT );
+    glEnable( GL_BLEND );
+    glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
+
+    glm::vec4 color = glm::vec4(.9,.9,.9,1.0f);
+    glColor4fv(glm::value_ptr(color));
+    glMaterialfv( GL_FRONT_AND_BACK, GL_AMBIENT, glm::value_ptr(color*0.2f) );
+    glMaterialfv( GL_FRONT_AND_BACK, GL_DIFFUSE, glm::value_ptr(color) );
+
+    if(!hasVelVBO())
+        buildVelVBO();
+
+    if(velTool) {
+        glPushAttrib( GL_DEPTH_BUFFER_BIT );
+        glDisable( GL_DEPTH_TEST );
+        glPushAttrib( GL_LIGHTING_BIT );
+        glDisable( GL_LIGHTING );
+        glPushAttrib( GL_COLOR_BUFFER_BIT );
+        glEnable( GL_BLEND );
+        glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
+        glEnable( GL_LINE_SMOOTH );
+        glHint( GL_LINE_SMOOTH_HINT, GL_NICEST );
+    }
 //            renderArrow();
-            renderVelVBO();
+    renderVelVBO();
 //            renderCenter();
-            glPopAttrib();
-            glPopAttrib();
-            glPopAttrib();
-        }
-
+    if(velTool)  {
         glPopAttrib();
         glPopAttrib();
-
+        glPopAttrib();
     }
 }
 
@@ -315,11 +334,13 @@ Mesh::renderVelVBO()
 }
 
 void
-Mesh::renderArrow() const
+Mesh::renderArrow()
 {
     glMatrixMode( GL_MODELVIEW );
     glPushMatrix();
-    glm::mat4 translate = glm::translate( glm::mat4(1.f), glm::vec3(0) );
+//    glm::mat4 translate = glm::translate( glm::mat4(1.f), glm::vec3(0) );
+    vec3 v = (this->getCentroid(glm::mat4(1.f)));
+    glm::mat4 translate = glm::translate( glm::mat4(1.f),glm::vec3(v.x,v.y,v.z));
 //    glm::mat4 basis = glm::scale( Tool::getAxialBasis(i), glm::vec3(m_scale) );
     glm::mat4 basis = glm::orientation(m_velVec,glm::vec3(0,1,0));
     glMultMatrixf( glm::value_ptr(translate*basis) );
