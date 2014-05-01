@@ -34,6 +34,7 @@
 #include "ui/picker.h"
 #include "ui/tools/Tools.h"
 #include "ui/uisettings.h"
+#include "ui/tools/velocitytool.h"
 
 #ifndef GLM_FORCE_RADIANS
     #define GLM_FORCE_RADIANS
@@ -41,13 +42,14 @@
 #include "glm/mat4x4.hpp"
 #include "glm/gtc/matrix_transform.hpp"
 #include "glm/gtc/type_ptr.hpp"
+#include <glm/gtx/string_cast.hpp>
 
 #include <QFileDialog>
 #include <QMessageBox>
 
 #define FPS 30
 
-#define MAJOR_GRID_N 10
+#define MAJOR_GRID_N 2
 #define MAJOR_GRID_TICK 0.5
 #define MINOR_GRID_TICK 0.1
 
@@ -130,32 +132,6 @@ ViewPanel::initializeGL()
 }
 
 void
-ViewPanel::teapotDemo()
-{
-    /// TODO - this function is temporary and written for convenience
-    /// in the future, open() and save() will read/write from a file format
-
-    // call load on teapot
-    SceneNode *node = new SceneNode;
-    QList<Mesh*> meshes;
-    OBJParser::load( PROJECT_PATH "/data/models/teapot.obj", meshes );
-    // select teapot renderable so we can fill it
-    node->setRenderable( meshes[0] );
-    m_scene->root()->addChild( node );
-    // call fillSelectedMesh()
-
-    ParticleSystem *particles = new ParticleSystem;
-    meshes[0]->fill( *particles, 32*512, 0.1f, 200.f );
-    m_engine->addParticleSystem( *particles );
-    delete particles;
-
-    BBox box = meshes[0]->getBBox( glm::mat4(1.f) );
-    UiSettings::gridPosition() = box.min();
-    UiSettings::gridDimensions() = glm::ivec3( 128, 128, 128 );
-    UiSettings::gridResolution() = box.longestDimSize() / 128.f;
-}
-
-void
 ViewPanel::paintGL()
 {
     glClearColor( 0.20f, 0.225f, 0.25f, 1.f );
@@ -164,8 +140,14 @@ ViewPanel::paintGL()
     glPushAttrib( GL_TRANSFORM_BIT );
     glEnable( GL_NORMALIZE );
 
+//    bool velTool;
+//    if((m_tool->getType()) == VelocityTool) {
+//        velTool = true;
+//    }
+
     m_viewport->push(); {
         m_scene->render();
+        m_scene->renderVelocity(true);
         m_engine->render();
         paintGrid();
         if ( m_tool ) m_tool->render();
@@ -179,9 +161,27 @@ ViewPanel::paintGL()
         m_infoPanel->setInfo( "Sim Time", QString::number(m_engine->getSimulationTime(), 'f', 3)+" s", false );
     }
 
+
+    float currTime = m_engine->getSimulationTime();
+    updateColliders(currTime - m_prevTime);
+    m_prevTime = currTime;
+
+
     m_infoPanel->render();
 
     glPopAttrib();
+}
+
+void ViewPanel::updateColliders(float timestep) {
+    for ( SceneNodeIterator it = m_scene->begin(); it.isValid(); ++it ) {
+        if ( (*it)->hasRenderable() ) {
+            if ( (*it)->getType() == SceneNode::SCENE_COLLIDER ) {
+                SceneCollider* c = dynamic_cast<SceneCollider*>((*it)->getRenderable());
+                glm::mat4 transform = glm::translate(glm::mat4(),c->getVelVec()*c->getVelMag()*timestep);
+                (*it)->applyTransformation(transform);
+            }
+        }
+    }
 }
 
 void
@@ -239,10 +239,11 @@ bool ViewPanel::startSimulation()
             if ( (*it)->hasRenderable() ) {
                 if ( (*it)->getType() == SceneNode::SIMULATION_GRID ) {
                     m_engine->setGrid( UiSettings::buildGrid((*it)->getCTM()) );
-                } else if ( (*it)->getType() == SceneNode::IMPLICIT_COLLIDER ) {
+                } else if ( (*it)->getType() == SceneNode::SCENE_COLLIDER ) {
                     SceneCollider *sceneCollider = dynamic_cast<SceneCollider*>((*it)->getRenderable());
                     ImplicitCollider collider( *(sceneCollider->getImplicitCollider()) );
                     collider.applyTransformation( (*it)->getCTM() );
+                    collider.velocity = (*it)->getRenderable()->getVelMag()*(*it)->getRenderable()->getVelVec();
                     m_engine->addCollider( collider );
                 }
             }
@@ -254,10 +255,7 @@ bool ViewPanel::startSimulation()
             if (!ok) // have not saved yet
                 ok = saveScene();
             if (ok)
-            {
-                QFileInfo sceneFileInfo(m_sceneIO->sceneFile());
-                m_engine->initExporter(sceneFileInfo.path());
-            }
+                m_engine->initExporter(m_sceneIO->sceneFile());
         }
 
         return m_engine->start(exportVol);
@@ -325,10 +323,9 @@ void ViewPanel::loadMesh( const QString &filename )
 
 }
 
-void ViewPanel::addCollider( int colliderType )
-{
+void ViewPanel::addCollider(int colliderType)  {
     vec3 parameter;
-    SceneNode *node = new SceneNode( SceneNode::IMPLICIT_COLLIDER );
+    SceneNode *node = new SceneNode( SceneNode::SCENE_COLLIDER );
     float r;
     switch ( (ColliderType)colliderType ) {
         case SPHERE:
@@ -347,6 +344,8 @@ void ViewPanel::addCollider( int colliderType )
     SceneCollider *sceneCollider = new SceneCollider( collider );
 
     node->setRenderable( sceneCollider );
+    glm::mat4 ctm = node->getCTM();
+    sceneCollider->setCTM(ctm);
     m_scene->root()->addChild( node );
 
     clearSelection();
@@ -358,18 +357,22 @@ void ViewPanel::addCollider( int colliderType )
 void ViewPanel::setTool( int tool )
 {
     SAFE_DELETE( m_tool );
-    switch ( (Tool::Type)tool ) {
+    Tool::Type t = (Tool::Type)tool;
+    switch ( t ) {
     case Tool::SELECTION:
-        m_tool = new SelectionTool(this);
+        m_tool = new SelectionTool(this,t);
         break;
     case Tool::MOVE:
-        m_tool = new MoveTool(this);
+        m_tool = new MoveTool(this,t);
         break;
     case Tool::ROTATE:
-        m_tool = new RotateTool(this);
+        m_tool = new RotateTool(this,t);
         break;
     case Tool::SCALE:
-        m_tool = new ScaleTool(this);
+        m_tool = new ScaleTool(this,t);
+        break;
+    case Tool::VELOCITY:
+        m_tool = new VelocityTool(this,t);
         break;
     }
     if ( m_tool ) m_tool->update();
@@ -388,13 +391,14 @@ ViewPanel::clearSelection()
 
 void ViewPanel::updateSceneGrid()
 {
-    SceneNode *gridNode = m_scene->getSceneGridNode();
-    if ( gridNode ) {
-        SceneGrid *grid = dynamic_cast<SceneGrid*>( gridNode->getRenderable() );
-        grid->setGrid( UiSettings::buildGrid(glm::mat4(1.f)) );
-        gridNode->setBBoxDirty();
-        gridNode->setCentroidDirty();
-    }
+//    SceneNode *gridNode = m_scene->getSceneGridNode();
+//    if ( gridNode ) {
+//        SceneGrid *grid = dynamic_cast<SceneGrid*>( gridNode->getRenderable() );
+//        grid->setGrid( UiSettings::buildGrid(glm::mat4(1.f)) );
+//        gridNode->setBBoxDirty();
+//        gridNode->setCentroidDirty();
+//    }
+    m_scene->updateSceneGrid();
     if ( m_tool ) m_tool->update();
     update();
 }
@@ -485,16 +489,25 @@ ViewPanel::deleteGridVBO()
 void ViewPanel::fillSelectedMesh()
 {
     Mesh *mesh = new Mesh;
-
+    glm::vec3 currentVel;
+    float currentMag;
     for ( SceneNodeIterator it = m_scene->begin(); it.isValid(); ++it ) {
         if ( (*it)->hasRenderable() &&
              (*it)->getType() == SceneNode::SNOW_CONTAINER &&
              (*it)->getRenderable()->isSelected() ) {
-            Mesh *copy = new Mesh( *dynamic_cast<Mesh*>((*it)->getRenderable()) );
+            Mesh * original = dynamic_cast<Mesh*>((*it)->getRenderable());
+
+            original->setParticleCount(UiSettings::fillNumParticles());
+            original->setMaterialPreset(UiSettings::materialPreset());
+
+            Mesh *copy = new Mesh( *original );
             const glm::mat4 transformation = (*it)->getCTM();
             copy->applyTransformation( transformation );
             mesh->append( *copy );
             delete copy;
+
+            currentVel = (*it)->getRenderable()->getVelVec();
+            currentMag = (*it)->getRenderable()->getVelMag();
         }
     }
 
@@ -504,7 +517,12 @@ void ViewPanel::fillSelectedMesh()
         makeCurrent();
 
         ParticleSystem *particles = new ParticleSystem;
+        particles->setVelMag(currentMag);
+        particles->setVelVec(currentVel);
         mesh->fill( *particles, UiSettings::fillNumParticles(), UiSettings::fillResolution(), UiSettings::fillDensity() );
+        std::cout << "vel here: " << particles->getVelMag() << std::endl;
+        std::cout << "vel vector here: " << glm::to_string(particles->getVelVec()) << std::endl;
+        particles->setVelocity();
         m_engine->addParticleSystem( *particles );
         delete particles;
 
@@ -514,6 +532,30 @@ void ViewPanel::fillSelectedMesh()
     delete mesh;
 
     if ( !UiSettings::showParticles() ) emit showParticles();
+}
+
+void ViewPanel::giveVelToSelected() {
+    for ( SceneNodeIterator it = m_scene->begin(); it.isValid(); ++it ) {
+        if ( (*it)->hasRenderable() &&
+             (*it)->getType() != SceneNode::SIMULATION_GRID &&
+             (*it)->getRenderable()->isSelected() ) {
+            (*it)->getRenderable()->setVelMag(1.0f);
+            (*it)->getRenderable()->setVelVec(glm::vec3(0,1,0));
+            (*it)->getRenderable()->updateMeshVel();
+        }
+    }
+}
+
+void ViewPanel::zeroVelOfSelected()  {
+    for ( SceneNodeIterator it = m_scene->begin(); it.isValid(); ++it ) {
+        if ( (*it)->hasRenderable() &&
+             (*it)->getType() != SceneNode::SIMULATION_GRID &&
+             (*it)->getRenderable()->isSelected() ) {
+            (*it)->getRenderable()->setVelMag(0.0f);
+            (*it)->getRenderable()->setVelVec(glm::vec3(0,0,0));
+            (*it)->getRenderable()->updateMeshVel();
+        }
+    }
 }
 
 void
@@ -548,29 +590,36 @@ ViewPanel::saveSelectedMesh()
 }
 
 bool
-ViewPanel::loadScene()
+ViewPanel::openScene()
 {
+    pauseDrawing();
     // call file dialog
-    QString str;
-    m_sceneIO->read(str, m_scene, m_engine);
+    QString filename = QFileDialog::getOpenFileName(this, "Choose Scene File Path", PROJECT_PATH "/data/scenes/");
+    if (!filename.isNull())
+        m_sceneIO->read(filename, m_scene, m_engine);
+    else
+        LOG("could not open file \n");
+    resumeDrawing();
 }
 
 bool
 ViewPanel::saveScene()
 {
+    pauseDrawing();
     // this is enforced if engine->start is called and export is not checked
+    QString foo = m_sceneIO->sceneFile();
     if (m_sceneIO->sceneFile().isNull())
     {
         // filename not initialized yet
-        QString filename = QFileDialog::getSaveFileName( this, "Choose Simulation File Path", PROJECT_PATH "/data/scenes/" );
+        QString filename = QFileDialog::getSaveFileName( this, "Choose Scene File Path", PROJECT_PATH "/data/scenes/" );
+
         if (!filename.isNull())
         {
             m_sceneIO->setSceneFile(filename);
-            m_sceneIO->write(m_sceneIO->sceneFile(), m_scene, m_engine);
+            m_sceneIO->write(m_scene, m_engine);
         }
         else
         {
-            // cancelled
             QMessageBox msgBox;
             msgBox.setText("Error : Invalid Save Path");
             msgBox.exec();
@@ -579,7 +628,8 @@ ViewPanel::saveScene()
     }
     else
     {
-        m_sceneIO->write(m_sceneIO->sceneFile(),m_scene, m_engine);
+        m_sceneIO->write(m_scene, m_engine);
     }
+    resumeDrawing();
 }
 

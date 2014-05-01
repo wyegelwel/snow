@@ -123,7 +123,7 @@ void MainWindow::fillNumParticleFinishedEditing()
 void MainWindow::setupUI()
 {
     assert( connect(ui->actionSave_Mesh, SIGNAL(triggered()), ui->viewPanel, SLOT(saveSelectedMesh())) );
-    assert( connect(ui->actionLoad_Scene, SIGNAL(triggered()), ui->viewPanel, SLOT(loadScene())));
+    assert( connect(ui->actionOpen_Scene, SIGNAL(triggered()), ui->viewPanel, SLOT(openScene())));
     assert( connect(ui->actionSave_Scene, SIGNAL(triggered()), ui->viewPanel, SLOT(saveScene())));
 
     // Mesh Filling
@@ -134,6 +134,8 @@ void MainWindow::setupUI()
     assert( connect(ui->fillNumParticlesSpinbox, SIGNAL(editingFinished()), this, SLOT(fillNumParticleFinishedEditing())) );
     FloatBinding::bindSpinBox( ui->densitySpinbox, UiSettings::fillDensity(), this );
     ComboIntAttribute::bindInt(ui->snowMaterialCombo, &UiSettings::materialPreset(), this);
+    assert( connect(ui->meshGiveVelocityButton, SIGNAL(clicked()), ui->viewPanel,SLOT(giveVelToSelected())));
+    assert( connect(ui->MeshZeroVelocityButton, SIGNAL(clicked()), ui->viewPanel,SLOT(zeroVelOfSelected())));
 
     // Simulation
     assert( connect(ui->startButton, SIGNAL(clicked()), this, SLOT(startSimulation())) );
@@ -160,6 +162,8 @@ void MainWindow::setupUI()
 
     // SceneCollider
     assert( connect(ui->colliderAddButton, SIGNAL(clicked()), this, SLOT(addCollider())) );
+    assert( connect(ui->ColliderVelocityButton, SIGNAL(clicked()), ui->viewPanel,SLOT(giveVelToSelected())));
+    assert( connect(ui->colliderZeroButton, SIGNAL(clicked()), ui->viewPanel,SLOT(zeroVelOfSelected())));
 
     // View Panel
     assert( connect(ui->showContainersCheckbox, SIGNAL(toggled(bool)), ui->showContainersCombo, SLOT(setEnabled(bool))) );
@@ -185,6 +189,8 @@ void MainWindow::setupUI()
     ui->toolButtonGroup->setId( ui->moveToolButton, Tool::MOVE );
     ui->toolButtonGroup->setId( ui->rotateToolButton, Tool::ROTATE );
     ui->toolButtonGroup->setId( ui->scaleToolButton, Tool::SCALE );
+    ui->toolButtonGroup->addButton(ui->velocityToolButton);
+    ui->toolButtonGroup->setId( ui->velocityToolButton, Tool::VELOCITY);
     assert( connect(ui->toolButtonGroup, SIGNAL(buttonClicked(int)), ui->viewPanel, SLOT(setTool(int))) );
     ui->selectionToolButton->click();
 

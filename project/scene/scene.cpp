@@ -15,10 +15,11 @@
 #ifndef GLM_FORCE_RADIANS
     #define GLM_FORCE_RADIANS
 #endif
-#include "glm/mat4x4.hpp"
+
 #include "glm/vec4.hpp"
 #include "glm/gtc/matrix_transform.hpp"
 #include "glm/gtc/type_ptr.hpp"
+#include <glm/gtx/rotate_vector.hpp>
 
 #include "scene.h"
 
@@ -26,21 +27,18 @@
 #include "scene/scenegrid.h"
 #include "scene/scenenode.h"
 #include "scene/scenenodeiterator.h"
+#include "scene/scenecollider.h"
+#include "sim/implicitcollider.h"
 #include "ui/uisettings.h"
+
+#include "io/objparser.h"
+
+#include "geometry/mesh.h"
 
 Scene::Scene()
     : m_root(new SceneNode)
 {
-    // Add scene grid
-    SceneNode *gridNode = new SceneNode( SceneNode::SIMULATION_GRID );
-    Grid grid;
-    grid.pos = vec3(0,0,0);
-    grid.dim = UiSettings::gridDimensions();
-    grid.h = UiSettings::gridResolution();
-    gridNode->setRenderable( new SceneGrid(grid) );
-    glm::mat4 transform = glm::translate( glm::mat4(1.f), glm::vec3(UiSettings::gridPosition().x,UiSettings::gridPosition().y,UiSettings::gridPosition().z) );
-    gridNode->applyTransformation( transform );
-    m_root->addChild( gridNode );
+    initSceneGrid();
 }
 
 Scene::~Scene()
@@ -57,12 +55,49 @@ Scene::~Scene()
 }
 
 void
+Scene::reset()
+{
+    SAFE_DELETE(m_root);
+    m_root = new SceneNode;
+}
+
+void
+Scene::initSceneGrid()
+{
+    // Add scene grid
+    SceneNode *gridNode = new SceneNode( SceneNode::SIMULATION_GRID );
+    Grid grid;
+    grid.pos = vec3(0,0,0);
+    grid.dim = UiSettings::gridDimensions();
+    grid.h = UiSettings::gridResolution();
+    gridNode->setRenderable( new SceneGrid(grid) );
+    m_root->addChild( gridNode );
+}
+
+void
+Scene::updateSceneGrid()
+{
+    SceneNode *gridNode = getSceneGridNode();
+    if ( gridNode ) {
+        SceneGrid *grid = dynamic_cast<SceneGrid*>( gridNode->getRenderable() );
+        grid->setGrid( UiSettings::buildGrid(glm::mat4(1.f)) );
+        gridNode->setBBoxDirty();
+        gridNode->setCentroidDirty();
+    }
+}
+
+void
 Scene::render()
 {
     setupLights();
     // Render opaque objects, then overlay with transparent objects
     m_root->renderOpaque();
     m_root->renderTransparent();
+}
+
+void
+Scene::renderVelocity(bool velTool) {
+    m_root->renderVelocity(velTool);
 }
 
 void
@@ -124,5 +159,57 @@ Scene::deleteSelectedNodes()
         } else {
             nodes += node->getChildren();
         }
+    }
+}
+
+void
+Scene::addCollider(const ColliderType &t,const vec3 &center, const vec3 &param, const vec3 &velocity)  {
+    SceneNode *node = new SceneNode( SceneNode::SCENE_COLLIDER );
+
+    ImplicitCollider *collider = new ImplicitCollider(t,center,param,velocity);
+    SceneCollider *sceneCollider = new SceneCollider( collider );
+
+    float mag = vec3::length(velocity);
+    if EQ(mag, 0)
+    {
+        sceneCollider->setVelMag(0);
+        sceneCollider->setVelVec(vec3(0,0,0));
+    }
+    else
+    {
+        sceneCollider->setVelMag(mag);
+        sceneCollider->setVelVec(vec3::normalize(velocity));
+    }
+
+    sceneCollider->updateMeshVel();
+
+    node->setRenderable( sceneCollider );
+    glm::mat4 ctm = glm::translate(glm::mat4(1.f),glm::vec3(center));
+
+    switch(t) {
+    case SPHERE:
+        ctm = glm::scale(ctm,glm::vec3(param.x()));
+        break;
+    case HALF_PLANE:
+        ctm *= glm::orientation(glm::vec3(param),glm::vec3(0,1,0));
+        break;
+    }
+    sceneCollider->setCTM(ctm);
+    node->applyTransformation(ctm);
+    m_root->addChild( node );
+}
+
+void
+Scene::loadMesh(const QString &filename, glm::mat4 CTM)
+{
+    QList<Mesh*> meshes;
+    OBJParser::load( filename, meshes );
+    for ( int i = 0; i < meshes.size(); ++i ) {
+        Mesh *mesh = meshes[i];
+        mesh->setType( Mesh::SNOW_CONTAINER );
+        SceneNode *node = new SceneNode( SceneNode::SNOW_CONTAINER );
+        node->setRenderable( mesh );
+        node->applyTransformation(CTM);
+        m_root->addChild(node);
     }
 }

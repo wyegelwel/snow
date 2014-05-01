@@ -62,10 +62,15 @@ public:
     void setGrid( const Grid &grid );
     void clearParticleGrid();
 
+    Grid getGrid() {return m_grid; }
+
     void initParticleMaterials( int preset );
 
     void addCollider( const ImplicitCollider &collider ) { m_colliders += collider; }
+    void addCollider(const ColliderType &t,const vec3 &center, const vec3 &param, const vec3 &velocity);
+
     void clearColliders() { m_colliders.clear(); }
+//    void updateColliders();
     QVector<ImplicitCollider>& colliders() { return m_colliders; }
 
     void initExporter( QString fprefix );

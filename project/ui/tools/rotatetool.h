@@ -27,7 +27,7 @@ class RotateTool : public SelectionTool
 
 public:
 
-    RotateTool( ViewPanel *panel );
+    RotateTool( ViewPanel *panel,Type t );
     virtual ~RotateTool();
 
     virtual void mousePressed();

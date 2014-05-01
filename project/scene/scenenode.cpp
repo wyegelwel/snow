@@ -14,6 +14,7 @@
     #define GLM_FORCE_RADIANS
 #endif
 #include "glm/gtc/type_ptr.hpp"
+#include <glm/gtx/string_cast.hpp>
 
 #include "common/common.h"
 #include "common/renderable.h"
@@ -97,10 +98,25 @@ SceneNode::renderTransparent()
 }
 
 void
+SceneNode::renderVelocity(bool velTool)  {
+    glMatrixMode( GL_MODELVIEW );
+    glPushMatrix();
+    glMultMatrixf( glm::value_ptr(getCTM()) );
+    if ( m_renderable ) m_renderable->renderVelocity(velTool);
+    glPopMatrix();
+    for ( int i = 0; i < m_children.size(); ++i )
+        m_children[i]->renderVelocity(velTool);
+}
+
+void
 SceneNode::applyTransformation( const glm::mat4 &transform )
 {
     m_transform = transform * m_transform;
     setCTMDirty();
+    if(this->hasRenderable()) {
+        getCTM();
+        this->getRenderable()->setCTM(m_ctm);
+    }
 }
 
 glm::mat4
@@ -128,7 +144,7 @@ SceneNode::setCTMDirty()
 BBox
 SceneNode::getBBox()
 {
-    if ( m_bboxDirty || getType() == IMPLICIT_COLLIDER ) {
+    if ( m_bboxDirty || getType() == SCENE_COLLIDER ) {
         if ( hasRenderable() ) {
             m_bbox = m_renderable->getBBox( getCTM() );
         } else {

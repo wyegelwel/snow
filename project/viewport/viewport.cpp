@@ -188,13 +188,13 @@ Viewport::drawAxis()
     glHint( GL_LINE_SMOOTH, GL_NICEST );
     glLineWidth( 1.5f );
     glBegin( GL_LINES ); {
-        glColor3fv( Tool::getAxialColor(0).data );
+        glColor3fv( Tool::getAxialColor(0).ptr() );
         glVertex3f( c.x, c.y, c.z );
         glVertex3f( x.x, x.y, x.z );
-        glColor3fv( Tool::getAxialColor(1).data );
+        glColor3fv( Tool::getAxialColor(1).ptr() );
         glVertex3f( c.x, c.y, c.z );
         glVertex3f( y.x, y.y, y.z );
-        glColor3fv( Tool::getAxialColor(2).data );
+        glColor3fv( Tool::getAxialColor(2).ptr() );
         glVertex3f( c.x, c.y, c.z );
         glVertex3f( z.x, z.y, z.z );
     } glEnd();

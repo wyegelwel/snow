@@ -57,9 +57,9 @@ struct mat3
     __host__ __device__ __forceinline__
     mat3( const vec3 &c0, const vec3 &c1, const vec3 &c2 )
     {
-        data[0] = c0.x; data[3] = c1.x; data[6] = c2.x;
-        data[1] = c0.y; data[4] = c1.y; data[7] = c2.y;
-        data[2] = c0.z; data[5] = c1.z; data[8] = c2.z;
+        data[0] = c0.data.x; data[3] = c1.data.x; data[6] = c2.data.x;
+        data[1] = c0.data.y; data[4] = c1.data.y; data[7] = c2.data.y;
+        data[2] = c0.data.z; data[5] = c1.data.z; data[8] = c2.data.z;
     }
 
     __host__ __device__  __forceinline__
@@ -104,9 +104,9 @@ struct mat3
     __host__ __device__ __forceinline__
     static mat3 outerProduct( const vec3 &v, const vec3& w )
     {
-        return mat3( v.x*w.x, v.y*w.x, v.z*w.x,
-                     v.x*w.y, v.y*w.y, v.z*w.y,
-                     v.x*w.z, v.y*w.z, v.z*w.z );
+        return mat3( v.data.x*w.data.x, v.data.y*w.data.x, v.data.z*w.data.x,
+                     v.data.x*w.data.y, v.data.y*w.data.y, v.data.z*w.data.y,
+                     v.data.x*w.data.z, v.data.y*w.data.z, v.data.z*w.data.z );
     }
 
     __host__ __device__ __forceinline__ float& operator [] ( int i ) { return data[i]; }
@@ -154,9 +154,9 @@ struct mat3
     vec3 operator * ( const vec3 &rhs ) const
     {
         vec3 result;
-        result.x = data[0]*rhs.x + data[3]*rhs.y + data[6]*rhs.z;
-        result.y = data[1]*rhs.x + data[4]*rhs.y + data[7]*rhs.z;
-        result.z = data[2]*rhs.x + data[5]*rhs.y + data[8]*rhs.z;
+        result.data.x = data[0]*rhs.data.x + data[3]*rhs.data.y + data[6]*rhs.data.z;
+        result.data.y = data[1]*rhs.data.x + data[4]*rhs.data.y + data[7]*rhs.data.z;
+        result.data.z = data[2]*rhs.data.x + data[5]*rhs.data.y + data[8]*rhs.data.z;
         return result;
     }
 

@@ -51,6 +51,7 @@ public:
     bool hasBuffers() const;
     void buildBuffers();
     void deleteBuffers();
+    void setVelocity();
 
 protected:
 

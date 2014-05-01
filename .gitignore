@@ -8,3 +8,4 @@ build-*/*
 Makefile
 project/snow
 project/ui/core
+moc_*.cpp

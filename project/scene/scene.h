@@ -11,10 +11,14 @@
 #ifndef SCENE_H
 #define SCENE_H
 
+#include "glm/mat4x4.hpp"
+#include "sim/implicitcollider.h"
+
 class ParticleSystem;
 class Renderable;
 class SceneNode;
 class SceneNodeIterator;
+class QString;
 
 class Scene
 {
@@ -26,6 +30,8 @@ public:
 
     virtual void render();
 
+    virtual void renderVelocity(bool velTool);
+
     SceneNode* root() { return m_root; }
 
     SceneNode* getSceneGridNode();
@@ -33,6 +39,15 @@ public:
     SceneNodeIterator begin() const;
 
     void deleteSelectedNodes();
+
+    void loadMesh(const QString &filename, glm::mat4 CTM=glm::mat4());
+
+    void reset();
+    void initSceneGrid();
+    void updateSceneGrid();
+
+    void addCollider(const ColliderType &t,const vec3 &center, const vec3 &param, const vec3 &velocity);
+
 
 private:
 

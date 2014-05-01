@@ -27,7 +27,7 @@ class MoveTool : public SelectionTool
 
 public:
 
-    MoveTool( ViewPanel *panel );
+    MoveTool( ViewPanel *panel,Type t );
     virtual ~MoveTool();
 
     virtual void mousePressed();

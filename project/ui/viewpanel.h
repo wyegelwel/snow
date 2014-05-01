@@ -63,10 +63,11 @@ public slots:
     void resumeSimulation();
     void pauseDrawing();
     void resumeDrawing();
+    void updateColliders(float timestep);
 
     void loadMesh( const QString &filename );
 
-    void addCollider( int colliderType );
+    void addCollider(int colliderType);
 
     void setTool( int tool );
 
@@ -76,11 +77,12 @@ public slots:
     void fillSelectedMesh();
     void saveSelectedMesh();
 
-    bool loadScene();
+    bool openScene();
     bool saveScene();
 
-    // Demo Scenes
-    void teapotDemo();
+    void zeroVelOfSelected();
+    void giveVelToSelected();
+
 signals:
 
     void showMeshes();
@@ -105,18 +107,21 @@ protected:
     int m_minorSize;
     bool m_draw;
     float m_fps;
+    float m_prevTime;
 
     void paintGrid();
 
     bool hasGridVBO() const;
     void buildGridVBO();
     void deleteGridVBO();
+    void addParticleSystem(ParticleSystem &particles);
 
     friend class Tool;
     friend class SelectionTool;
     friend class MoveTool;
     friend class RotateTool;
     friend class ScaleTool;
+    friend class VelocityTool;
 
     //friend class SceneIO;
 

@@ -16,6 +16,7 @@
  *
  * reads/writes scene files. Scene files contain not only static objects,
  * but the snow simulation parameters.
+ * doubles as save file format and blender import format
  *
  * Note, this is designed to be saved once when beginning a simulation with exporting
  * enabled, so this class was not designed with multithreading in mind.
@@ -23,11 +24,18 @@
  */
 
 #include <iostream>
-#include <QString>
 #include <QtXml>
+#include "glm/mat4x4.hpp"
+
+struct vec3;
+
+struct SimulationParameters;
+struct ImplicitCollider;
 
 class Scene;
 class Engine;
+class Grid;
+class ParticleSystem;
 
 class SceneIO
 {
@@ -35,33 +43,40 @@ public:
     SceneIO();
 
     bool read(QString fname, Scene * scene, Engine * engine);
-    bool write(QString fname, Scene * scene, Engine * engine);
+    bool write(Scene * scene, Engine * engine);
 
-    QString sceneFile() { return m_scenefile; }
-    void setSceneFile(QString filename) { m_scenefile = filename; }
-    /**
-     * adds <medium> tag to XML tree. Also calls exportVolumeData to write out volume.
-     * calls exportVolumeData, then if successful, links to the .vol file
-//     */
-//    QDomElement appendMedium(QDomElement node);
-//    /// export rendering presets
-//    QDomElement appendRenderer(QDomElement node);
-//    /// converts camera into XML node
-//    //QDomElement appendCamera(QDomElement node, Camera * camera);
-//    /// append transform matrix
-//    QDomElement appendXform(QDomElement node, glm::mat4 xform);
-//    /// appends sceneNodes
-//    QDomElement appendShape(QDomElement node, SceneNode * sceneNode);
-//    /// add obj shape node
-//    QDomElement appendOBJ(QDomElement node, QString objfile);
-//    /// add default material
-//    QDomElement appendBSDF(QDomElement node);
-    //QDomElement appendLight(QDomElement node);
+    QString sceneFile() { return m_sceneFilePrefix; }
+    void setSceneFile(QString filename);
 
 private:
-    QString m_scenefile;
+    QString m_sceneFilePrefix;
     QDomDocument m_document; // XML document
 
+    /// import functions
+
+    void readExportSettings();
+
+    void applySimulationParameters();
+    void applyExportSettings();
+    void applyParticleSystem(Scene * scene);
+    void applyGrid(Scene * scene);
+    void applyColliders(Scene * scene, Engine * engine);
+
+    /// export functions
+
+    void appendSimulationParameters(QDomElement root, float timeStep);
+    void appendParticleSystem(QDomElement root, Scene * scene);
+    void appendGrid(QDomElement root, Scene * scene);
+    void appendColliders(QDomElement root, Scene * scene);
+    void appendExportSettings(QDomElement root);
+
+    /// low level DOM node helpers
+    void appendString(QDomElement node, const QString name, const QString value);
+    void appendInt(QDomElement node, const QString name, const int i);
+    void appendFloat(QDomElement node, const QString name, const float f);
+    void appendVector(QDomElement node, const QString name, const vec3 v);
+    void appendDim(QDomElement node, const QString name, const glm::ivec3 iv);
+    void appendMatrix(QDomElement node, const QString name, const glm::mat4 mat);
 };
 
 #endif // SCENEIO_H

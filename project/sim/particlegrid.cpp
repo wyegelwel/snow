@@ -53,7 +53,7 @@ ParticleGrid::render()
             glPushAttrib( GL_VERTEX_PROGRAM_POINT_SIZE );
             glEnable( GL_VERTEX_PROGRAM_POINT_SIZE );
             shader->bind();
-            shader->setUniformValue( "pos", m_grid.pos.x, m_grid.pos.y, m_grid.pos.z );
+            shader->setUniformValue( "pos", m_grid.pos.x(), m_grid.pos.y(), m_grid.pos.z() );
             shader->setUniformValue( "dim", (float)m_grid.dim.x, (float)m_grid.dim.y, (float)m_grid.dim.z );
             shader->setUniformValue( "h", m_grid.h );
             shader->setUniformValue( "density", UiSettings::fillDensity() );

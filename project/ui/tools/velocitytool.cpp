@@ -2,7 +2,7 @@
 **
 **   SNOW - CS224 BROWN UNIVERSITY
 **
-**   rotatetool.cpp
+**   VelocityTool.cpp
 **   Authors: evjang, mliberma, taparson, wyegelwe
 **   Created: 21 Apr 2014
 **
@@ -19,7 +19,7 @@
 #include "glm/gtc/matrix_transform.hpp"
 #include "glm/gtc/type_ptr.hpp"
 
-#include "rotatetool.h"
+#include "velocitytool.h"
 #include "scene/scene.h"
 #include "scene/scenenode.h"
 #include "scene/scenenodeiterator.h"
@@ -30,24 +30,28 @@
 #include "viewport/camera.h"
 #include "viewport/viewport.h"
 
-RotateTool::RotateTool( ViewPanel *panel,Type t )
+#include <iostream>
+
+VelocityTool::VelocityTool( ViewPanel *panel,Type t )
     : SelectionTool(panel,t),
       m_axisSelection(Picker::NO_PICK),
+      m_vecSelection(Picker::NO_PICK),
       m_active(false),
       m_rotating(false),
+      m_scaling(false),
       m_center(0,0,0),
       m_scale(1.f),
       m_vbo(0)
 {
 }
 
-RotateTool::~RotateTool()
+VelocityTool::~VelocityTool()
 {
     deleteVBO();
 }
 
 void
-RotateTool::update()
+VelocityTool::update()
 {
     if ( (m_active = SelectionTool::hasRotatableSelection(m_center)) ) {
         m_scale = Tool::getHandleSize( m_center );
@@ -55,7 +59,7 @@ RotateTool::update()
 }
 
 void
-RotateTool::renderAxis( unsigned int i ) const
+VelocityTool::renderAxis( unsigned int i ) const
 {
     glMatrixMode( GL_MODELVIEW );
     glPushMatrix();
@@ -73,7 +77,7 @@ RotateTool::renderAxis( unsigned int i ) const
 }
 
 void
-RotateTool::render()
+VelocityTool::render()
 {
     if ( m_active ) {
 
@@ -98,8 +102,10 @@ RotateTool::render()
     }
 }
 
+
+
 unsigned int
-RotateTool::getAxisPick() const
+VelocityTool::getAxisPick() const
 {
     unsigned int pick = Picker::NO_PICK;
     if ( m_active ) {
@@ -115,13 +121,49 @@ RotateTool::getAxisPick() const
     return pick;
 }
 
+unsigned int
+VelocityTool::getVelVecPick() const
+{
+    unsigned int pick = Picker::NO_PICK;
+
+    m_panel->m_viewport->loadPickMatrices( UserInput::mousePos(), 3.f );
+
+    SceneNode *clicked = NULL;
+
+    QList<SceneNode*> renderables;
+    for ( SceneNodeIterator it = m_panel->m_scene->begin(); it.isValid(); ++it ) {
+        if ( (*it)->hasRenderable() && (*it)->getRenderable()->isSelected()) {
+            renderables += (*it);
+        }
+    }
+    if ( !renderables.empty() ) {
+        Picker picker( renderables.size() );
+        for ( int i = 0; i < renderables.size(); ++i ) {
+            glMatrixMode( GL_MODELVIEW );
+            glPushMatrix();
+            glMultMatrixf( glm::value_ptr(renderables[i]->getCTM()) );
+            picker.setObjectIndex(i);
+            renderables[i]->getRenderable()->renderVelForPicker();
+            glPopMatrix();
+        }
+        pick = picker.getPick();
+        if ( pick != Picker::NO_PICK ) {
+            clicked = renderables[pick];
+        }
+    }
+
+    return pick;
+}
+
 void
-RotateTool::mousePressed()
+VelocityTool::mousePressed()
 {
     if ( m_active ) {
         m_axisSelection = getAxisPick();
-        m_rotating = ( m_axisSelection != Picker::NO_PICK );
-        if ( m_axisSelection == Picker::NO_PICK ) {
+        m_vecSelection = getVelVecPick();
+        m_rotating = ( m_axisSelection != Picker::NO_PICK && m_vecSelection == Picker::NO_PICK);
+        m_scaling = (m_vecSelection != Picker::NO_PICK);
+        if ( m_axisSelection == Picker::NO_PICK && m_vecSelection == Picker::NO_PICK) {
             SelectionTool::mousePressed();
         }
     } else {
@@ -131,7 +173,23 @@ RotateTool::mousePressed()
 }
 
 float
-RotateTool::intersectAxis( const glm::ivec2 &mouse ) const
+VelocityTool::intersectVelVec( const glm::ivec2 &mouse,const glm::vec3 &velVec ) const
+{
+    glm::vec2 uv = glm::vec2( (float)mouse.x/m_panel->width(), (float)mouse.y/m_panel->height() );
+    vec3 direction = m_panel->m_viewport->getCamera()->getCameraRay( uv );
+    vec3 origin = m_panel->m_viewport->getCamera()->getPosition();
+    unsigned int majorAxis = direction.majorAxis();
+    int axis = majorAxis;
+    if ( majorAxis == m_axisSelection ) {
+        axis = ( majorAxis == 0 ) ? 1 : 0;
+    }
+    float t = (0-origin[axis])/direction[axis];
+    vec3 point = origin + t*direction;
+    return vec3::dot( velVec, point-m_center );
+}
+
+float
+VelocityTool::intersectAxis( const glm::ivec2 &mouse ) const
 {
     glm::vec2 uv = glm::vec2( (float)mouse.x/m_panel->width(), (float)mouse.y/m_panel->height() );
     vec3 direction = m_panel->m_viewport->getCamera()->getCameraRay( uv );
@@ -145,7 +203,7 @@ RotateTool::intersectAxis( const glm::ivec2 &mouse ) const
 }
 
 void
-RotateTool::mouseMoved()
+VelocityTool::mouseMoved()
 {
     if ( m_rotating ) {
         float theta0 = intersectAxis( UserInput::mousePos()-UserInput::mouseMove() );
@@ -159,7 +217,8 @@ RotateTool::mouseMoved()
         for ( SceneNodeIterator it = m_panel->m_scene->begin(); it.isValid(); ++it ) {
             if ( (*it)->hasRenderable() && (*it)->getRenderable()->isSelected() &&
                  (*it)->getType() != SceneNode::SIMULATION_GRID ) {
-                (*it)->applyTransformation( transform );
+                (*it)->getRenderable()->rotateVelVec( transform );
+                (*it)->getRenderable()->updateMeshVel();
             }
 //            else if((*it)->getType() == SceneNode::IMPLICIT_COLLIDER && (*it)->hasRenderable() && (*it)->getRenderable()->isSelected())  {
 //                switch(dynamic_cast<SceneCollider*>((*it)->getRenderable())->getImplicitCollider()->type) {
@@ -175,26 +234,45 @@ RotateTool::mouseMoved()
 //            else {}
         }
     }
+    if( m_scaling)  {
+        const float scale_factor=50.0f;
+        const glm::ivec2 &p0 = UserInput::mousePos() - UserInput::mouseMove();
+        const glm::ivec2 &p1 = UserInput::mousePos();
+        for ( SceneNodeIterator it = m_panel->m_scene->begin(); it.isValid(); ++it ) {
+            if ( (*it)->hasRenderable() && (*it)->getRenderable()->isSelected() &&
+                 (*it)->getType() != SceneNode::SIMULATION_GRID ) {
+                float t0,t1;
+                glm::vec3 velVec = (*it)->getRenderable()->getVelVec();
+                t0 = intersectVelVec(p0,velVec);
+                t1 = intersectVelVec(p1,velVec);
+                (*it)->getRenderable()->setVelMag((*it)->getRenderable()->getVelMag() + (t1-t0)*scale_factor);
+                std::cout << (*it)->getRenderable()->getVelMag() << std::endl;
+                (*it)->getRenderable()->updateMeshVel();
+            }
+         }
+    }
     update();
 }
 
 void
-RotateTool::mouseReleased()
+VelocityTool::mouseReleased()
 {
     m_axisSelection = Picker::NO_PICK;
+    m_vecSelection = Picker::NO_PICK;
+    m_scaling = false;
     m_rotating = false;
     SelectionTool::mouseReleased();
     update();
 }
 
 bool
-RotateTool::hasVBO() const
+VelocityTool::hasVBO() const
 {
     return m_vbo > 0 && glIsBuffer( m_vbo );
 }
 
 void
-RotateTool::buildVBO()
+VelocityTool::buildVBO()
 {
     deleteVBO();
 
@@ -215,7 +293,7 @@ RotateTool::buildVBO()
 }
 
 void
-RotateTool::deleteVBO()
+VelocityTool::deleteVBO()
 {
     if ( m_vbo > 0 ) {
         glBindBuffer( GL_ARRAY_BUFFER, m_vbo );

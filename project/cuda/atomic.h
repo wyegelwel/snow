@@ -21,9 +21,9 @@
 __device__ __forceinline__
 void atomicAdd( vec3 *add, const vec3 &toAdd )
 {
-    atomicAdd(&(add->x), toAdd.x);
-    atomicAdd(&(add->y), toAdd.y);
-    atomicAdd(&(add->z), toAdd.z);
+    atomicAdd(&(add->data.x), toAdd.data.x);
+    atomicAdd(&(add->data.y), toAdd.data.y);
+    atomicAdd(&(add->data.z), toAdd.data.z);
 }
 
 __device__ __forceinline__

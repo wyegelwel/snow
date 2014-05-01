@@ -1,0 +1,49 @@
+<!-- this is an example of what a scene might look like -->
+<!-- SNOW 1 May 2015 -->
+<?xml version="1.0" encoding="utf-8" ?>
+<SnowSimulation>
+    <SimulationParameters>
+        <float value="5e-05" name="timeStep"/>
+    </SimulationParameters>
+    <ExportSettings>
+        <string value="/gpfs/main/home/evjang/course/cs224/group_final/snow/project/data/scenes/monkey_and_sphere" name="filePrefix"/>
+        <int value="3" name="maxTime"/>
+        <int value="24" name="exportFPS"/>
+        <int value="0" name="exportDensity"/>
+        <int value="0" name="exportVelocity"/>
+    </ExportSettings>
+    <!-- Multiple particle systems permitted -->
+    <ParticleSystem>
+        <SnowContainer>
+            <string value="/gpfs/main/home/evjang/course/cs224/group_final/snow/project/data/models/monkey.obj" name="filename"/>
+            <string value="0" name="materialPreset"/>
+            <int value="0" name="numParticles"/>
+            <matrix value="0.028520 0.081875 0.000000 -0.005574 -0.081875 0.028520 0.000000 0.205541 0.000000 0.000000 0.086700 -0.130700 0.000000 0.000000 0.000000 1.000000" name="CTM"/>
+        </SnowContainer>
+        <SnowContainer>
+            <string value="/gpfs/main/home/evjang/course/cs224/group_final/snow/project/data/models/sphere.obj" name="filename"/>
+            <string value="0" name="materialPreset"/>
+            <int value="0" name="numParticles"/>
+            <matrix value="1.000000 0.000000 0.000000 0.000000 0.000000 1.000000 0.000000 0.065456 0.000000 0.000000 1.000000 0.000000 0.000000 0.000000 0.000000 1.000000" name="CTM"/>
+        </SnowContainer>
+    </ParticleSystem>
+    <!--	 Colliders -->
+	<ImplicitColliders>
+		<Collider type="HALF_PLANE">
+			<vector name="center" x="0" y="-2" z="-1"/>
+			<vector name="velocity" x="0" y="0" z="0" />
+			<vector name="param" x="0" y="0" z="0" /> <!-- corresponds to the ambiguous param attribute of ImplicitCollider class -->
+		</Collider>
+		<Collider type="SPHERE">
+			<vector name="center" x="0" y="-2" z="-1"/>
+			<vector name="velocity" x="0" y="0" z="0" />
+			<vector name="param" x="0" y="0" z="0" />
+		</Collider>
+	</ImplicitColliders>
+    <!-- Grid Starting Position (t=0) and dimensions. -->
+    <Grid>
+        <dim x="128" y="128" z="128" name="gridDim"/>
+        <vector x="-0.171443" y="-0.0320331" z="-0.247352" name="pos"/>
+        <float value="0.003" name="h"/>
+    </Grid>
+</SnowSimulation>

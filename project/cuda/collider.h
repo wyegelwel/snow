@@ -48,7 +48,7 @@ __device__ bool isCollidingHalfPlaneImplicit(const ImplicitCollider &collider, c
  * and collider.param.x is the radius.
  */
 __device__ bool isCollidingSphereImplicit(const ImplicitCollider &collider, const vec3 &position){
-    float radius = collider.param.x;
+    float radius = collider.param.x();
     return (vec3::length(position-collider.center) <= radius);
 }
 
@@ -92,6 +92,7 @@ __device__ void checkForAndHandleCollisions( const ImplicitCollider *colliders, 
 {
     for ( int i = 0; i < numColliders; ++i ) {
         const ImplicitCollider &collider = colliders[i];
+//        collider.center += velocity*timestep;
         if ( isColliding(collider, position) ){
             vec3 vRel = velocity - collider.velocity;
             vec3 normal;
@@ -110,5 +111,12 @@ __device__ void checkForAndHandleCollisions( const ImplicitCollider *colliders, 
         }
     }
 }
+//__device__ void updateColliderPositions(ImplicitCollider *colliders, int numColliders, float timestep)
+//{
+//    for ( int i = 0; i < numColliders; ++i ) {
+//        ImplicitCollider &collider = colliders[i];
+//        collider.center += collider.velocity*timestep;
+//    }
+//}
 
 #endif // CUDACOLLIDER_H

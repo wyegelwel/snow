@@ -34,7 +34,7 @@ Tool::getAxialBasis( unsigned int axis )
 float
 Tool::getHandleSize( const vec3 &center ) const
 {
-    glm::vec3 c = glm::vec3( center.x, center.y, center.z );
+    glm::vec3 c(center);
     Camera *camera = m_panel->m_viewport->getCamera();
     float distance = glm::length( c - camera->getPosition() );
     glm::vec2 uv = camera->getProjection( c );

@@ -27,8 +27,8 @@
 #include "ui/viewpanel.h"
 #include "viewport/viewport.h"
 
-SelectionTool::SelectionTool( ViewPanel *panel )
-    : Tool(panel)
+SelectionTool::SelectionTool( ViewPanel *panel ,Type t)
+    : Tool(panel,t)
 {
 }
 
@@ -98,7 +98,6 @@ SelectionTool::getSelectedSceneNode()
     }
 
     m_panel->m_viewport->popMatrices();
-
     return clicked;
 }
 

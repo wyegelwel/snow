@@ -21,7 +21,7 @@ class SelectionTool : public Tool
 
 public:
 
-    SelectionTool( ViewPanel *panel );
+    SelectionTool( ViewPanel *panel,Type t);
     virtual ~SelectionTool();
 
     virtual void mousePressed();

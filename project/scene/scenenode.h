@@ -31,7 +31,7 @@ public:
     enum Type
     {
         TRANSFORM,
-        IMPLICIT_COLLIDER,
+        SCENE_COLLIDER,
         SNOW_CONTAINER,
         SIMULATION_GRID
     };
@@ -59,6 +59,8 @@ public:
     virtual void renderOpaque();
     // Render the node's renderable if it is transparent
     virtual void renderTransparent();
+
+    virtual void renderVelocity(bool velTool);
 
     glm::mat4 getCTM();
     // Indicate that the CTM needs recomputing
