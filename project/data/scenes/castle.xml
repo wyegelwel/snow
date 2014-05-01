@@ -1,0 +1,220 @@
+<?xml version='1.0' encoding='utf-8'?>
+<SnowSimulation>
+    <SimulationParameters>
+        <float value="5e-05" name="timeStep"/>
+    </SimulationParameters>
+    <ExportSettings>
+        <string value="/gpfs/main/home/evjang/course/cs224/group_final/snow/project/data/scenes/castle" name="filePrefix"/>
+        <int value="3" name="maxTime"/>
+        <int value="24" name="exportFPS"/>
+        <int value="0" name="exportDensity"/>
+        <int value="0" name="exportVelocity"/>
+    </ExportSettings>
+    <ParticleSystem>
+        <SnowContainer>
+            <string value="/gpfs/main/home/evjang/course/cs224/group_final/snow/project/data/models/castle_turret.obj" name="filename"/>
+            <string value="1" name="materialPreset"/>
+            <int value="59904" name="numParticles"/>
+            <matrix value="1.000000 0.000000 0.000000 0.000000 0.000000 1.000000 0.000000 0.000000 0.000000 0.000000 1.000000 0.000000 0.000000 0.000000 0.000000 1.000000" name="CTM"/>
+        </SnowContainer>
+        <SnowContainer>
+            <string value="/gpfs/main/home/evjang/course/cs224/group_final/snow/project/data/models/castle_base.obj" name="filename"/>
+            <string value="13362852" name="materialPreset"/>
+            <int value="0" name="numParticles"/>
+            <matrix value="1.000000 0.000000 0.000000 0.000000 0.000000 1.000000 0.000000 0.000000 0.000000 0.000000 1.000000 0.000000 0.000000 0.000000 0.000000 1.000000" name="CTM"/>
+        </SnowContainer>
+        <SnowContainer>
+            <string value="/gpfs/main/home/evjang/course/cs224/group_final/snow/project/data/models/castle_middle.obj" name="filename"/>
+            <string value="20295700" name="materialPreset"/>
+            <int value="0" name="numParticles"/>
+            <matrix value="1.000000 0.000000 0.000000 0.000000 0.000000 1.000000 0.000000 0.000000 0.000000 0.000000 1.000000 0.000000 0.000000 0.000000 0.000000 1.000000" name="CTM"/>
+        </SnowContainer>
+        <SnowContainer>
+            <string value="/gpfs/main/home/evjang/course/cs224/group_final/snow/project/data/models/castle_crenellations_mid.obj" name="filename"/>
+            <string value="20174756" name="materialPreset"/>
+            <int value="0" name="numParticles"/>
+            <matrix value="1.000000 0.000000 0.000000 0.080724 0.000000 1.000000 0.000000 0.000000 0.000000 0.000000 1.000000 0.000000 0.000000 0.000000 0.000000 1.000000" name="CTM"/>
+        </SnowContainer>
+        <SnowContainer>
+            <string value="/gpfs/main/home/evjang/course/cs224/group_final/snow/project/data/models/castle_crenellations.obj" name="filename"/>
+            <string value="20241188" name="materialPreset"/>
+            <int value="0" name="numParticles"/>
+            <matrix value="1.000000 0.000000 0.000000 0.143030 0.000000 1.000000 0.000000 0.000000 0.000000 0.000000 1.000000 0.000000 0.000000 0.000000 0.000000 1.000000" name="CTM"/>
+        </SnowContainer>
+        <SnowContainer>
+            <string value="/gpfs/main/home/evjang/course/cs224/group_final/snow/project/data/models/castle_crenellations.obj" name="filename"/>
+            <string value="20225716" name="materialPreset"/>
+            <int value="0" name="numParticles"/>
+            <matrix value="-0.006028 0.000000 -0.999981 -0.016147 0.000000 1.000000 0.000000 0.000000 0.999981 0.000000 -0.006028 0.159438 0.000000 0.000000 0.000000 1.000000" name="CTM"/>
+        </SnowContainer>
+        <SnowContainer>
+            <string value="/gpfs/main/home/evjang/course/cs224/group_final/snow/project/data/models/castle_turret.obj" name="filename"/>
+            <string value="11937428" name="materialPreset"/>
+            <int value="0" name="numParticles"/>
+            <matrix value="1.000000 0.000000 0.000000 -0.137996 0.000000 1.000000 0.000000 0.000000 0.000000 0.000000 1.000000 0.000000 0.000000 0.000000 0.000000 1.000000" name="CTM"/>
+        </SnowContainer>
+        <SnowContainer>
+            <string value="/gpfs/main/home/evjang/course/cs224/group_final/snow/project/data/models/castle_turret.obj" name="filename"/>
+            <string value="20065060" name="materialPreset"/>
+            <int value="0" name="numParticles"/>
+            <matrix value="1.000000 0.000000 0.000000 0.000000 0.000000 1.000000 0.000000 0.000000 0.000000 0.000000 1.000000 -0.137245 0.000000 0.000000 0.000000 1.000000" name="CTM"/>
+        </SnowContainer>
+        <SnowContainer>
+            <string value="/gpfs/main/home/evjang/course/cs224/group_final/snow/project/data/models/castle_turret.obj" name="filename"/>
+            <string value="12834196" name="materialPreset"/>
+            <int value="0" name="numParticles"/>
+            <matrix value="1.000000 0.000000 0.000000 -0.138957 0.000000 1.000000 0.000000 0.000000 0.000000 0.000000 1.000000 -0.134347 0.000000 0.000000 0.000000 1.000000" name="CTM"/>
+        </SnowContainer>
+        <SnowContainer>
+            <string value="/gpfs/main/home/evjang/course/cs224/group_final/snow/project/data/models/castle_crenellations_mid.obj" name="filename"/>
+            <string value="80" name="materialPreset"/>
+            <int value="0" name="numParticles"/>
+            <matrix value="-0.009429 0.000000 -0.999956 -0.014392 0.000000 1.000000 0.000000 0.000000 0.999956 0.000000 -0.009429 0.017818 0.000000 0.000000 0.000000 1.000000" name="CTM"/>
+        </SnowContainer>
+        <SnowContainer>
+            <string value="/gpfs/main/home/evjang/course/cs224/group_final/snow/project/data/models/castle_crenellations_mid.obj" name="filename"/>
+            <string value="0" name="materialPreset"/>
+            <int value="0" name="numParticles"/>
+            <matrix value="0.006781 0.000000 -0.999977 -0.015215 0.000000 1.000000 0.000000 0.000000 0.999977 0.000000 0.006781 0.097472 0.000000 0.000000 0.000000 1.000000" name="CTM"/>
+        </SnowContainer>
+        <SnowContainer>
+            <string value="/gpfs/main/home/evjang/course/cs224/group_final/snow/project/data/models/castle_crenellations_mid.obj" name="filename"/>
+            <string value="19787284" name="materialPreset"/>
+            <int value="0" name="numParticles"/>
+            <matrix value="1.000000 0.000000 0.000000 0.000000 0.000000 1.000000 0.000000 0.000000 0.000000 0.000000 1.000000 0.000000 0.000000 0.000000 0.000000 1.000000" name="CTM"/>
+        </SnowContainer>
+        <SnowContainer>
+            <string value="/gpfs/main/home/evjang/course/cs224/group_final/snow/project/data/models/castle_tower.obj" name="filename"/>
+            <string value="11899268" name="materialPreset"/>
+            <int value="0" name="numParticles"/>
+            <matrix value="1.000000 0.000000 0.000000 0.000000 0.000000 1.000000 0.000000 0.000000 0.000000 0.000000 1.000000 0.000000 0.000000 0.000000 0.000000 1.000000" name="CTM"/>
+        </SnowContainer>
+        <SnowContainer>
+            <string value="/gpfs/main/home/evjang/course/cs224/group_final/snow/project/data/models/castle_crenellations.obj" name="filename"/>
+            <string value="-351501008" name="materialPreset"/>
+            <int value="0" name="numParticles"/>
+            <matrix value="1.000000 0.000000 0.000000 0.000000 0.000000 1.000000 0.000000 0.000000 0.000000 0.000000 1.000000 0.000000 0.000000 0.000000 0.000000 1.000000" name="CTM"/>
+        </SnowContainer>
+        <SnowContainer>
+            <string value="/gpfs/main/home/evjang/course/cs224/group_final/snow/project/data/models/castle_crenellations.obj" name="filename"/>
+            <string value="12965780" name="materialPreset"/>
+            <int value="0" name="numParticles"/>
+            <matrix value="-0.005190 0.000000 -0.999986 -0.016502 0.000000 1.000000 0.000000 0.000000 0.999986 0.000000 -0.005190 0.017488 0.000000 0.000000 0.000000 1.000000" name="CTM"/>
+        </SnowContainer>
+    </ParticleSystem>
+    <Grid>
+        <dim x="360" y="180" z="500" name="gridDim"/>
+        <vector x="-0.203826" y="-0.00518656" z="-0.114661" name="pos"/>
+        <float value="0.001" name="h"/>
+    </Grid>
+</SnowSimulation>
+<?xml version="1.0" encoding="utf-8" ?>
+<SnowSimulation>
+    <SimulationParameters>
+        <float value="5e-05" name="timeStep"/>
+    </SimulationParameters>
+    <ExportSettings>
+        <string value="/gpfs/main/home/evjang/course/cs224/group_final/snow/project/data/scenes/castle" name="filePrefix"/>
+        <int value="3" name="maxTime"/>
+        <int value="24" name="exportFPS"/>
+        <int value="0" name="exportDensity"/>
+        <int value="0" name="exportVelocity"/>
+    </ExportSettings>
+    <ParticleSystem>
+        <SnowContainer>
+            <string value="/gpfs/main/home/evjang/course/cs224/group_final/snow/project/data/models/castle_turret.obj" name="filename"/>
+            <string value="22065268" name="materialPreset"/>
+            <int value="0" name="numParticles"/>
+            <matrix value="1.000000 0.000000 0.000000 0.000000 0.000000 1.000000 0.000000 0.000000 0.000000 0.000000 1.000000 0.000000 0.000000 0.000000 0.000000 1.000000" name="CTM"/>
+        </SnowContainer>
+        <SnowContainer>
+            <string value="/gpfs/main/home/evjang/course/cs224/group_final/snow/project/data/models/castle_base.obj" name="filename"/>
+            <string value="19912756" name="materialPreset"/>
+            <int value="0" name="numParticles"/>
+            <matrix value="1.000000 0.000000 0.000000 0.000000 0.000000 1.000000 0.000000 0.000000 0.000000 0.000000 1.000000 0.000000 0.000000 0.000000 0.000000 1.000000" name="CTM"/>
+        </SnowContainer>
+        <SnowContainer>
+            <string value="/gpfs/main/home/evjang/course/cs224/group_final/snow/project/data/models/castle_middle.obj" name="filename"/>
+            <string value="14848804" name="materialPreset"/>
+            <int value="0" name="numParticles"/>
+            <matrix value="1.000000 0.000000 0.000000 0.000000 0.000000 1.000000 0.000000 0.000000 0.000000 0.000000 1.000000 0.000000 0.000000 0.000000 0.000000 1.000000" name="CTM"/>
+        </SnowContainer>
+        <SnowContainer>
+            <string value="/gpfs/main/home/evjang/course/cs224/group_final/snow/project/data/models/castle_crenellations_mid.obj" name="filename"/>
+            <string value="20017956" name="materialPreset"/>
+            <int value="0" name="numParticles"/>
+            <matrix value="1.000000 0.000000 0.000000 0.080724 0.000000 1.000000 0.000000 0.000000 0.000000 0.000000 1.000000 0.000000 0.000000 0.000000 0.000000 1.000000" name="CTM"/>
+        </SnowContainer>
+        <SnowContainer>
+            <string value="/gpfs/main/home/evjang/course/cs224/group_final/snow/project/data/models/castle_crenellations.obj" name="filename"/>
+            <string value="19912756" name="materialPreset"/>
+            <int value="0" name="numParticles"/>
+            <matrix value="1.000000 0.000000 0.000000 0.143030 0.000000 1.000000 0.000000 0.000000 0.000000 0.000000 1.000000 0.000000 0.000000 0.000000 0.000000 1.000000" name="CTM"/>
+        </SnowContainer>
+        <SnowContainer>
+            <string value="/gpfs/main/home/evjang/course/cs224/group_final/snow/project/data/models/castle_crenellations.obj" name="filename"/>
+            <string value="22176676" name="materialPreset"/>
+            <int value="0" name="numParticles"/>
+            <matrix value="-0.006028 0.000000 -0.999981 -0.016147 0.000000 1.000000 0.000000 0.000000 0.999981 0.000000 -0.006028 0.159438 0.000000 0.000000 0.000000 1.000000" name="CTM"/>
+        </SnowContainer>
+        <SnowContainer>
+            <string value="/gpfs/main/home/evjang/course/cs224/group_final/snow/project/data/models/castle_turret.obj" name="filename"/>
+            <string value="22176676" name="materialPreset"/>
+            <int value="0" name="numParticles"/>
+            <matrix value="1.000000 0.000000 0.000000 -0.137996 0.000000 1.000000 0.000000 0.000000 0.000000 0.000000 1.000000 0.000000 0.000000 0.000000 0.000000 1.000000" name="CTM"/>
+        </SnowContainer>
+        <SnowContainer>
+            <string value="/gpfs/main/home/evjang/course/cs224/group_final/snow/project/data/models/castle_turret.obj" name="filename"/>
+            <string value="22176676" name="materialPreset"/>
+            <int value="0" name="numParticles"/>
+            <matrix value="1.000000 0.000000 0.000000 0.000000 0.000000 1.000000 0.000000 0.000000 0.000000 0.000000 1.000000 -0.137245 0.000000 0.000000 0.000000 1.000000" name="CTM"/>
+        </SnowContainer>
+        <SnowContainer>
+            <string value="/gpfs/main/home/evjang/course/cs224/group_final/snow/project/data/models/castle_turret.obj" name="filename"/>
+            <string value="20554836" name="materialPreset"/>
+            <int value="0" name="numParticles"/>
+            <matrix value="1.000000 0.000000 0.000000 -0.138957 0.000000 1.000000 0.000000 0.000000 0.000000 0.000000 1.000000 -0.134347 0.000000 0.000000 0.000000 1.000000" name="CTM"/>
+        </SnowContainer>
+        <SnowContainer>
+            <string value="/gpfs/main/home/evjang/course/cs224/group_final/snow/project/data/models/castle_crenellations_mid.obj" name="filename"/>
+            <string value="22241140" name="materialPreset"/>
+            <int value="0" name="numParticles"/>
+            <matrix value="-0.009429 0.000000 -0.999956 -0.014392 0.000000 1.000000 0.000000 0.000000 0.999956 0.000000 -0.009429 0.017818 0.000000 0.000000 0.000000 1.000000" name="CTM"/>
+        </SnowContainer>
+        <SnowContainer>
+            <string value="/gpfs/main/home/evjang/course/cs224/group_final/snow/project/data/models/castle_crenellations_mid.obj" name="filename"/>
+            <string value="22176676" name="materialPreset"/>
+            <int value="0" name="numParticles"/>
+            <matrix value="0.006781 0.000000 -0.999977 -0.015215 0.000000 1.000000 0.000000 0.000000 0.999977 0.000000 0.006781 0.097472 0.000000 0.000000 0.000000 1.000000" name="CTM"/>
+        </SnowContainer>
+        <SnowContainer>
+            <string value="/gpfs/main/home/evjang/course/cs224/group_final/snow/project/data/models/castle_crenellations_mid.obj" name="filename"/>
+            <string value="20554836" name="materialPreset"/>
+            <int value="0" name="numParticles"/>
+            <matrix value="1.000000 0.000000 0.000000 0.000000 0.000000 1.000000 0.000000 0.000000 0.000000 0.000000 1.000000 0.000000 0.000000 0.000000 0.000000 1.000000" name="CTM"/>
+        </SnowContainer>
+        <SnowContainer>
+            <string value="/gpfs/main/home/evjang/course/cs224/group_final/snow/project/data/models/castle_tower.obj" name="filename"/>
+            <string value="22241140" name="materialPreset"/>
+            <int value="0" name="numParticles"/>
+            <matrix value="1.000000 0.000000 0.000000 0.000000 0.000000 1.000000 0.000000 0.000000 0.000000 0.000000 1.000000 0.000000 0.000000 0.000000 0.000000 1.000000" name="CTM"/>
+        </SnowContainer>
+        <SnowContainer>
+            <string value="/gpfs/main/home/evjang/course/cs224/group_final/snow/project/data/models/castle_crenellations.obj" name="filename"/>
+            <string value="22241140" name="materialPreset"/>
+            <int value="0" name="numParticles"/>
+            <matrix value="1.000000 0.000000 0.000000 0.000000 0.000000 1.000000 0.000000 0.000000 0.000000 0.000000 1.000000 0.000000 0.000000 0.000000 0.000000 1.000000" name="CTM"/>
+        </SnowContainer>
+        <SnowContainer>
+            <string value="/gpfs/main/home/evjang/course/cs224/group_final/snow/project/data/models/castle_crenellations.obj" name="filename"/>
+            <string value="19884180" name="materialPreset"/>
+            <int value="0" name="numParticles"/>
+            <matrix value="-0.005190 0.000000 -0.999986 -0.016502 0.000000 1.000000 0.000000 0.000000 0.999986 0.000000 -0.005190 0.017488 0.000000 0.000000 0.000000 1.000000" name="CTM"/>
+        </SnowContainer>
+    </ParticleSystem>
+    <Grid>
+        <dim x="360" y="180" z="500" name="gridDim"/>
+        <vector x="-0.203826" y="-0.00518656" z="-0.114661" name="pos"/>
+        <float value="0.001" name="h"/>
+    </Grid>
+</SnowSimulation>
