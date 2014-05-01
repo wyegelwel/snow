@@ -275,11 +275,12 @@ Mesh::fill( ParticleSystem &particles, int particleCount, float h, float targetD
     LOG( "Filling mesh in %d x %d x %d grid (%s voxels)...", grid.dim.x, grid.dim.y, grid.dim.z, STR(QLocale().toString(grid.dim.x*grid.dim.y*grid.dim.z)) );
 
     particles.resize( particleCount );
-    fillMesh( &m_cudaVBO, getNumTris(), grid, particles.data(), particleCount, targetDensity,  UiSettings::materialPreset() );
+    fillMesh( &m_cudaVBO, getNumTris(), grid, particles.data(), particleCount, targetDensity,  m_fillMaterialPreset );
 
 #if 0
     fillMesh2(&m_cudaVBO, getNumTris(), grid, particles.data(), particleCount, targetDensity);
 #endif
+
 
     LOG( "Mesh filled with %s particles in %lld ms.", STR(QLocale().toString(particleCount)), timer.restart() );
 }

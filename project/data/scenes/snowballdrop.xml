@@ -1,41 +1,52 @@
+<!-- this is an example of what a scene might look like -->
 <?xml version="1.0" encoding="UTF-8"?>
-	<SnowSimulation>
-		<engine>
-		<!-- stuff used for sim and export -->
-		<grid>
-			<dim x="128" y="128" z="128" />
-			<pos x="0" y="0" z="0" />
-			<h value="0.01"/>
-		</grid>
-
-		<particlesystem>
-			<float name="numParticles"/>
-			<MaterialPreset value="chunky" />
-			 <!-- Multiple particle systems permitted -->
-			<string name="teapot.obj">
-				<matrix value="0  -0.53  0  -1.79  0.92  0  0  8.03  0  0  0.53  0  0  0  0  1"/>
-				<string name="materialConstant" value="chunky"/> <!-- materialconstants of these snow particles set here -->
-			</container>
-			<container name="monkey.obj">
-				<CTM /> 
-			</container>
-		</particlesystem>
-
-		<ImplicitColliders>
-			<collider type="HALF_PLANE">
-				<point name="center" x="0" y="-2" z="-1"/>
-				<vector name="velocity" x="0" y="0" z="0" />
-				<vector name="param" x="0" y="0" z="0" />
-			</collider>
-			<collider type="SPHERE">
-				<point name="center" x="0" y="-2" z="-1"/>
-				<vector name="velocity" x="0" y="0" z="0" />
-				<vector name="param" x="0" y="0" z="0" />
-			</collider>
-		</ImplicitColliders>
+	<SimulationParameters>
 		<!-- stuff used just for exporting -->
+		<integer name="timeStep" value="0.000001" />
+	</SimulationParameters>
+
+	<!-- PARAMTERS OF PARTICLE SYSTEM -->
+	<ParticleSystem>
+		 <!-- Multiple particle systems permitted -->
+		<Container>
+			<int name="numParticles" value="512"/>
+			<string name="filename" value="teapot.obj"/>
+			<string name="materialPreset" value="chunky"/> <!-- materialconstants of these snow particles set here -->
+			<matrix name="CTM" value="0  -0.53  0  -1.79  0.92  0  0  8.03  0  0  0.53  0  0  0  0  1"/>
+		</Container>
+		<Container>
+			<int name="numParticles" value="512"/>
+			<string name="filename" value="monkey.obj"/>
+			<string name="materialPreset" value="default"/>
+			<matrix name="CTM" value="0  -0.53  0  -1.79  0.92  0  0  8.03  0  0  0.53  0  0  0  0  1"/>
+		</Container>
+	</ParticleSystem>
+
+	<!-- Grid Starting Position (t=0) and dimensions. -->
+	<Grid>
+		<dim name="nodeDim" x="128" y="128" z="128" /> <!	-- be careful! we actually care about the node dim -->
+		<vector name="pos" x="0" y="0" z="0" /> <!-- position of the grid -->
+		<float name="h" value="0.01"/>
+	</Grid>
+
+	<!--	 Colliders -->
+	<ImplicitColliders>
+		<Collider type="HALF_PLANE">
+			<vector name="center" x="0" y="-2" z="-1"/>
+			<vector name="velocity" x="0" y="0" z="0" />
+			<vector name="param" x="0" y="0" z="0" /> <!-- corresponds to the ambiguous param attribute of ImplicitCollider class -->
+		</Collider>
+		<Collider type="SPHERE">
+			<vector name="center" x="0" y="-2" z="-1"/>
+			<vector name="velocity" x="0" y="0" z="0" />
+			<vector name="param" x="0" y="0" z="0" />
+		</Collider>
+	</ImplicitColliders>
+
+	<ExportSettings>
+		<string name="filePrefix" value="/data/people/evjang/offline_renders/teapot" />
 		<integer name="numFrames" value="1000" />
-			
-		</engine>
-	</SnowSimulation>
+		<integer name="exportDensity" value="1"/>
+		<integer name="exportVelocity" value="0"/>
+	</ExportSettings>
 </xml>

@@ -81,7 +81,7 @@
        <property name="geometry">
         <rect>
          <x>0</x>
-         <y>-467</y>
+         <y>0</y>
          <width>280</width>
          <height>1054</height>
         </rect>
@@ -1323,12 +1323,18 @@
   </action>
   <action name="actionLoad_Scene">
    <property name="text">
-    <string>Load Scene</string>
+    <string>Open Scene</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+O, Ctrl+S</string>
    </property>
   </action>
   <action name="actionSave_Scene">
    <property name="text">
     <string>Save Scene</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+S</string>
    </property>
   </action>
  </widget>

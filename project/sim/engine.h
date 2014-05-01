@@ -63,6 +63,8 @@ public:
     void setGrid( const Grid &grid );
     void clearParticleGrid();
 
+    Grid getGrid() {return m_grid; }
+
 //    MaterialConstants& materialConstants() { return m_materialConstants; }
     void initParticleMaterials(int preset);
 

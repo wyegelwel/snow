@@ -223,7 +223,7 @@ bool ViewPanel::startSimulation()
             if (!ok) // have not saved yet
                 ok = saveScene();
             if (ok)
-                m_engine->initExporter(sceneFileInfo.baseName());
+                m_engine->initExporter(m_sceneIO->sceneFile());
         }
 
         return m_engine->start(exportVol);
@@ -461,7 +461,12 @@ void ViewPanel::fillSelectedMesh()
         if ( (*it)->hasRenderable() &&
              (*it)->getType() == SceneNode::SNOW_CONTAINER &&
              (*it)->getRenderable()->isSelected() ) {
-            Mesh *copy = new Mesh( *dynamic_cast<Mesh*>((*it)->getRenderable()) );
+            Mesh * original = dynamic_cast<Mesh*>((*it)->getRenderable());
+
+            original->setParticleCount(UiSettings::fillNumParticles());
+            original->setMaterialPreset(UiSettings::materialPreset());
+
+            Mesh *copy = new Mesh( *original );
             const glm::mat4 transformation = (*it)->getCTM();
             copy->applyTransformation( transformation );
             mesh->append( *copy );
@@ -530,6 +535,7 @@ bool
 ViewPanel::saveScene()
 {
     // this is enforced if engine->start is called and export is not checked
+    QString foo = m_sceneIO->sceneFile();
     if (m_sceneIO->sceneFile().isNull())
     {
         // filename not initialized yet
