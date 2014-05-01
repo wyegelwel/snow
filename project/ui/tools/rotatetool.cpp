@@ -59,7 +59,7 @@ RotateTool::renderAxis( unsigned int i ) const
 {
     glMatrixMode( GL_MODELVIEW );
     glPushMatrix();
-    glm::mat4 translate = glm::translate( glm::mat4(1.f), glm::vec3(m_center.x, m_center.y, m_center.z) );
+    glm::mat4 translate = glm::translate( glm::mat4(1.f), glm::vec3(m_center) );
     glm::mat4 basis = glm::scale( Tool::getAxialBasis(i), glm::vec3(m_scale) );
     glMultMatrixf( glm::value_ptr(translate*basis) );
     glBindBuffer( GL_ARRAY_BUFFER, m_vbo );
@@ -89,7 +89,7 @@ RotateTool::render()
         glEnable( GL_LINE_SMOOTH );
         glHint( GL_LINE_SMOOTH_HINT, GL_NICEST );
         for ( unsigned int i = 0; i < 3; ++i ) {
-            glColor3fv( Tool::getAxialColor((i==m_axisSelection)?3:i).data );
+            glColor3fv( Tool::getAxialColor((i==m_axisSelection)?3:i).ptr() );
             renderAxis( i );
         }
         glPopAttrib();
@@ -151,8 +151,8 @@ RotateTool::mouseMoved()
         float theta0 = intersectAxis( UserInput::mousePos()-UserInput::mouseMove() );
         float theta1 = intersectAxis( UserInput::mousePos() );
         float theta = theta1-theta0;
-        glm::mat4 Tinv = glm::translate( glm::mat4(1.f), glm::vec3(-m_center.x, -m_center.y, -m_center.z) );
-        glm::mat4 T = glm::translate( glm::mat4(1.f), glm::vec3(m_center.x, m_center.y, m_center.z) );
+        glm::mat4 Tinv = glm::translate( glm::mat4(1.f), glm::vec3(-m_center) );
+        glm::mat4 T = glm::translate( glm::mat4(1.f), glm::vec3(m_center) );
         glm::vec3 axis(0,0,0); axis[m_axisSelection] = 1.f;
         glm::mat4 R = glm::rotate( glm::mat4(1.f), theta, axis );
         glm::mat4 transform = T * R * Tinv;

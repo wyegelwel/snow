@@ -30,6 +30,7 @@ extern "C"
     void implicitTests();
     void testcompute_dJF_invTrans();
     void testConjugateResidual();
+    void testMemoryStuff();
 }
 
 void Tests::runTests(char *argv[])  {
@@ -91,6 +92,7 @@ void Tests::runWilTests() {
 void Tests::runMaxTests() {
     printf("\nRunning Max Tests...\n");
 //    implicitTests();
-    testConjugateResidual();
+//    testConjugateResidual();
+    testMemoryStuff();
     printf("Done running Max Tests.\n");
 }

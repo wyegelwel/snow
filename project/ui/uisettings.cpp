@@ -105,9 +105,9 @@ UiSettings::saveSettings()
     s.setValue( "exportFPS", exportFPS());
     s.setValue( "maxTime", maxTime());
 
-    s.setValue( "gridPositionX", gridPosition().x );
-    s.setValue( "gridPositionY", gridPosition().y );
-    s.setValue( "gridPositionZ", gridPosition().z );
+    s.setValue( "gridPositionX", gridPosition().x() );
+    s.setValue( "gridPositionY", gridPosition().y() );
+    s.setValue( "gridPositionZ", gridPosition().z() );
 
     s.setValue( "gridDimensionX", gridDimensions().x );
     s.setValue( "gridDimensionY", gridDimensions().y );
@@ -136,7 +136,7 @@ UiSettings::buildGrid( const glm::mat4 &ctm )
 {
     Grid grid;
     vec3 p = UiSettings::gridPosition();
-    glm::vec4 point = ctm * glm::vec4(p.x,p.y,p.z,1);
+    glm::vec4 point = ctm * glm::vec4(glm::vec3(p),1);
     grid.pos = vec3( point.x, point.y, point.z );
     grid.dim = UiSettings::gridDimensions();
     grid.h = UiSettings::gridResolution();

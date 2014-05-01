@@ -24,11 +24,11 @@ BBox::render()
         glm::vec3 corners[8];
         glm::vec3 corner;
         for ( int x = 0, index = 0; x <= 1; x++ ) {
-            corner.x = (x?m_max:m_min).x;
+            corner.x = (x?m_max:m_min).x();
             for ( int y = 0; y <= 1; y++ ) {
-                corner.y = (y?m_max:m_min).y;
+                corner.y = (y?m_max:m_min).y();
                 for ( int z = 0; z <= 1; z++, index++ ) {
-                    corner.z = (z?m_max:m_min).z;
+                    corner.z = (z?m_max:m_min).z();
                     corners[index] = corner;
                 }
             }

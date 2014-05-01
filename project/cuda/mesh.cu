@@ -151,6 +151,7 @@ __global__ void fillMeshVoxelsKernel( curandState *states, unsigned int seed, Gr
     Particle particle;
     particle.mass = particleMass;
     particle.position = min + r*(max-min);
+    particle.velocity = vec3(0,-1,0);
     particles[tid] = particle;
 }
 

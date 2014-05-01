@@ -107,10 +107,10 @@ MoveTool::render()
         glEnable( GL_LINE_SMOOTH );
         glHint( GL_LINE_SMOOTH_HINT, GL_NICEST );
         for ( unsigned int i = 0; i < 3; ++i ) {
-            glColor3fv( Tool::getAxialColor((i==m_axisSelection)?3:i).data );
+            glColor3fv( Tool::getAxialColor((i==m_axisSelection)?3:i).ptr() );
             renderAxis( i );
         }
-        glColor3fv( getAxialColor(3).data );
+        glColor3fv( getAxialColor(3).ptr() );
         renderCenter();
         glPopAttrib();
         glPopAttrib();

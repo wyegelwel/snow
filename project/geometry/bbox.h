@@ -60,34 +60,34 @@ public:
     inline vec3 min() const { return m_min; }
     inline vec3 max() const { return m_max; }
 
-    inline bool isEmpty() const { return m_min.x > m_max.x; }
+    inline bool isEmpty() const { return m_min.x() > m_max.x(); }
 
     inline bool contains( const vec3 &point ) const
     {
-        return ( point.x >= m_min.x && point.x <= m_max.x ) &&
-                ( point.y >= m_min.y && point.y <= m_max.y ) &&
-                ( point.z >= m_min.z && point.z <= m_max.z );
+        return ( point.x() >= m_min.x() && point.x() <= m_max.x() ) &&
+                ( point.y() >= m_min.y() && point.y() <= m_max.y() ) &&
+                ( point.z() >= m_min.z() && point.z() <= m_max.z() );
     }
 
     inline vec3 size() const { return m_max - m_min; }
-    inline float width() const { return m_max.x - m_min.x; }
-    inline float height() const { return m_max.y - m_min.y; }
-    inline float depth() const { return m_max.z - m_max.z; }
+    inline float width() const { return m_max.x() - m_min.x(); }
+    inline float height() const { return m_max.y() - m_min.y(); }
+    inline float depth() const { return m_max.z() - m_max.z(); }
 
     inline int longestDim() const
     {
         vec3 size = m_max - m_min;
-        return ( size.x > size.y ) ? ( (size.x > size.z) ? 0 : 2 ) : ( (size.y > size.z) ? 1 : 2 );
+        return ( size.x() > size.y() ) ? ( (size.x() > size.z()) ? 0 : 2 ) : ( (size.y() > size.z()) ? 1 : 2 );
     }
 
     inline float longestDimSize() const
     {
         vec3 size = m_max - m_min;
-        return ( size.x > size.y ) ? ( (size.x > size.z) ? size.x : size.z ) : ( (size.y > size.z) ? size.y : size.z );
+        return ( size.x() > size.y() ) ? ( (size.x() > size.z()) ? size.x() : size.z() ) : ( (size.y() > size.z()) ? size.y() : size.z() );
     }
 
-    inline float volume() const { vec3 s = m_max-m_min; return s.x*s.y*s.z; }
-    inline float surfaceArea() const { vec3 s = m_max-m_min; return 2*(s.x*s.y+s.x*s.z+s.y*s.z); }
+    inline float volume() const { vec3 s = m_max-m_min; return s.x()*s.y()*s.z(); }
+    inline float surfaceArea() const { vec3 s = m_max-m_min; return 2*(s.x()*s.y()+s.x()*s.z()+s.y()*s.z()); }
 
     inline void fix( float h )
     {
@@ -104,7 +104,7 @@ public:
         box.fix( h );
         Grid grid;
         vec3 dimf = vec3::round( (box.max()-box.min())/h );
-        grid.dim = glm::ivec3( dimf.x, dimf.y, dimf.z );
+        grid.dim = glm::ivec3( dimf.x(), dimf.y(), dimf.z() );
         grid.h = h;
         grid.pos = box.min();
         return grid;
@@ -151,12 +151,12 @@ public:
         BBox box;
         vec3 corner;
         for ( int x = 0, index = 0; x <= 1; x++ ) {
-            corner.x = (x?m_max:m_min).x;
+            corner.x() = (x?m_max:m_min).x();
             for ( int y = 0; y <= 1; y++ ) {
-                corner.y = (y?m_max:m_min).y;
+                corner.y() = (y?m_max:m_min).y();
                 for ( int z = 0; z <= 1; z++, index++ ) {
-                    corner.z = (z?m_max:m_min).z;
-                    glm::vec4 point = ctm * glm::vec4(corner.x, corner.y, corner.z, 1.f);
+                    corner.z() = (z?m_max:m_min).z();
+                    glm::vec4 point = ctm * glm::vec4(corner.x(), corner.y(), corner.z(), 1.f);
                     box += vec3( point.x, point.y, point.z );
                 }
             }
@@ -167,7 +167,7 @@ public:
     virtual vec3 getCentroid( const glm::mat4 &ctm )
     {
         vec3 c = center();
-        glm::vec4 p = ctm * glm::vec4( c.x, c.y, c.z, 1.f );
+        glm::vec4 p = ctm * glm::vec4( glm::vec3(c), 1.f );
         return vec3( p.x, p.y, p.z );
     }
 

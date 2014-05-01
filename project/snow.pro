@@ -48,7 +48,6 @@ SOURCES += \
     sim/implicitcollider.cpp \
     ui/tools/velocitytool.cpp
 
-
 HEADERS  += \
     ui/mainwindow.h \
     ui/viewpanel.h \
@@ -119,7 +118,8 @@ CUDA_SOURCES += cuda/snow.cu \
 #    cuda/eric.cu \
 #    cuda/wil_tests.cu \
     cuda/simulation.cu \
-    cuda/cr_tests.cu
+    cuda/cr_tests.cu \
+    cuda/mem_tests.cu
 
 CUDA_DIR = /contrib/projects/cuda5-toolkit
 INCLUDEPATH += $$CUDA_DIR/include
@@ -139,6 +139,7 @@ OTHER_FILES += \
     cuda/wil_tests.cu \
     cuda/simulation.cu \
     cuda/cr_tests.cu \
+    cuda/mem_tests.cu \
     resources/shaders/particlesystem.vert \
     resources/shaders/particlesystem.frag \
     resources/shaders/particlegrid.frag \
@@ -151,6 +152,7 @@ OTHER_FILES += \
 # of the GPU. compute capabilities listed here http://en.wikipedia.org/wiki/CUDA
 # MSLAB GeForce 460 seems to have compute capability 2.1
 CUDA_ARCH = sm_21
+#CUDA_ARCH = sm_35
 
 # custom NVCC flags
 NVCCFLAGS = --compiler-options -fno-strict-aliasing -use_fast_math --ptxas-options=-v

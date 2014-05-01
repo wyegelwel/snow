@@ -105,104 +105,104 @@ SceneGrid::buildVBO()
     const glm::ivec3 &dim = m_grid.dim;
     const float &h = m_grid.h;
     vec3 min = m_grid.pos;
-    vec3 max = m_grid.pos + h * vec3( dim.x, dim.y, dim.z );
+    vec3 max = m_grid.pos + h*vec3(dim);
 
     // Bounding box
     data += min;
-    data += vec3( min.x, min.y, max.z );
-    data += vec3( min.x, min.y, max.z );
-    data += vec3( min.x, max.y, max.z );
-    data += vec3( min.x, max.y, max.z );
-    data += vec3( min.x, max.y, min.z );
-    data += vec3( min.x, max.y, min.z );
+    data += vec3( min.x(), min.y(), max.z() );
+    data += vec3( min.x(), min.y(), max.z() );
+    data += vec3( min.x(), max.y(), max.z() );
+    data += vec3( min.x(), max.y(), max.z() );
+    data += vec3( min.x(), max.y(), min.z() );
+    data += vec3( min.x(), max.y(), min.z() );
     data += min;
-    data += vec3( max.x, min.y, min.z );
-    data += vec3( max.x, min.y, max.z );
-    data += vec3( max.x, min.y, max.z );
-    data += vec3( max.x, max.y, max.z );
-    data += vec3( max.x, max.y, max.z );
-    data += vec3( max.x, max.y, min.z );
-    data += vec3( max.x, max.y, min.z );
-    data += vec3( max.x, min.y, min.z );
+    data += vec3( max.x(), min.y(), min.z() );
+    data += vec3( max.x(), min.y(), max.z() );
+    data += vec3( max.x(), min.y(), max.z() );
+    data += vec3( max.x(), max.y(), max.z() );
+    data += vec3( max.x(), max.y(), max.z() );
+    data += vec3( max.x(), max.y(), min.z() );
+    data += vec3( max.x(), max.y(), min.z() );
+    data += vec3( max.x(), min.y(), min.z() );
     data += min;
-    data += vec3( max.x, min.y, min.z );
-    data += vec3( min.x, min.y, max.z );
-    data += vec3( max.x, min.y, max.z );
-    data += vec3( min.x, max.y, max.z );
+    data += vec3( max.x(), min.y(), min.z() );
+    data += vec3( min.x(), min.y(), max.z() );
+    data += vec3( max.x(), min.y(), max.z() );
+    data += vec3( min.x(), max.y(), max.z() );
     data += max;
-    data += vec3( min.x, max.y, min.z );
-    data += vec3( max.x, max.y, min.z );
+    data += vec3( min.x(), max.y(), min.z() );
+    data += vec3( max.x(), max.y(), min.z() );
 
     // -yz face
     for ( int i = 1; i < dim.y; ++i ) {
-        float y = min.y + i*h;
-        data += vec3( min.x, y, min.z );
-        data += vec3( min.x, y, max.z );
+        float y = min.y() + i*h;
+        data += vec3( min.x(), y, min.z() );
+        data += vec3( min.x(), y, max.z() );
     }
     for ( int i = 1; i < dim.z; ++i ) {
-        float z = min.z + i*h;
-        data += vec3( min.x, min.y, z );
-        data += vec3( min.x, max.y, z );
+        float z = min.z() + i*h;
+        data += vec3( min.x(), min.y(), z );
+        data += vec3( min.x(), max.y(), z );
     }
 
     // -xy face
     for ( int i = 1; i < dim.x; ++i ) {
-        float x = min.x + i*h;
-        data += vec3( x, min.y, min.z );
-        data += vec3( x, max.y, min.z );
+        float x = min.x() + i*h;
+        data += vec3( x, min.y(), min.z() );
+        data += vec3( x, max.y(), min.z() );
     }
     for ( int i = 1; i < dim.y; ++i ) {
-        float y = min.y + i*h;
-        data += vec3( min.x, y, min.z );
-        data += vec3( max.x, y, min.z );
+        float y = min.y() + i*h;
+        data += vec3( min.x(), y, min.z() );
+        data += vec3( max.x(), y, min.z() );
     }
 
     // -xz face
     for ( int i = 1; i < dim.x; ++i ) {
-        float x = min.x + i*h;
-        data += vec3( x, min.y, min.z );
-        data += vec3( x, min.y, max.z );
+        float x = min.x() + i*h;
+        data += vec3( x, min.y(), min.z() );
+        data += vec3( x, min.y(), max.z() );
     }
     for ( int i = 1; i < dim.z; ++i ) {
-        float z = min.z + i*h;
-        data += vec3( min.x, min.y, z );
-        data += vec3( max.x, min.y, z );
+        float z = min.z() + i*h;
+        data += vec3( min.x(), min.y(), z );
+        data += vec3( max.x(), min.y(), z );
     }
 
     // +yz face
     for ( int i = 1; i < dim.y; ++i ) {
-        float y = min.y + i*h;
-        data += vec3( max.x, y, min.z );
-        data += vec3( max.x, y, max.z );
+        float y = min.y() + i*h;
+        data += vec3( max.x(), y, min.z() );
+        data += vec3( max.x(), y, max.z() );
     }
     for ( int i = 1; i < dim.z; ++i ) {
-        float z = min.z + i*h;
-        data += vec3( max.x, min.y, z );
-        data += vec3( max.x, max.y, z );
+        float z = min.z() + i*h;
+        data += vec3( max.x(), min.y(), z );
+        data += vec3( max.x(), max.y(), z );
     }
 
     // +xy face
     for ( int i = 1; i < dim.x; ++i ) {
-        float x = min.x + i*h;
-        data += vec3( x, min.y, max.z );
-        data += vec3( x, max.y, max.z );
+        float x = min.x() + i*h;
+        data += vec3( x, min.y(), max.z() );
+        data += vec3( x, max.y(), max.z() );
     }
     for ( int i = 1; i < dim.y; ++i ) {
-        float y = min.y + i*h;
-        data += vec3( min.x, y, max.z );
-        data += vec3( max.x, y, max.z );
+        float y = min.y() + i*h;
+        data += vec3( min.x(), y, max.z() );
+        data += vec3( max.x(), y, max.z() );
     }
 
     // +xz face
     for ( int i = 1; i < dim.x; ++i ) {
-        float x = min.x + i*h;
-        data += vec3( x, max.y, min.z );
-        data += vec3( x, max.y, max.z );
+        float x = min.x() + i*h;
+        data += vec3( x, max.y(), min.z() );
+        data += vec3( x, max.y(), max.z() );
     }
     for ( int i = 1; i < dim.z; ++i ) {
-        float z = min.z + i*h;
-        data += vec3( min.x, max.y, z );
-        data += vec3( max.x, max.y, z );
+        float z = min.z() + i*h;
+        data += vec3( min.x(), max.y(), z );
+        data += vec3( max.x(), max.y(), z );
     }
 
     m_vboSize = data.size();

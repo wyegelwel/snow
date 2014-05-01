@@ -177,7 +177,11 @@ void ViewPanel::updateColliders(float timestep) {
         if ( (*it)->hasRenderable() ) {
             if ( (*it)->getType() == SceneNode::SCENE_COLLIDER ) {
                 SceneCollider* c = dynamic_cast<SceneCollider*>((*it)->getRenderable());
-                glm::mat4 transform = glm::translate(glm::mat4(),c->getVelVec()*c->getVelMag()*timestep);
+                glm::vec3 v = c->getVelVec();
+                glm::vec4 newV = (*it)->getCTM()*glm::vec4(v,1);
+                if(glm::length(v) > 0)
+                    v = glm::normalize(glm::vec3(newV.x,newV.y,newV.z));
+                glm::mat4 transform = glm::translate(glm::mat4(),v*c->getVelMag()*timestep);
                 (*it)->applyTransformation(transform);
             }
         }
@@ -241,10 +245,16 @@ bool ViewPanel::startSimulation()
                     m_engine->setGrid( UiSettings::buildGrid((*it)->getCTM()) );
                 } else if ( (*it)->getType() == SceneNode::SCENE_COLLIDER ) {
                     SceneCollider *sceneCollider = dynamic_cast<SceneCollider*>((*it)->getRenderable());
-                    ImplicitCollider collider( *(sceneCollider->getImplicitCollider()) );
+                    ImplicitCollider &collider( *(sceneCollider->getImplicitCollider()) );
                     collider.applyTransformation( (*it)->getCTM() );
-                    collider.velocity = (*it)->getRenderable()->getVelMag()*(*it)->getRenderable()->getVelVec();
+                    glm::vec3 v = sceneCollider->getVelVec();
+                    glm::vec4 newV = (*it)->getCTM()*glm::vec4(v,1);
+                    std::cout << glm::to_string(v) << std::endl;
+                    if(glm::length(v)>0)
+                        v = glm::normalize(glm::vec3(newV.x,newV.y,newV.z));
+                    collider.velocity = (*it)->getRenderable()->getVelMag()*v;
                     m_engine->addCollider( collider );
+                    std::cout << glm::to_string(glm::vec3(collider.velocity)) << std::endl;
                 }
             }
         }
@@ -370,10 +380,18 @@ void ViewPanel::checkSelected()  {
        m_selected = NULL;
    }
    else if(counter == 1 && m_selected->getType() != SceneNode::SIMULATION_GRID)  {
-       vec3 v = m_selected->getRenderable()->getVelVec();
-       glm::vec4 vWorld = m_selected->getCTM()*glm::vec4(glm::vec3(v),1);
-       v = vec3(vWorld.x,vWorld.y,vWorld.z);
-       emit changeVel(true,m_selected->getRenderable()->getVelMag(),v.x,v.y,v.z);
+       glm::vec3 v = glm::vec3(m_selected->getRenderable()->getVelVec());
+       glm::vec4 vWorld = m_selected->getCTM()*glm::vec4((v),1);
+       float mag = glm::length(v);
+       if EQ(mag, 0)
+       {
+           emit changeVel(true,m_selected->getRenderable()->getVelMag(),0,0,0);
+       }
+       else
+       {
+           v = glm::normalize(glm::vec3(vWorld.x,vWorld.y,vWorld.z));
+           emit changeVel(true,m_selected->getRenderable()->getVelMag(),v.x,v.y,v.z);
+       }
        emit changeSelection("Currently Selected: ",true,m_selected->getType());
    }
    else if(counter == 1 && m_selected->getType() == SceneNode::SIMULATION_GRID)  {

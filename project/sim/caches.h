@@ -60,7 +60,6 @@ struct ParticleCache
 {
     // Data used during initial node computations
     mat3 sigma;
-    vec3 particleGridPos;
 
     // Data used during implicit node velocity update
     mat3 Ap;

@@ -108,9 +108,9 @@ void MitsubaExporter::writeVOLHeader(std::ofstream &os, const int channels)
     // up for arbitrary scenes, so the blender plugin will support re-writing these values
     // before rendering.
 
-    float minX = m_grid.pos.x;
-    float minY = m_grid.pos.y;
-    float minZ = m_grid.pos.z;
+    float minX = m_grid.pos.x();
+    float minY = m_grid.pos.y();
+    float minZ = m_grid.pos.z();
     float maxX = minX + h*m_grid.dim.x;
     float maxY = minY + h*m_grid.dim.y;
     float maxZ = minZ + h*m_grid.dim.z;

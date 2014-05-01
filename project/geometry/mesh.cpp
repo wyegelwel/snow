@@ -340,7 +340,7 @@ Mesh::renderArrow()
     glPushMatrix();
 //    glm::mat4 translate = glm::translate( glm::mat4(1.f), glm::vec3(0) );
     vec3 v = (this->getCentroid(glm::mat4(1.f)));
-    glm::mat4 translate = glm::translate( glm::mat4(1.f),glm::vec3(v.x,v.y,v.z));
+    glm::mat4 translate = glm::translate( glm::mat4(1.f),glm::vec3(v));
 //    glm::mat4 basis = glm::scale( Tool::getAxialBasis(i), glm::vec3(m_scale) );
     glm::mat4 basis = glm::orientation(m_velVec,glm::vec3(0,1,0));
     glMultMatrixf( glm::value_ptr(translate*basis) );
@@ -530,7 +530,7 @@ Mesh::getBBox( const glm::mat4 &ctm )
     BBox box;
     for ( int i = 0; i < getNumVertices(); ++i ) {
         const Vertex &v = m_vertices[i];
-        glm::vec4 point = ctm * glm::vec4( v.x, v.y, v.z, 1.f );
+        glm::vec4 point = ctm * glm::vec4( glm::vec3(v), 1.f );
         box += vec3( point.x, point.y, point.z );
     }
     return box;
@@ -542,7 +542,7 @@ Mesh::getCentroid( const glm::mat4 &ctm )
     vec3 c(0,0,0);
     for ( int i = 0; i < getNumVertices(); ++i ) {
         const Vertex &v = m_vertices[i];
-        glm::vec4 point = ctm * glm::vec4( v.x, v.y, v.z, 1.f );
+        glm::vec4 point = ctm * glm::vec4( glm::vec3(v), 1.f );
         c += vec3( point.x, point.y, point.z );
     }
     return c / (float)getNumVertices();
@@ -563,7 +563,7 @@ Mesh::applyTransformation( const glm::mat4 &transform )
 {
     for ( int i = 0; i < getNumVertices(); ++i ) {
         const Vertex &v = m_vertices[i];
-        glm::vec4 point = transform * glm::vec4( v.x, v.y, v.z, 1.f );
+        glm::vec4 point = transform * glm::vec4( glm::vec3(v), 1.f );
         m_vertices[i] = vec3( point.x, point.y, point.z );
     }
     computeNormals();

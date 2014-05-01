@@ -106,9 +106,10 @@ void MainWindow::setVelText(bool b,float f,float x, float y, float z) {
         ui->velLabel->setText("Velocity: ");
         return;
     }
-    vec3 v = vec3(x,y,z);
+    glm::vec3 v = vec3(x,y,z);
     v = v*f;
     QString toSet = "Velocity: (";
+
     QString s1 = QString::number(v.x,'g',2);
     toSet.append(s1);
     toSet.append(" m/s,");

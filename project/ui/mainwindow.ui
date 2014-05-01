@@ -24,22 +24,6 @@
     <property name="spacing">
      <number>3</number>
     </property>
-    <item row="0" column="1">
-     <widget class="ViewPanel" name="viewPanel" native="true">
-      <property name="sizePolicy">
-       <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-        <horstretch>0</horstretch>
-        <verstretch>0</verstretch>
-       </sizepolicy>
-      </property>
-      <property name="focusPolicy">
-       <enum>Qt::StrongFocus</enum>
-      </property>
-      <property name="autoFillBackground">
-       <bool>true</bool>
-      </property>
-     </widget>
-    </item>
     <item row="0" column="0">
      <widget class="QScrollArea" name="controlPanel">
       <property name="sizePolicy">
@@ -81,13 +65,13 @@
        <property name="geometry">
         <rect>
          <x>0</x>
-         <y>0</y>
+         <y>-29</y>
          <width>280</width>
          <height>1169</height>
         </rect>
        </property>
        <layout class="QGridLayout" name="gridLayout_2">
-        <item row="3" column="0">
+        <item row="4" column="0">
          <widget class="CollapsibleBox" name="snowContainersGroupBox">
           <property name="autoFillBackground">
            <bool>true</bool>
@@ -300,7 +284,44 @@
           </layout>
          </widget>
         </item>
-        <item row="5" column="0">
+        <item row="2" column="0">
+         <widget class="CollapsibleBox" name="SelectedObjectGroupBox">
+          <property name="title">
+           <string>Selected Object</string>
+          </property>
+          <layout class="QGridLayout" name="gridLayout_10">
+           <item row="3" column="1">
+            <widget class="QPushButton" name="MeshZeroVelocityButton">
+             <property name="text">
+              <string>Zero Velocity</string>
+             </property>
+            </widget>
+           </item>
+           <item row="3" column="0">
+            <widget class="QPushButton" name="meshGiveVelocityButton">
+             <property name="text">
+              <string>Give Velocity</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="0" colspan="2">
+            <widget class="QLabel" name="currentlySelectedLabel">
+             <property name="text">
+              <string>Currently Selected: None</string>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="0" colspan="2">
+            <widget class="QLabel" name="velLabel">
+             <property name="text">
+              <string>Velocity: </string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item row="8" column="0">
          <widget class="CollapsibleBox" name="simulationGroupBox">
           <property name="autoFillBackground">
            <bool>true</bool>
@@ -694,7 +715,7 @@
           </layout>
          </widget>
         </item>
-        <item row="12" column="0">
+        <item row="15" column="0">
          <widget class="Line" name="line_4">
           <property name="autoFillBackground">
            <bool>true</bool>
@@ -704,7 +725,7 @@
           </property>
          </widget>
         </item>
-        <item row="13" column="0">
+        <item row="16" column="0">
          <spacer name="verticalSpacer">
           <property name="autoFillBackground">
            <bool>true</bool>
@@ -730,7 +751,7 @@
           </property>
          </widget>
         </item>
-        <item row="10" column="0">
+        <item row="13" column="0">
          <widget class="Line" name="line_3">
           <property name="autoFillBackground">
            <bool>true</bool>
@@ -740,7 +761,7 @@
           </property>
          </widget>
         </item>
-        <item row="11" column="0">
+        <item row="14" column="0">
          <widget class="CollapsibleBox" name="viewPanelGroupBox">
           <property name="autoFillBackground">
            <bool>true</bool>
@@ -1242,7 +1263,7 @@
           </layout>
          </widget>
         </item>
-        <item row="4" column="0">
+        <item row="6" column="0">
          <widget class="Line" name="line">
           <property name="autoFillBackground">
            <bool>true</bool>
@@ -1252,7 +1273,7 @@
           </property>
          </widget>
         </item>
-        <item row="6" column="0">
+        <item row="9" column="0">
          <widget class="Line" name="line_2">
           <property name="autoFillBackground">
            <bool>true</bool>
@@ -1262,44 +1283,7 @@
           </property>
          </widget>
         </item>
-        <item row="2" column="0">
-         <widget class="CollapsibleBox" name="SelectedObjectGroupBox">
-          <property name="title">
-           <string>Selected Object</string>
-          </property>
-          <layout class="QGridLayout" name="gridLayout_10">
-           <item row="3" column="1">
-            <widget class="QPushButton" name="MeshZeroVelocityButton">
-             <property name="text">
-              <string>Zero Velocity</string>
-             </property>
-            </widget>
-           </item>
-           <item row="3" column="0">
-            <widget class="QPushButton" name="meshGiveVelocityButton">
-             <property name="text">
-              <string>Give Velocity</string>
-             </property>
-            </widget>
-           </item>
-           <item row="1" column="0" colspan="2">
-            <widget class="QLabel" name="currentlySelectedLabel">
-             <property name="text">
-              <string>Currently Selected: None</string>
-             </property>
-            </widget>
-           </item>
-           <item row="2" column="0" colspan="2">
-            <widget class="QLabel" name="velLabel">
-             <property name="text">
-              <string>Velocity: </string>
-             </property>
-            </widget>
-           </item>
-          </layout>
-         </widget>
-        </item>
-        <item row="7" column="0">
+        <item row="3" column="0">
          <widget class="CollapsibleBox" name="collidersGroupBox">
           <property name="autoFillBackground">
            <bool>true</bool>
@@ -1355,6 +1339,25 @@
         </item>
        </layout>
       </widget>
+     </widget>
+    </item>
+    <item row="1" column="2">
+     <widget class="QLineEdit" name="lineEdit"/>
+    </item>
+    <item row="0" column="1">
+     <widget class="ViewPanel" name="viewPanel" native="true">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="focusPolicy">
+       <enum>Qt::StrongFocus</enum>
+      </property>
+      <property name="autoFillBackground">
+       <bool>true</bool>
+      </property>
      </widget>
     </item>
    </layout>
