@@ -12,6 +12,7 @@
 #define SCENE_H
 
 #include "glm/mat4x4.hpp"
+#include "sim/implicitcollider.h"
 
 class ParticleSystem;
 class Renderable;
@@ -44,6 +45,8 @@ public:
     void reset();
     void initSceneGrid();
     void updateSceneGrid();
+
+    void addCollider(const ColliderType &t,const glm::vec3 &center, const glm::vec3 &param, const glm::vec3 &velocity);
 
 private:
 

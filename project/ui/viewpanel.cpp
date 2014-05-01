@@ -49,7 +49,7 @@
 
 #define FPS 30
 
-#define MAJOR_GRID_N 10
+#define MAJOR_GRID_N 2
 #define MAJOR_GRID_TICK 0.5
 #define MINOR_GRID_TICK 0.1
 

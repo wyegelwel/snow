@@ -67,6 +67,8 @@ public:
     void initParticleMaterials( int preset );
 
     void addCollider( const ImplicitCollider &collider ) { m_colliders += collider; }
+    void addCollider(const ColliderType &t,const glm::vec3 &center, const glm::vec3 &param, const glm::vec3 &velocity);
+
     void clearColliders() { m_colliders.clear(); }
 //    void updateColliders();
     QVector<ImplicitCollider>& colliders() { return m_colliders; }

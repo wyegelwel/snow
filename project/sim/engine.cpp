@@ -57,6 +57,11 @@ void Engine::setGrid(const Grid &grid)
     m_particleGrid->setGrid( grid );
 }
 
+void Engine::addCollider(const ColliderType &t, const glm::vec3 &center, const glm::vec3 &param, const glm::vec3 &velocity) {
+    const ImplicitCollider &col = ImplicitCollider(t,center,param,velocity);
+    m_colliders += col;
+}
+
 void Engine::addParticleSystem( const ParticleSystem &particles )
 {
     QVector<Particle> parts = particles.getParticles();

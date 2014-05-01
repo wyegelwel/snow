@@ -19,6 +19,7 @@
 #include "glm/vec4.hpp"
 #include "glm/gtc/matrix_transform.hpp"
 #include "glm/gtc/type_ptr.hpp"
+#include <glm/gtx/rotate_vector.hpp>
 
 #include "scene.h"
 
@@ -26,6 +27,8 @@
 #include "scene/scenegrid.h"
 #include "scene/scenenode.h"
 #include "scene/scenenodeiterator.h"
+#include "scene/scenecollider.h"
+#include "sim/implicitcollider.h"
 #include "ui/uisettings.h"
 
 #include "io/objparser.h"
@@ -157,6 +160,32 @@ Scene::deleteSelectedNodes()
             nodes += node->getChildren();
         }
     }
+}
+
+void
+Scene::addCollider(const ColliderType &t,const glm::vec3 &center, const glm::vec3 &param, const glm::vec3 &velocity)  {
+    SceneNode *node = new SceneNode( SceneNode::IMPLICIT_COLLIDER );
+
+    ImplicitCollider *collider = new ImplicitCollider(t,center,param,velocity);
+    SceneCollider *sceneCollider = new SceneCollider( collider );
+
+    sceneCollider->setVelMag(glm::length(velocity));
+    sceneCollider->setVelVec(glm::normalize(velocity));
+
+    node->setRenderable( sceneCollider );
+    glm::mat4 ctm = glm::translate(glm::mat4(1.f),center);
+
+    switch(t) {
+    case SPHERE:
+        ctm = glm::scale(ctm,glm::vec3(param.x,param.x,param.x));
+        break;
+    case HALF_PLANE:
+        ctm *= glm::orientation(param,glm::vec3(0,1,0));
+        break;
+    }
+    sceneCollider->setCTM(ctm);
+    node->applyTransformation(ctm);
+    m_root->addChild( node );
 }
 
 void
