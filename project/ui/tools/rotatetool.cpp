@@ -160,6 +160,7 @@ RotateTool::mouseMoved()
             if ( (*it)->hasRenderable() && (*it)->getRenderable()->isSelected() &&
                  (*it)->getType() != SceneNode::SIMULATION_GRID ) {
                 (*it)->applyTransformation( transform );
+                m_panel->checkSelected();
             }
 //            else if((*it)->getType() == SceneNode::IMPLICIT_COLLIDER && (*it)->hasRenderable() && (*it)->getRenderable()->isSelected())  {
 //                switch(dynamic_cast<SceneCollider*>((*it)->getRenderable())->getImplicitCollider()->type) {

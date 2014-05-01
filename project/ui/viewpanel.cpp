@@ -319,6 +319,7 @@ void ViewPanel::loadMesh( const QString &filename )
 
     m_tool->update();
 
+    checkSelected();
     if ( !UiSettings::showContainers() ) emit showMeshes();
 
 }
@@ -352,6 +353,39 @@ void ViewPanel::addCollider(int colliderType)  {
     sceneCollider->setSelected( true );
 
     m_tool->update();
+    checkSelected();
+}
+
+void ViewPanel::checkSelected()  {
+   int counter = 0;
+   for ( SceneNodeIterator it = m_scene->begin(); it.isValid(); ++it ) {
+       if ( (*it)->hasRenderable() &&(*it)->getRenderable()->isSelected()) {
+           counter++;
+           m_selected = (*it);
+       }
+   }
+   if(counter == 0)  {
+       emit changeVel(false);
+       emit changeSelection("Currently Selected: none",false);
+       m_selected = NULL;
+   }
+   else if(counter == 1 && m_selected->getType() != SceneNode::SIMULATION_GRID)  {
+       vec3 v = m_selected->getRenderable()->getVelVec();
+       glm::vec4 vWorld = m_selected->getCTM()*glm::vec4(glm::vec3(v),1);
+       v = vec3(vWorld.x,vWorld.y,vWorld.z);
+       emit changeVel(true,m_selected->getRenderable()->getVelMag(),v.x,v.y,v.z);
+       emit changeSelection("Currently Selected: ",true,m_selected->getType());
+   }
+   else if(counter == 1 && m_selected->getType() == SceneNode::SIMULATION_GRID)  {
+       emit changeVel(false);
+       emit changeSelection("Currently Selected: Grid",false);
+   }
+   else  {
+       std::cout << "now here" << std::endl;
+       emit changeVel(false);
+       emit changeSelection("Currently Selected: more than one object",false);
+       m_selected = NULL;
+   }
 }
 
 void ViewPanel::setTool( int tool )
@@ -387,6 +421,7 @@ ViewPanel::clearSelection()
             (*it)->getRenderable()->setSelected( false );
         }
     }
+    checkSelected();
 }
 
 void ViewPanel::updateSceneGrid()
@@ -535,6 +570,7 @@ void ViewPanel::fillSelectedMesh()
 }
 
 void ViewPanel::giveVelToSelected() {
+    if(!m_selected) return;
     for ( SceneNodeIterator it = m_scene->begin(); it.isValid(); ++it ) {
         if ( (*it)->hasRenderable() &&
              (*it)->getType() != SceneNode::SIMULATION_GRID &&
@@ -544,9 +580,11 @@ void ViewPanel::giveVelToSelected() {
             (*it)->getRenderable()->updateMeshVel();
         }
     }
+    checkSelected();
 }
 
 void ViewPanel::zeroVelOfSelected()  {
+    if(!m_selected) return;
     for ( SceneNodeIterator it = m_scene->begin(); it.isValid(); ++it ) {
         if ( (*it)->hasRenderable() &&
              (*it)->getType() != SceneNode::SIMULATION_GRID &&
@@ -556,6 +594,7 @@ void ViewPanel::zeroVelOfSelected()  {
             (*it)->getRenderable()->updateMeshVel();
         }
     }
+    checkSelected();
 }
 
 void

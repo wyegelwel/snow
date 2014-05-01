@@ -89,6 +89,56 @@ void MainWindow::stopSimulation()
     ui->resetButton->setEnabled( true );
 }
 
+//void MainWindow::setVelMagText(float f,bool b)  {
+//    if(!b) {
+//        ui->velMagLabel->setText("Velocity Magnitued: " );
+//        return;
+//    }
+//    QString s = QString::number(f,'g',4);
+//    QString toSet = "Velocity Magnitude: ";
+//    toSet.append(s);
+//    toSet.append(" m/s");
+//    ui->velMagLabel->setText(toSet);
+//}
+
+void MainWindow::setVelText(bool b,float f,float x, float y, float z) {
+    if(!b)  {
+        ui->velLabel->setText("Velocity: ");
+        return;
+    }
+    vec3 v = vec3(x,y,z);
+    v = v*f;
+    QString toSet = "Velocity: (";
+    QString s1 = QString::number(v.x,'g',2);
+    toSet.append(s1);
+    toSet.append(" m/s,");
+    QString s2 = QString::number(v.y,'g',2);
+    toSet.append(s2);
+    toSet.append(" m/s,");
+    QString s3 = QString::number(v.z,'g',2);
+    toSet.append(s3);
+    toSet.append(" m/s)");
+    ui->velLabel->setText(toSet);
+
+}
+
+void MainWindow::setSelectionText(QString s, bool b, int i)  {
+    if(!b) {
+        ui->currentlySelectedLabel->setText(s);
+        return;
+    }
+    switch(i)  {
+    case(1):
+        ui->currentlySelectedLabel->setText("Currently Selected: Collider");
+        break;
+    case(2):
+        ui->currentlySelectedLabel->setText("Currently Selected: Snow Container");
+        break;
+    default:
+        break;
+    }
+}
+
 void MainWindow::takeScreenshot()
 {
     // this has issues rasterizing particles...
@@ -162,8 +212,8 @@ void MainWindow::setupUI()
 
     // SceneCollider
     assert( connect(ui->colliderAddButton, SIGNAL(clicked()), this, SLOT(addCollider())) );
-    assert( connect(ui->ColliderVelocityButton, SIGNAL(clicked()), ui->viewPanel,SLOT(giveVelToSelected())));
-    assert( connect(ui->colliderZeroButton, SIGNAL(clicked()), ui->viewPanel,SLOT(zeroVelOfSelected())));
+//    assert( connect(ui->ColliderVelocityButton, SIGNAL(clicked()), ui->viewPanel,SLOT(giveVelToSelected())));
+//    assert( connect(ui->colliderZeroButton, SIGNAL(clicked()), ui->viewPanel,SLOT(zeroVelOfSelected())));
 
     // View Panel
     assert( connect(ui->showContainersCheckbox, SIGNAL(toggled(bool)), ui->showContainersCombo, SLOT(setEnabled(bool))) );
@@ -194,7 +244,15 @@ void MainWindow::setupUI()
     assert( connect(ui->toolButtonGroup, SIGNAL(buttonClicked(int)), ui->viewPanel, SLOT(setTool(int))) );
     ui->selectionToolButton->click();
 
+    // Selected Object
+//    assert( connect(ui->viewPanel,SIGNAL(changeVelMag(float,bool)),this,SLOT(setVelMagText(float,bool))) );
+//    assert( connect(ui->viewPanel,SIGNAL(changeVelVec(vec3,bool)),this,SLOT(setVelVecText(vec3,bool))) );
+    assert( connect(ui->viewPanel,SIGNAL(changeVel(bool,float,float,float,float)),this,SLOT(setVelText(bool,float,float,float,float))) );
+    assert( connect(ui->viewPanel,SIGNAL(changeSelection(QString,bool,int)),this,SLOT(setSelectionText(QString,bool,int))) );
+
+
     ui->toolGroupBox->init();
+    ui->SelectedObjectGroupBox->init();
     ui->snowContainersGroupBox->init();
     ui->simulationGroupBox->init();
     ui->gridGroupBox->init();
