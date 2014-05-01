@@ -121,6 +121,32 @@ __host__ void initializeParticleVolumes( Particle *particles, int numParticles, 
     checkCudaErrors( cudaFree(devNodeMasses) );
 }
 
+__global__ void fillParticleNodeIndexCache( const Particle *particles, ParticleCache *pCaches, const Grid *grid){
+    int particleIdx = blockIdx.y*gridDim.x*blockDim.x + blockIdx.x*blockDim.x + threadIdx.x;
+
+    const Particle &particle = particles[particleIdx];
+    ParticleCache &pCache = pCaches[particleIdx];
+    NodeIndexCache &nIdxCache = pCache.nodeIdxCache[threadIdx.y];
+
+    glm::ivec3 currIJK;
+    pCache.particleGridPos = (particle.position - grid->pos)/grid->h;
+    Grid::gridIndexToIJK(threadIdx.y, glm::ivec3(4,4,4), currIJK);
+    currIJK += glm::ivec3( pCache.particleGridPos-1 );
+
+    if ( Grid::withinBoundsInclusive(currIJK, glm::ivec3(0,0,0), grid->dim) ) {
+        float w;
+        vec3 wg;
+        vec3 nodePosition(currIJK.x, currIJK.y, currIJK.z);
+        weightAndGradient( pCache.particleGridPos - nodePosition, w, wg );
+
+        nIdxCache.nodeIdx = grid->getGridIndex(currIJK, grid->nodeDim());
+        nIdxCache.w = w;
+        nIdxCache.wg = wg;
+     }else{
+        nIdxCache.nodeIdx = -1;
+    }
+}
+
 __global__ void computeSigma( const Particle *particles, ParticleCache *pCaches, const Grid *grid )
 {
     int particleIdx = blockIdx.x*blockDim.x + threadIdx.x;
@@ -143,7 +169,6 @@ __global__ void computeSigma( const Particle *particles, ParticleCache *pCaches,
     float lambdaFp = material.lambda*__expf(material.xi*(1-Jpp));
 
     pCache.sigma = (2*muFp*mat3::multiplyABt(Fe-Re, Fe) + mat3(lambdaFp*(Jep-1)*Jep)) * -particle.volume;
-    pCache.particleGridPos = (particle.position - grid->pos)/grid->h;
 }
 
 /**
@@ -166,23 +191,14 @@ __global__ void computeCellMassVelocityAndForceFast( const Particle *particleDat
 
     const Particle &particle = particleData[particleIdx];
     const ParticleCache &pCache = pCaches[particleIdx];
-
-    glm::ivec3 currIJK;
-    Grid::gridIndexToIJK(threadIdx.y, glm::ivec3(4,4,4), currIJK);
-    currIJK += glm::ivec3( pCache.particleGridPos-1 );
-
-    if ( Grid::withinBoundsInclusive(currIJK, glm::ivec3(0,0,0), grid->dim) ) {
-        Node &node = nodes[Grid::getGridIndex(currIJK, grid->dim+1)];
-
-        float w;
-        vec3 wg;
-        vec3 nodePosition(currIJK.x, currIJK.y, currIJK.z);
-        weightAndGradient( pCache.particleGridPos - nodePosition, w, wg );
-
-        atomicAdd( &node.mass, particle.mass*w );
-        atomicAdd( &node.velocity, particle.velocity*particle.mass*w );
-        atomicAdd( &node.force, pCache.sigma*wg );
-     }
+    const NodeIndexCache &nIdxCache = pCache.nodeIdxCache[threadIdx.y];
+    if (nIdxCache.nodeIdx >= 0){
+        Node &node = nodes[nIdxCache.nodeIdx];
+        float weightedMass = particle.mass*nIdxCache.w;
+        atomicAdd( &node.mass, weightedMass );
+        atomicAdd( &node.velocity, particle.velocity*weightedMass );
+        atomicAdd( &node.force, pCache.sigma*nIdxCache.wg );
+    }
 }
 
 /**
@@ -236,49 +252,17 @@ __global__ void updateNodeVelocities( Node *nodes, int numNodes, float dt, const
 }
 
 // Use weighting functions to compute particle velocity gradient and update particle velocity
-__device__ void processGridVelocities( Particle &particle, const Grid *grid, const Node *nodes, mat3 &velocityGradient )
+__device__ void processGridVelocities( Particle &particle, const ParticleCache &pCache, const Grid *grid, const Node *nodes, mat3 &velocityGradient )
 {
-    const vec3 &pos = particle.position;
-    const glm::ivec3 &dim = grid->dim;
-    const float h = grid->h;
-
-    // Compute neighborhood of particle in grid
-    vec3 gridIndex = (pos - grid->pos) / h,
-         gridMax = vec3::floor( gridIndex + vec3(2,2,2) ),
-         gridMin = vec3::ceil( gridIndex - vec3(2,2,2) );
-    glm::ivec3 maxIndex = glm::clamp( glm::ivec3(gridMax), glm::ivec3(0,0,0), dim ),
-               minIndex = glm::clamp( glm::ivec3(gridMin), glm::ivec3(0,0,0), dim );
-
-    // For computing particle velocity gradient:
-    //      grad(v_p) = sum( v_i * transpose(grad(w_ip)) ) = [3x3 matrix]
-    // For updating particle velocity:
-    //      v_PIC = sum( v_i * w_ip )
-    //      v_FLIP = v_p + sum( dv_i * w_ip )
-    //      v = (1-alpha)*v_PIC _ alpha*v_FLIP
     vec3 v_PIC(0,0,0), dv_FLIP(0,0,0);
-    int rowSize = dim.z+1;
-    int pageSize = (dim.y+1)*rowSize;
-    for ( int i = minIndex.x; i <= maxIndex.x; ++i ) {
-        vec3 d, s;
-        d.x = gridIndex.x - i;
-        d.x *= ( s.x = ( d.x < 0 ) ? -1.f : 1.f );
-        int pageOffset = i*pageSize;
-        for ( int j = minIndex.y; j <= maxIndex.y; ++j ) {
-            d.y = gridIndex.y - j;
-            d.y *= ( s.y = ( d.y < 0 ) ? -1.f : 1.f );
-            int rowOffset = pageOffset + j*rowSize;
-            for ( int k = minIndex.z; k <= maxIndex.z; ++k ) {
-                d.z = gridIndex.z - k;
-                d.z *= ( s.z = ( d.z < 0 ) ? -1.f : 1.f );
-                const Node &node = nodes[rowOffset+k];
-                float w;
-                vec3 wg;
-                weightAndGradient( -s, d, w, wg );
-                velocityGradient += mat3::outerProduct( node.velocity, wg );
-                // Particle velocities
-                v_PIC += node.velocity * w;
-                dv_FLIP += node.velocityChange * w;
-            }
+    for (int i = 0; i < 64; i++){
+        const NodeIndexCache &nIdxCache = pCache.nodeIdxCache[i];
+        if (nIdxCache.nodeIdx > -1){
+            const Node &node = nodes[nIdxCache.nodeIdx];
+            velocityGradient += mat3::outerProduct( node.velocity, nIdxCache.wg );
+            // Particle velocities
+            v_PIC += node.velocity * nIdxCache.w;
+            dv_FLIP += node.velocityChange * nIdxCache.w;
         }
     }
     particle.velocity = (1.f-ALPHA)*v_PIC + ALPHA*(particle.velocity+dv_FLIP);
@@ -317,15 +301,16 @@ __device__ void updateParticleDeformationGradients( Particle &particle, const ma
 //    particle.plasticF = V * mat3::inverse( S ) * mat3::transpose( W ) * particle.elasticF * particle.plasticF;
 }
 
-__global__ void updateParticlesFromGrid( Particle *particles, const Grid *grid, const Node *nodes, float timeStep, const ImplicitCollider *colliders, int numColliders )
+__global__ void updateParticlesFromGrid( Particle *particles, ParticleCache *pCaches, const Grid *grid, const Node *nodes, float timeStep, const ImplicitCollider *colliders, int numColliders )
 {
     int tid = threadIdx.x + blockIdx.x * blockDim.x;
 
     Particle &particle = particles[tid];
+    const ParticleCache &pCache = pCaches[tid];
 
     // Update particle velocities and fill in velocity gradient for deformation gradient computation
     mat3 velocityGradient = mat3( 0.f );
-    processGridVelocities( particle, grid, nodes, velocityGradient );
+    processGridVelocities( particle, pCache, grid, nodes, velocityGradient );
 
     updateParticleDeformationGradients( particle, velocityGradient, timeStep );
 
@@ -352,7 +337,7 @@ __host__ void updateParticles( Particle *particles, ParticleCache *pCaches, int 
     const dim3 pBlocks2D( (numParticles+THREAD_COUNT-1)/THREAD_COUNT, 64 );
     const dim3 threads2D( THREAD_COUNT/64, 64 );
 
-    LAUNCH( computeSigma<<<pBlocks1D,threads1D>>>(particles,pCaches,grid) );
+    LAUNCH( fillParticleNodeIndexCache<<<pBlocks2D, threads2D>>>( particles, pCaches, grid); computeSigma<<<pBlocks1D,threads1D>>>(particles,pCaches,grid) );
 
     LAUNCH( computeCellMassVelocityAndForceFast<<<pBlocks2D,threads2D>>>(particles,pCaches,grid,nodes) );
 
@@ -360,5 +345,5 @@ __host__ void updateParticles( Particle *particles, ParticleCache *pCaches, int 
 
     if ( implicitUpdate ) integrateNodeForces( particles, pCaches, numParticles, grid, nodes, nodeCaches, numNodes, timeStep );
 
-    LAUNCH( updateParticlesFromGrid<<<pBlocks1D,threads1D>>>(particles,grid,nodes,timeStep,colliders,numColliders) );
+    LAUNCH( updateParticlesFromGrid<<<pBlocks1D,threads1D>>>(particles, pCaches, grid,nodes,timeStep,colliders,numColliders) );
 }

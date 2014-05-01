@@ -56,11 +56,18 @@ struct NodeCache
 
 };
 
+struct NodeIndexCache{
+    int nodeIdx;
+    float w;
+    vec3 wg;
+};
+
 struct ParticleCache
 {
     // Data used during initial node computations
     mat3 sigma;
     vec3 particleGridPos;
+    NodeIndexCache nodeIdxCache[64];
 
     // Data used during implicit node velocity update
     mat3 Ap;

@@ -48,39 +48,15 @@ __global__ void computedF( const Particle *particles, ParticleCache *pCaches,
     const Particle &particle = particles[particleIdx];
     ParticleCache &pCache = pCaches[particleIdx];
 
-    const glm::ivec3 &dim = grid->dim;
+    mat3 dF(0.0);
 
-    // Compute neighborhood of particle in grid
-    vec3 gridIndex = (particle.position - grid->pos) / grid->h,
-         gridMax = vec3::floor( gridIndex + vec3(2,2,2) ),
-         gridMin = vec3::ceil( gridIndex - vec3(2,2,2) );
-    glm::ivec3 maxIndex = glm::clamp( glm::ivec3(gridMax), glm::ivec3(0,0,0), dim ),
-               minIndex = glm::clamp( glm::ivec3(gridMin), glm::ivec3(0,0,0), dim );
+    for (int i = 0; i < 64; i++){
+        const NodeIndexCache &nIdxCache = pCache.nodeIdxCache[i];
+        if (nIdxCache.nodeIdx >= 0){
+            const NodeCache &nodeCache = nodeCaches[nIdxCache.nodeIdx];
+            vec3 du_j = dt * nodeCache[uOffset];
 
-    // Fill dF
-    mat3 dF(0.0f);
-    int rowSize = dim.z+1;
-    int pageSize = (dim.y+1)*rowSize;
-    for ( int i = minIndex.x; i <= maxIndex.x; ++i ) {
-        vec3 d, s;
-        d.x = gridIndex.x - i;
-        d.x *= ( s.x = ( d.x < 0 ) ? -1.f : 1.f );
-        int pageOffset = i*pageSize;
-        for ( int j = minIndex.y; j <= maxIndex.y; ++j ) {
-            d.y = gridIndex.y - j;
-            d.y *= ( s.y = ( d.y < 0 ) ? -1.f : 1.f );
-            int rowOffset = pageOffset + j*rowSize;
-            for ( int k = minIndex.z; k <= maxIndex.z; ++k ) {
-                d.z = gridIndex.z - k;
-                d.z *= ( s.z = ( d.z < 0 ) ? -1.f : 1.f );
-                vec3 wg;
-                weightGradient( s, d, wg );
-
-                const NodeCache &nodeCache = nodeCaches[rowOffset+k];
-                vec3 du_j = dt * nodeCache[uOffset];
-
-                dF += mat3::outerProduct( du_j, wg );
-            }
+            dF += mat3::outerProduct( du_j, nIdxCache.wg );
         }
     }
 
@@ -94,26 +70,14 @@ __global__ void computeFeHat(Particle *particles, Grid *grid, float dt, Node *no
        Particle &particle = particles[particleIdx];
        ParticleCache &pCache = pCaches[particleIdx];
 
-       vec3 particleGridPos = (particle.position - grid->pos) / grid->h;
-       glm::ivec3 min = glm::ivec3(std::ceil(particleGridPos.x - 2), std::ceil(particleGridPos.y - 2), std::ceil(particleGridPos.z - 2));
-       glm::ivec3 max = glm::ivec3(std::floor(particleGridPos.x + 2), std::floor(particleGridPos.y + 2), std::floor(particleGridPos.z + 2));
-
        mat3 vGradient(0.0f);
 
-       min = glm::max(glm::ivec3(0.0f), min);
-       max = glm::min(grid->dim, max);
-       for (int i = min.x; i <= max.x; i++){
-           for (int j = min.y; j <= max.y; j++){
-               for (int k = min.z; k <= max.z; k++){
-                   int currIdx = grid->getGridIndex(i, j, k, grid->dim+1);
-                   Node &node = nodes[currIdx];
-
-                   vec3 wg;
-                   weightGradient(particleGridPos - vec3(i, j, k), wg);
-
-                   vGradient += mat3::outerProduct(dt*node.velocity, wg);
-               }
-           }
+       for (int i = 0; i < 64; i++){
+           const NodeIndexCache &nIdxCache = pCache.nodeIdxCache[i];
+           if (nIdxCache.nodeIdx >= 0){
+               Node &node = nodes[nIdxCache.nodeIdx];
+               vGradient += mat3::outerProduct(dt*node.velocity, nIdxCache.wg);
+            }
        }
 
        pCache.FeHat = mat3::addIdentity(vGradient) * particle.elasticF;
@@ -226,21 +190,12 @@ __global__ void computedf( const Particle *particles, const ParticleCache *pCach
     int particleIdx = blockIdx.y*gridDim.x*blockDim.x + blockIdx.x*blockDim.x + threadIdx.x;
 
     const Particle &particle = particles[particleIdx];
-    vec3 gridPos = (particle.position-grid->pos)/grid->h;
+    const ParticleCache &pCache = pCaches[particleIdx];
+    const NodeIndexCache &nIdxCache = pCache.nodeIdxCache[threadIdx.y];
 
-    glm::ivec3 ijk;
-    Grid::gridIndexToIJK( threadIdx.y, glm::ivec3(4,4,4), ijk );
-    ijk += glm::ivec3( gridPos-1 );
-
-    if ( Grid::withinBoundsInclusive(ijk, glm::ivec3(0,0,0), grid->dim) ) {
-
-        vec3 wg;
-        vec3 nodePos(ijk);
-        weightGradient( gridPos-nodePos, wg );
-        vec3 df_j = -particle.volume * mat3::multiplyABt( pCaches[particleIdx].Ap, particle.elasticF ) * wg;
-
-        int gridIndex = Grid::getGridIndex( ijk, grid->nodeDim() );
-        atomicAdd( &(nodeCaches[gridIndex].df), df_j );
+    if (nIdxCache.nodeIdx >= 0){
+        vec3 df_j = -particle.volume * mat3::multiplyABt( pCaches[particleIdx].Ap, particle.elasticF ) * nIdxCache.wg;
+        atomicAdd( &(nodeCaches[nIdxCache.nodeIdx].df), df_j );
     }
 }
 
