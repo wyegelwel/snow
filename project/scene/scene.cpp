@@ -15,7 +15,7 @@
 #ifndef GLM_FORCE_RADIANS
     #define GLM_FORCE_RADIANS
 #endif
-#include "glm/mat4x4.hpp"
+
 #include "glm/vec4.hpp"
 #include "glm/gtc/matrix_transform.hpp"
 #include "glm/gtc/type_ptr.hpp"
@@ -28,19 +28,14 @@
 #include "scene/scenenodeiterator.h"
 #include "ui/uisettings.h"
 
+#include "io/objparser.h"
+
+#include "geometry/mesh.h"
+
 Scene::Scene()
     : m_root(new SceneNode)
 {
-    // Add scene grid
-    SceneNode *gridNode = new SceneNode( SceneNode::SIMULATION_GRID );
-    Grid grid;
-    grid.pos = vec3(0,0,0);
-    grid.dim = UiSettings::gridDimensions();
-    grid.h = UiSettings::gridResolution();
-    gridNode->setRenderable( new SceneGrid(grid) );
-    glm::mat4 transform = glm::translate( glm::mat4(1.f), glm::vec3(UiSettings::gridPosition().x,UiSettings::gridPosition().y,UiSettings::gridPosition().z) );
-    gridNode->applyTransformation( transform );
-    m_root->addChild( gridNode );
+    initSceneGrid();
 }
 
 Scene::~Scene()
@@ -54,6 +49,28 @@ Scene::~Scene()
     }
     UiSettings::saveSettings();
     SAFE_DELETE( m_root );
+}
+
+void
+Scene::initSceneGrid()
+{
+    // Add scene grid
+    SceneNode *gridNode = new SceneNode( SceneNode::SIMULATION_GRID );
+    Grid grid;
+    grid.pos = vec3(0,0,0);
+    grid.dim = UiSettings::gridDimensions();
+    grid.h = UiSettings::gridResolution();
+    gridNode->setRenderable( new SceneGrid(grid) );
+    glm::mat4 transform = glm::translate( glm::mat4(1.f), glm::vec3(UiSettings::gridPosition().x,UiSettings::gridPosition().y,UiSettings::gridPosition().z) );
+    gridNode->applyTransformation( transform );
+    m_root->addChild( gridNode );
+}
+
+void
+Scene::reset()
+{
+    SAFE_DELETE(m_root);
+    m_root = new SceneNode;
 }
 
 void
@@ -124,5 +141,20 @@ Scene::deleteSelectedNodes()
         } else {
             nodes += node->getChildren();
         }
+    }
+}
+
+void
+Scene::loadMesh(const QString &filename, glm::mat4 CTM)
+{
+    QList<Mesh*> meshes;
+    OBJParser::load( filename, meshes );
+    for ( int i = 0; i < meshes.size(); ++i ) {
+        Mesh *mesh = meshes[i];
+        mesh->setType( Mesh::SNOW_CONTAINER );
+        SceneNode *node = new SceneNode( SceneNode::SNOW_CONTAINER );
+        node->setRenderable( mesh );
+        node->applyTransformation(CTM);
+        m_root->addChild(node);
     }
 }

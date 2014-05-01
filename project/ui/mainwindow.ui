@@ -1280,10 +1280,10 @@
     <property name="title">
      <string>File</string>
     </property>
-    <addaction name="actionScreenshot"/>
-    <addaction name="actionSave_Mesh"/>
-    <addaction name="actionLoad_Scene"/>
+    <addaction name="actionOpen_Scene"/>
     <addaction name="actionSave_Scene"/>
+    <addaction name="actionSave_Mesh"/>
+    <addaction name="actionScreenshot"/>
    </widget>
    <widget class="QMenu" name="menuDemo">
     <property name="title">
@@ -1321,12 +1321,12 @@
     <string>Save Mesh</string>
    </property>
   </action>
-  <action name="actionLoad_Scene">
+  <action name="actionOpen_Scene">
    <property name="text">
     <string>Open Scene</string>
    </property>
    <property name="shortcut">
-    <string>Ctrl+O, Ctrl+S</string>
+    <string>Ctrl+O</string>
    </property>
   </action>
   <action name="actionSave_Scene">
@@ -1377,22 +1377,6 @@
     <hint type="destinationlabel">
      <x>499</x>
      <y>299</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>actionDemoTeapot</sender>
-   <signal>triggered()</signal>
-   <receiver>viewPanel</receiver>
-   <slot>teapotDemo()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>-1</x>
-     <y>-1</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>651</x>
-     <y>307</y>
     </hint>
    </hints>
   </connection>

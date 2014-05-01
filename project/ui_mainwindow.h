@@ -1,7 +1,7 @@
 /********************************************************************************
 ** Form generated from reading UI file 'mainwindow.ui'
 **
-** Created: Wed Apr 30 23:39:13 2014
+** Created: Thu May 1 03:12:04 2014
 **      by: Qt User Interface Compiler version 4.8.2
 **
 ** WARNING! All changes made in this file will be lost when recompiling UI file!
@@ -43,7 +43,7 @@ public:
     QAction *actionScreenshot;
     QAction *actionDemoTeapot;
     QAction *actionSave_Mesh;
-    QAction *actionLoad_Scene;
+    QAction *actionOpen_Scene;
     QAction *actionSave_Scene;
     QWidget *centralWidget;
     QGridLayout *gridLayout;
@@ -144,8 +144,8 @@ public:
         actionDemoTeapot->setObjectName(QString::fromUtf8("actionDemoTeapot"));
         actionSave_Mesh = new QAction(MainWindow);
         actionSave_Mesh->setObjectName(QString::fromUtf8("actionSave_Mesh"));
-        actionLoad_Scene = new QAction(MainWindow);
-        actionLoad_Scene->setObjectName(QString::fromUtf8("actionLoad_Scene"));
+        actionOpen_Scene = new QAction(MainWindow);
+        actionOpen_Scene->setObjectName(QString::fromUtf8("actionOpen_Scene"));
         actionSave_Scene = new QAction(MainWindow);
         actionSave_Scene->setObjectName(QString::fromUtf8("actionSave_Scene"));
         centralWidget = new QWidget(MainWindow);
@@ -184,7 +184,7 @@ public:
         controlPanel->setWidgetResizable(true);
         scrollAreaWidgetContents = new QWidget();
         scrollAreaWidgetContents->setObjectName(QString::fromUtf8("scrollAreaWidgetContents"));
-        scrollAreaWidgetContents->setGeometry(QRect(0, -467, 280, 1054));
+        scrollAreaWidgetContents->setGeometry(QRect(0, 0, 280, 1054));
         gridLayout_2 = new QGridLayout(scrollAreaWidgetContents);
         gridLayout_2->setSpacing(6);
         gridLayout_2->setContentsMargins(11, 11, 11, 11);
@@ -768,15 +768,14 @@ public:
 
         menuBar->addAction(menuFile->menuAction());
         menuBar->addAction(menuDemo->menuAction());
-        menuFile->addAction(actionScreenshot);
-        menuFile->addAction(actionSave_Mesh);
-        menuFile->addAction(actionLoad_Scene);
+        menuFile->addAction(actionOpen_Scene);
         menuFile->addAction(actionSave_Scene);
+        menuFile->addAction(actionSave_Mesh);
+        menuFile->addAction(actionScreenshot);
         menuDemo->addAction(actionDemoTeapot);
 
         retranslateUi(MainWindow);
         QObject::connect(actionScreenshot, SIGNAL(triggered()), MainWindow, SLOT(takeScreenshot()));
-        QObject::connect(actionDemoTeapot, SIGNAL(triggered()), viewPanel, SLOT(teapotDemo()));
 
         QMetaObject::connectSlotsByName(MainWindow);
     } // setupUi
@@ -788,8 +787,10 @@ public:
         actionScreenshot->setShortcut(QApplication::translate("MainWindow", "Ctrl+P", 0, QApplication::UnicodeUTF8));
         actionDemoTeapot->setText(QApplication::translate("MainWindow", "Teapot", 0, QApplication::UnicodeUTF8));
         actionSave_Mesh->setText(QApplication::translate("MainWindow", "Save Mesh", 0, QApplication::UnicodeUTF8));
-        actionLoad_Scene->setText(QApplication::translate("MainWindow", "Load Scene", 0, QApplication::UnicodeUTF8));
+        actionOpen_Scene->setText(QApplication::translate("MainWindow", "Open Scene", 0, QApplication::UnicodeUTF8));
+        actionOpen_Scene->setShortcut(QApplication::translate("MainWindow", "Ctrl+O", 0, QApplication::UnicodeUTF8));
         actionSave_Scene->setText(QApplication::translate("MainWindow", "Save Scene", 0, QApplication::UnicodeUTF8));
+        actionSave_Scene->setShortcut(QApplication::translate("MainWindow", "Ctrl+S", 0, QApplication::UnicodeUTF8));
         toolGroupBox->setTitle(QApplication::translate("MainWindow", "Tools", 0, QApplication::UnicodeUTF8));
         selectionToolButton->setText(QString());
         moveToolButton->setText(QString());

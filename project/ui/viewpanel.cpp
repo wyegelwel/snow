@@ -291,9 +291,11 @@ void ViewPanel::loadMesh( const QString &filename )
 
 }
 
-void ViewPanel::addCollider(ColliderType c,QString planeType)  {
+void ViewPanel::addCollider(ColliderType c)  {
+    // this is called from the UI, creates collider in center of world.
     //TODO add a collider to the scene and set it as selected renderable.
     ImplicitCollider *collider = new ImplicitCollider;
+
     vec3 parameter;
     SceneNode *node = new SceneNode( SceneNode::IMPLICIT_COLLIDER );
     glm::mat4 transform;glm::vec3 scale;float r;
@@ -524,11 +526,14 @@ ViewPanel::saveSelectedMesh()
 }
 
 bool
-ViewPanel::loadScene()
+ViewPanel::openScene()
 {
     // call file dialog
-    QString str;
-    m_sceneIO->read(str, m_scene, m_engine);
+    QString filename = QFileDialog::getOpenFileName(this, "Choose Scene File Path", PROJECT_PATH "/data/scenes/");
+    if (!filename.isNull())
+        m_sceneIO->read(filename, m_scene, m_engine);
+    else
+        LOG("could not open file \n");
 }
 
 bool
@@ -539,7 +544,7 @@ ViewPanel::saveScene()
     if (m_sceneIO->sceneFile().isNull())
     {
         // filename not initialized yet
-        QString filename = QFileDialog::getSaveFileName( this, "Choose Simulation File Path", PROJECT_PATH "/data/scenes/" );
+        QString filename = QFileDialog::getSaveFileName( this, "Choose Scene File Path", PROJECT_PATH "/data/scenes/" );
 
         if (!filename.isNull())
         {

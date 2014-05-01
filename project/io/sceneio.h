@@ -52,19 +52,23 @@ private:
     QString m_sceneFilePrefix;
     QDomDocument m_document; // XML document
 
-    /// importing
+    /// import functions
 
     void readExportSettings();
 
-    // TODO - add methods for parsing a file and setting up the scene.
+    void applySimulationParameters(Engine * engine);
+    void applyExportSettings();
+    void applyParticleSystem(Scene * scene);
+    void applyGrid(Engine * engine);
+    void applyColliders(Engine * engine);
 
-    /// high-level XML functions
+    /// export functions
 
-    void appendSimulationParameters(SimulationParameters params);
-    void appendParticleSystem(Scene * scene);
-    void appendGrid(Grid grid);
-    void appendColliders(QVector<ImplicitCollider> colliders);
-    void appendExportSettings();
+    void appendSimulationParameters(QDomElement root, SimulationParameters params);
+    void appendParticleSystem(QDomElement root, Scene * scene);
+    void appendGrid(QDomElement root, Scene * scene);
+    void appendColliders(QDomElement root, QVector<ImplicitCollider> colliders);
+    void appendExportSettings(QDomElement root);
 
     /// low level DOM node helpers
     void appendString(QDomElement node, const QString name, const QString value);
