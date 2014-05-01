@@ -31,7 +31,7 @@ public:
     enum Type
     {
         TRANSFORM,
-        IMPLICIT_COLLIDER,
+        SCENE_COLLIDER,
         SNOW_CONTAINER,
         SIMULATION_GRID
     };

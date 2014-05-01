@@ -216,7 +216,7 @@ ScaleTool::mouseMoved()
         uniformScale = T * uniformScale * Tinv;
         for ( SceneNodeIterator it = m_panel->m_scene->begin(); it.isValid(); ++it ) {
             if ( (*it)->hasRenderable() && (*it)->getRenderable()->isSelected() && (*it)->getType() != SceneNode::SIMULATION_GRID ) {
-                if ( (*it)->getType() == SceneNode::IMPLICIT_COLLIDER ) {
+                if ( (*it)->getType() == SceneNode::SCENE_COLLIDER ) {
                     (*it)->applyTransformation( uniformScale );
                 } else {
                     (*it)->applyTransformation( transform );

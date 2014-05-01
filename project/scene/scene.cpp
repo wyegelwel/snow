@@ -163,24 +163,33 @@ Scene::deleteSelectedNodes()
 }
 
 void
-Scene::addCollider(const ColliderType &t,const glm::vec3 &center, const glm::vec3 &param, const glm::vec3 &velocity)  {
-    SceneNode *node = new SceneNode( SceneNode::IMPLICIT_COLLIDER );
+Scene::addCollider(const ColliderType &t,const vec3 &center, const vec3 &param, const vec3 &velocity)  {
+    SceneNode *node = new SceneNode( SceneNode::SCENE_COLLIDER );
 
     ImplicitCollider *collider = new ImplicitCollider(t,center,param,velocity);
     SceneCollider *sceneCollider = new SceneCollider( collider );
 
-    sceneCollider->setVelMag(glm::length(velocity));
-    sceneCollider->setVelVec(glm::normalize(velocity));
+    float mag = vec3::length(velocity);
+    if EQ(mag, 0)
+    {
+        sceneCollider->setVelMag(0);
+        sceneCollider->setVelVec(vec3(0,0,0));
+    }
+    else
+    {
+        sceneCollider->setVelMag(mag);
+        sceneCollider->setVelVec(vec3::normalize(velocity));
+    }
 
     node->setRenderable( sceneCollider );
-    glm::mat4 ctm = glm::translate(glm::mat4(1.f),center);
+    glm::mat4 ctm = glm::translate(glm::mat4(1.f),glm::vec3(center));
 
     switch(t) {
     case SPHERE:
         ctm = glm::scale(ctm,glm::vec3(param.x,param.x,param.x));
         break;
     case HALF_PLANE:
-        ctm *= glm::orientation(param,glm::vec3(0,1,0));
+        ctm *= glm::orientation(glm::vec3(param),glm::vec3(0,1,0));
         break;
     }
     sceneCollider->setCTM(ctm);

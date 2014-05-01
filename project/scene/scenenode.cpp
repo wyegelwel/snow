@@ -144,7 +144,7 @@ SceneNode::setCTMDirty()
 BBox
 SceneNode::getBBox()
 {
-    if ( m_bboxDirty || getType() == IMPLICIT_COLLIDER ) {
+    if ( m_bboxDirty || getType() == SCENE_COLLIDER ) {
         if ( hasRenderable() ) {
             m_bbox = m_renderable->getBBox( getCTM() );
         } else {

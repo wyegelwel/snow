@@ -81,7 +81,7 @@
        <property name="geometry">
         <rect>
          <x>0</x>
-         <y>-164</y>
+         <y>0</y>
          <width>280</width>
          <height>1116</height>
         </rect>
@@ -1368,14 +1368,7 @@
     <addaction name="actionSave_Mesh"/>
     <addaction name="actionScreenshot"/>
    </widget>
-   <widget class="QMenu" name="menuDemo">
-    <property name="title">
-     <string>Demo</string>
-    </property>
-    <addaction name="actionDemoTeapot"/>
-   </widget>
    <addaction name="menuFile"/>
-   <addaction name="menuDemo"/>
   </widget>
   <widget class="QToolBar" name="mainToolBar">
    <attribute name="toolBarArea">
@@ -1392,11 +1385,6 @@
    </property>
    <property name="shortcut">
     <string>Ctrl+P</string>
-   </property>
-  </action>
-  <action name="actionDemoTeapot">
-   <property name="text">
-    <string>Teapot</string>
    </property>
   </action>
   <action name="actionSave_Mesh">

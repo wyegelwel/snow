@@ -83,8 +83,6 @@ public slots:
     void zeroVelOfSelected();
     void giveVelToSelected();
 
-    // Demo Scenes
-    void teapotDemo();
 signals:
 
     void showMeshes();

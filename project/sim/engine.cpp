@@ -57,7 +57,7 @@ void Engine::setGrid(const Grid &grid)
     m_particleGrid->setGrid( grid );
 }
 
-void Engine::addCollider(const ColliderType &t, const glm::vec3 &center, const glm::vec3 &param, const glm::vec3 &velocity) {
+void Engine::addCollider(const ColliderType &t, const vec3 &center, const vec3 &param, const vec3 &velocity) {
     const ImplicitCollider &col = ImplicitCollider(t,center,param,velocity);
     m_colliders += col;
 }

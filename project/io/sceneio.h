@@ -60,14 +60,14 @@ private:
     void applyExportSettings();
     void applyParticleSystem(Scene * scene);
     void applyGrid(Scene * scene);
-    void applyColliders(Scene * scene);
+    void applyColliders(Scene * scene, Engine * engine);
 
     /// export functions
 
     void appendSimulationParameters(QDomElement root, float timeStep);
     void appendParticleSystem(QDomElement root, Scene * scene);
     void appendGrid(QDomElement root, Scene * scene);
-    void appendColliders(QDomElement root, QVector<ImplicitCollider> colliders);
+    void appendColliders(QDomElement root, Scene * scene);
     void appendExportSettings(QDomElement root);
 
     /// low level DOM node helpers

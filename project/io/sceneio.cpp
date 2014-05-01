@@ -20,7 +20,7 @@
 #include "geometry/mesh.h"
 #include "ui/uisettings.h"
 #include "cuda/vector.h"
-
+#include "scene/scenecollider.h"
 #include "glm/gtx/string_cast.hpp"
 
 #include "common/common.h"
@@ -39,6 +39,8 @@ void SceneIO::setSceneFile(QString filename)
 
 bool SceneIO::read(QString filename, Scene *scene, Engine *engine)
 {
+    m_document.clear();
+
     QFileInfo info(filename);
     m_sceneFilePrefix = QString("%1/%2").arg(info.absolutePath(),info.baseName());
 
@@ -54,10 +56,13 @@ bool SceneIO::read(QString filename, Scene *scene, Engine *engine)
     scene->reset();
     scene->initSceneGrid();
 
-    m_document.clear();
     QString errMsg; int errLine; int errCol;
     if (!m_document.setContent(file, &errMsg, &errLine, &errCol))
     {
+        QMessageBox msgBox;
+        errMsg = QString("XML Import Error : Line %1, Col %2 : %3").arg(QString::number(errLine),QString::number(errCol),errMsg);
+        msgBox.setText(errMsg);
+        msgBox.exec();
         return false;
     }
 
@@ -65,7 +70,7 @@ bool SceneIO::read(QString filename, Scene *scene, Engine *engine)
     applyExportSettings();
     applyParticleSystem(scene);
     applyGrid(scene);
-//    applyColliders(scene);
+    applyColliders(scene, engine);
 }
 
 void SceneIO::applySimulationParameters()
@@ -170,37 +175,39 @@ void SceneIO::applyGrid(Scene * scene)
     scene->updateSceneGrid();
 }
 
-void SceneIO::applyColliders(Scene * scene)
+void SceneIO::applyColliders(Scene * scene, Engine * engine)
 {
-    /// TODO - call ViewPanel::addCollider so it also shows up in the scene.
-    // for each collider, need to import it into the scene
-    // and call fillSelected
+    vec3 center, velocity, param;
+    int colliderType;
 
     QDomNodeList list = m_document.elementsByTagName("Collider");
-    for (int i=0; list.size(); ++i)
+    for (int i=0; i<list.size(); ++i)
     {
         QDomElement e = list.at(i).toElement();
-     //   Collider collider;
-        for (int j=0; e.childNodes().size(); j++)
+        colliderType = e.attribute("type").toInt();
+        for (int j=0; j<e.childNodes().size(); j++)
         {
-            QDomElement v = e.childNodes().at(j).toElement();
+            QDomElement c = e.childNodes().at(j).toElement();
             vec3 vector;
-            vector.x = v.attribute("x").toFloat();
-            vector.y = v.attribute("y").toFloat();
-            vector.z = v.attribute("z").toFloat();
-//            switch (v.attribute("name"))
-//            {
-//            case "center":
-//                break;
-//            case "velocity":
-//                break;
-//            case "param" :
-//                break;
-//            }
+            vector.x = c.attribute("x").toFloat();
+            vector.y = c.attribute("y").toFloat();
+            vector.z = c.attribute("z").toFloat();
+            QString name = c.attribute("name");
+            if (name.compare("center")==0)
+            {
+                center = vector;
+            }
+            else if (name.compare("velocity")==0)
+            {
+                velocity = vector;
+            }
+            else if (name.compare("param")==0)
+            {
+                param = vector;
+            }
         }
-
-// TODO - do this after collider initialization code is finished on UI side
-
+        scene->addCollider((ColliderType)colliderType, center, param, velocity);
+        engine->addCollider((ColliderType)colliderType, center, param, velocity);
     }
 }
 
@@ -208,6 +215,7 @@ void SceneIO::applyColliders(Scene * scene)
 
 bool SceneIO::write(Scene *scene, Engine *engine)
 {
+    m_document.clear();
     QDomProcessingInstruction processInstruct = m_document.createProcessingInstruction("xml", "version=\"1.0\" encoding=\"utf-8\" ");
     m_document.appendChild(processInstruct);
 
@@ -218,11 +226,11 @@ bool SceneIO::write(Scene *scene, Engine *engine)
     appendExportSettings(root);
     appendParticleSystem(root, scene);
     appendGrid(root, scene);
-    appendColliders(root, engine->colliders());
+    appendColliders(root, scene);
 
     QString fname = QString("%1.xml").arg(m_sceneFilePrefix);
     QFile file(fname);
-    if (!file.open(QIODevice::WriteOnly | QIODevice::Text))
+    if (!file.open(QIODevice::ReadWrite | QIODevice::Truncate | QIODevice::Text))
     {
         LOG("write failed!");
     }
@@ -236,22 +244,34 @@ bool SceneIO::write(Scene *scene, Engine *engine)
     }
 }
 
-void SceneIO::appendColliders(QDomElement root, QVector<ImplicitCollider> colliders)
+void SceneIO::appendColliders(QDomElement root, Scene * scene)
 {
-    if (colliders.size() < 1)
-        return;
+    int count = 0;
     QDomElement icNode = m_document.createElement("ImplicitColliders");
-    for (int i=0; i<colliders.size(); ++i)
-    {
-        ImplicitCollider collider = colliders[i];
-        QDomElement cNode = m_document.createElement("Collider");
-        appendVector(cNode, "center", collider.center);
-        appendVector(cNode, "velocity", collider.velocity);
-        appendVector(cNode, "param", collider.param);
-        icNode.appendChild(cNode);
-    }
 
-    root.appendChild(icNode);
+    vec3 velocity;
+    for ( SceneNodeIterator it = scene->begin(); it.isValid(); ++it )
+    {
+        if ((*it)->hasRenderable() && (*it)->getType() == SceneNode::SCENE_COLLIDER)
+        {
+            QDomElement cNode = m_document.createElement("Collider");
+            SceneCollider * sCollider = dynamic_cast<SceneCollider*>((*it)->getRenderable());
+            ImplicitCollider iCollider(*sCollider->getImplicitCollider()); // make copy
+
+            iCollider.applyTransformation((*it)->getCTM());
+            iCollider.velocity = (*it)->getRenderable()->getVelMag()*(*it)->getRenderable()->getVelVec();
+
+            cNode.setAttribute("type", iCollider.type);
+            appendVector(cNode, "center", iCollider.center);
+            appendVector(cNode, "velocity", iCollider.velocity);
+            appendVector(cNode, "param", iCollider.param);
+            icNode.appendChild(cNode);
+
+            count++;
+        }
+    }
+    if (count > 0)
+        root.appendChild(icNode);
 }
 
 void SceneIO::appendExportSettings(QDomElement root)

@@ -175,7 +175,7 @@ ViewPanel::paintGL()
 void ViewPanel::updateColliders(float timestep) {
     for ( SceneNodeIterator it = m_scene->begin(); it.isValid(); ++it ) {
         if ( (*it)->hasRenderable() ) {
-            if ( (*it)->getType() == SceneNode::IMPLICIT_COLLIDER ) {
+            if ( (*it)->getType() == SceneNode::SCENE_COLLIDER ) {
                 SceneCollider* c = dynamic_cast<SceneCollider*>((*it)->getRenderable());
                 glm::mat4 transform = glm::translate(glm::mat4(),c->getVelVec()*c->getVelMag()*timestep);
                 (*it)->applyTransformation(transform);
@@ -239,12 +239,11 @@ bool ViewPanel::startSimulation()
             if ( (*it)->hasRenderable() ) {
                 if ( (*it)->getType() == SceneNode::SIMULATION_GRID ) {
                     m_engine->setGrid( UiSettings::buildGrid((*it)->getCTM()) );
-                } else if ( (*it)->getType() == SceneNode::IMPLICIT_COLLIDER ) {
+                } else if ( (*it)->getType() == SceneNode::SCENE_COLLIDER ) {
                     SceneCollider *sceneCollider = dynamic_cast<SceneCollider*>((*it)->getRenderable());
                     ImplicitCollider collider( *(sceneCollider->getImplicitCollider()) );
                     collider.applyTransformation( (*it)->getCTM() );
                     collider.velocity = (*it)->getRenderable()->getVelMag()*(*it)->getRenderable()->getVelVec();
-                    std::cout << "collider vel here is: " << collider.velocity.y << std::endl;
                     m_engine->addCollider( collider );
                 }
             }
@@ -326,7 +325,7 @@ void ViewPanel::loadMesh( const QString &filename )
 
 void ViewPanel::addCollider(int colliderType)  {
     vec3 parameter;
-    SceneNode *node = new SceneNode( SceneNode::IMPLICIT_COLLIDER );
+    SceneNode *node = new SceneNode( SceneNode::SCENE_COLLIDER );
     float r;
     switch ( (ColliderType)colliderType ) {
         case SPHERE:
@@ -593,17 +592,20 @@ ViewPanel::saveSelectedMesh()
 bool
 ViewPanel::openScene()
 {
+    pauseDrawing();
     // call file dialog
     QString filename = QFileDialog::getOpenFileName(this, "Choose Scene File Path", PROJECT_PATH "/data/scenes/");
     if (!filename.isNull())
         m_sceneIO->read(filename, m_scene, m_engine);
     else
         LOG("could not open file \n");
+    resumeDrawing();
 }
 
 bool
 ViewPanel::saveScene()
 {
+    pauseDrawing();
     // this is enforced if engine->start is called and export is not checked
     QString foo = m_sceneIO->sceneFile();
     if (m_sceneIO->sceneFile().isNull())
@@ -628,5 +630,6 @@ ViewPanel::saveScene()
     {
         m_sceneIO->write(m_scene, m_engine);
     }
+    resumeDrawing();
 }
 
