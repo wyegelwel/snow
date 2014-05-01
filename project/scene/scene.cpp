@@ -181,6 +181,8 @@ Scene::addCollider(const ColliderType &t,const vec3 &center, const vec3 &param, 
         sceneCollider->setVelVec(vec3::normalize(velocity));
     }
 
+    sceneCollider->updateMeshVel();
+
     node->setRenderable( sceneCollider );
     glm::mat4 ctm = glm::translate(glm::mat4(1.f),glm::vec3(center));
 
