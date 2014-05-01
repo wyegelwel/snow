@@ -48,7 +48,7 @@ struct vec3
     vec3( float xx, float yy, float zz ) { data.x = xx; data.y = yy; data.z = zz; }
 
     __host__ __device__ __forceinline__
-    vec3( const vec3 &v ) { data = v.data; }
+    vec3( const vec3 &v ) { data.x = v.data.x; data.y = v.data.y; data.z = v.data.z; }
 
     __host__ __device__ __forceinline__
     vec3( const glm::vec3 &v ) { data.x = v.x; data.y = v.y; data.z = v.z; }

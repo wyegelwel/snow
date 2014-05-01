@@ -34,7 +34,7 @@
 
 #define BETA 0.5f
 #define MAX_ITERATIONS 20
-#define RESIDUAL_THRESHOLD 0.001
+#define RESIDUAL_THRESHOLD 1e-20
 
 /**
  * Called over particles
