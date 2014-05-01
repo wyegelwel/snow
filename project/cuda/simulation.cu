@@ -34,6 +34,7 @@
 
 #define ALPHA 0.95f
 
+
 #define GRAVITY vec3(0.f,-9.8f,0.f)
 
 // Chain to compute the volume of the particle
@@ -48,6 +49,7 @@ __global__ void computeNodeMasses( const Particle *particles, const Grid *grid, 
 
     const Particle &particle = particles[particleIdx];
 
+
     glm::ivec3 currIJK;
     Grid::gridIndexToIJK( threadIdx.y, glm::ivec3(4,4,4), currIJK );
     vec3 particleGridPos = (particle.position - grid->pos) / grid->h;
@@ -60,6 +62,7 @@ __global__ void computeNodeMasses( const Particle *particles, const Grid *grid, 
         atomicAdd( &nodeMasses[Grid::getGridIndex(currIJK, grid->dim+1)], particle.mass*w );
      }
 }
+
 
 /**
  * Computes the particle's density * grid's volume. This needs to be separate from computeCellMasses(...) because
@@ -185,6 +188,7 @@ __global__ void computeCellMassVelocityAndForceFast( const Particle *particleDat
      }
 }
 
+
 /**
  * Called on each grid node.
  *
@@ -219,10 +223,10 @@ __global__ void updateNodeVelocities( Node *nodes, int numNodes, float dt, const
         node.velocityChange = node.velocity;
 
         // Gravity for node forces
-        node.force += node.mass * GRAVITY;
+//        node.force += node.mass * GRAVITY;
 
         // Update velocity with node force
-        node.velocity += dt * scale * node.force;
+        node.velocity += dt * (scale*node.force+GRAVITY);
 
         // Handle collisions
         int gridI, gridJ, gridK;
@@ -231,6 +235,7 @@ __global__ void updateNodeVelocities( Node *nodes, int numNodes, float dt, const
         checkForAndHandleCollisions( colliders, numColliders, nodePosition, node.velocity );
 
         if ( updateVelocityChange ) node.velocityChange = node.velocity - node.velocityChange;
+
 
     }
 }
@@ -248,6 +253,7 @@ __device__ void processGridVelocities( Particle &particle, const Grid *grid, con
          gridMin = vec3::ceil( gridIndex - vec3(2,2,2) );
     glm::ivec3 maxIndex = glm::clamp( glm::ivec3(gridMax), glm::ivec3(0,0,0), dim ),
                minIndex = glm::clamp( glm::ivec3(gridMin), glm::ivec3(0,0,0), dim );
+
 
     // For computing particle velocity gradient:
     //      grad(v_p) = sum( v_i * transpose(grad(w_ip)) ) = [3x3 matrix]
@@ -307,11 +313,11 @@ __device__ void updateParticleDeformationGradients( Particle &particle, const ma
     particle.plasticF = mat3::multiplyADBt( V, Sinv, W ) * particle.elasticF * particle.plasticF;
     particle.elasticF = mat3::multiplyADBt( W, S, V );
 
-//     // MORE ACCURATE COMPUTATION:
+     // MORE ACCURATE COMPUTATION:
 
-//    S[0] = CLAMP( S[0], mat->criticalCompression, mat->criticalStretch );
-//    S[4] = CLAMP( S[4], mat->criticalCompression, mat->criticalStretch );
-//    S[8] = CLAMP( S[8], mat->criticalCompression, mat->criticalStretch );
+//    S[0] = CLAMP( S[0], material.criticalCompressionRatio, material.criticalStretchRatio );
+//    S[4] = CLAMP( S[4], material.criticalCompressionRatio, material.criticalStretchRatio );
+//    S[8] = CLAMP( S[8], material.criticalCompressionRatio, material.criticalStretchRatio );
 
 //    particle.elasticF = W * S * mat3::transpose( V );
 //    particle.plasticF = V * mat3::inverse( S ) * mat3::transpose( W ) * particle.elasticF * particle.plasticF;
@@ -351,6 +357,7 @@ __host__ void updateParticles( Particle *particles, ParticleCache *pCaches, int 
     const dim3 threads1D( THREAD_COUNT );
     const dim3 pBlocks2D( (numParticles+THREAD_COUNT-1)/THREAD_COUNT, 64 );
     const dim3 threads2D( THREAD_COUNT/64, 64 );
+
 
     LAUNCH( computeSigma<<<pBlocks1D,threads1D>>>(particles,pCaches,grid) );
 

@@ -27,7 +27,7 @@
 #include <helper_functions.h>
 #include <helper_cuda.h>
 
-#define TICKS 50
+#define TICKS 10
 
 Engine::Engine()
     : m_particleSystem(NULL),

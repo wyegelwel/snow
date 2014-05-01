@@ -149,6 +149,7 @@ OTHER_FILES += \
 # of the GPU. compute capabilities listed here http://en.wikipedia.org/wiki/CUDA
 # MSLAB GeForce 460 seems to have compute capability 2.1
 CUDA_ARCH = sm_21
+#CUDA_ARCH = sm_35
 
 # custom NVCC flags
 NVCCFLAGS = --compiler-options -fno-strict-aliasing -use_fast_math --ptxas-options=-v
