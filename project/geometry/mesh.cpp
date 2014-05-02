@@ -177,6 +177,14 @@ Mesh::render()
 }
 
 void Mesh::renderVelocity(bool velTool)  {
+
+    glMatrixMode( GL_MODELVIEW );
+    glPushMatrix();
+//    glm::mat4 translate = glm::translate( glm::mat4(1.f), glm::vec3(0) );
+//    glm::mat4 basis = glm::scale( Tool::getAxialBasis(i), glm::vec3(m_scale) );
+    glm::mat4 translate = glm::translate(glm::mat4(1.f),glm::vec3(getCentroid(glm::mat4(1.f))));
+    glMultMatrixf( glm::value_ptr(translate) );
+
     glPushAttrib( GL_DEPTH_TEST );
     glEnable( GL_DEPTH_TEST );
 
@@ -214,11 +222,13 @@ void Mesh::renderVelocity(bool velTool)  {
         glPopAttrib();
         glPopAttrib();
     }
+     glPopMatrix();
 }
 
 void
 Mesh::renderForPicker()
 {
+
     if ( !hasVBO() ) {
         buildVBO();
     }
@@ -241,14 +251,22 @@ Mesh::renderVelForPicker()
         buildVelVBO();
     }
     if ( (m_type == SNOW_CONTAINER) ? UiSettings::showContainers() : UiSettings::showColliders() ) {
+        glMatrixMode( GL_MODELVIEW );
+        glPushMatrix();
+        glm::mat4 translate = glm::translate(glm::mat4(1.f),glm::vec3(getCentroid(glm::mat4(1.f))));
+        glMultMatrixf( glm::value_ptr(translate) );
+
         glPushAttrib( GL_DEPTH_TEST );
         glEnable( GL_DEPTH_TEST );
         glPushAttrib( GL_LIGHTING_BIT );
         glDisable( GL_LIGHTING );
         glColor3f( 1.f, 1.f, 1.f );
-        renderVelVBO();
+        if(!EQ(m_velMag,0))
+            renderVelVBO();
         glPopAttrib();
         glPopAttrib();
+
+        glPopMatrix();
     }
 }
 
@@ -309,23 +327,18 @@ Mesh::renderVelVBO()
     glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
     glEnable( GL_LINE_SMOOTH );
     glHint( GL_LINE_SMOOTH_HINT, GL_NICEST );
-//    for ( unsigned int i = 0; i < 3; ++i ) {
-//        glColor3fv( getAxialColor((i==m_axisSelection)?3:i).data );
-//        renderAxis( i );
-//    }
-//    glColor3fv( getAxialColor(3).data );
     glm::vec3 scaleVec;
     scaleVec.x = 1.0f/glm::length(glm::vec3(m_ctm[0][0],m_ctm[1][0],m_ctm[2][0]));
     scaleVec.y = 1.0f/glm::length(glm::vec3(m_ctm[0][1],m_ctm[1][1],m_ctm[2][1]));
     scaleVec.z = 1.0f/glm::length(glm::vec3(m_ctm[0][2],m_ctm[1][2],m_ctm[2][2]));
     glPushMatrix();
-//    std::cout << "ctm: " << glm::to_string(m_ctm) << std::endl;
-//    std::cout << "scale vec: " << glm::to_string(scaleVec) << std::endl;
     glm::mat4 transform = glm::scale(glm::mat4(),scaleVec);
     transform = glm::scale(transform,glm::vec3(scale_constant,scale_constant,scale_constant));
 
     glMultMatrixf(glm::value_ptr(transform));
+    glLineWidth(4);
     renderArrow();
+    glLineWidth(1);
     glPopMatrix();
 //    renderCenter();
     glPopAttrib();
@@ -400,31 +413,32 @@ Mesh::deleteVelVBO()
 
 void Mesh::buildVelVBO()
 {
+
+    float scale_factor = 4;
     deleteVBO();
 
     QVector<vec3> data;
-    glm::vec3 pos = this->getCentroid(glm::mat4());
+    glm::vec3 pos(0);
 
     // Axis
-//    std::cout << "mag: " << m_velMag << std::endl;
     data += vec3( pos.x, pos.y, pos.z );
-    data += vec3(pos.x,pos.y+m_velMag,pos.z);
+    data += vec3(pos.x,pos.y+m_velMag*scale_factor,pos.z);
 
     // Cone
     if(m_velMag != 0) {
         static const int resolution = 60;
         static const float dTheta = 2.f*M_PI/resolution;
-        static const float coneHeight = 0.1f;
-        static const float coneRadius = 0.05f;
+        static const float coneHeight = 0.1f*scale_factor;
+        static const float coneRadius = 0.05f*scale_factor;
         for ( int i = 0; i < resolution; ++i ) {
             float upsideUp = 1;
             if(m_velMag < 0)
                 upsideUp = -1;
-            data += vec3( pos.x, m_velMag, pos.z );
+            data += vec3( pos.x, m_velMag*scale_factor, pos.z );
             float theta0 = i*dTheta;
             float theta1 = (i+1)*dTheta;
-            data += (vec3(pos.x,pos.y + m_velMag-(upsideUp*coneHeight),pos.z)+coneRadius*vec3(cosf(theta0),0,-sinf(theta0)));
-            data += (vec3(pos.x,pos.y + m_velMag-(upsideUp*coneHeight),pos.z)+coneRadius*vec3(cosf(theta1),0,-sinf(theta1)));
+            data += (vec3(pos.x,pos.y + m_velMag*scale_factor-(upsideUp*coneHeight),pos.z)+coneRadius*vec3(cosf(theta0),0,-sinf(theta0)));
+            data += (vec3(pos.x,pos.y + m_velMag*scale_factor-(upsideUp*coneHeight),pos.z)+coneRadius*vec3(cosf(theta1),0,-sinf(theta1)));
         }
     }
 
@@ -493,7 +507,7 @@ Mesh::buildVBO()
 }
 
 void
-Mesh::fill( ParticleSystem &particles, int particleCount, float h, float targetDensity )
+Mesh::fill( ParticleSystem &particles, int particleCount, float h, float targetDensity, int materialPreset )
 {
     if ( !hasVBO() ) {
         buildVBO();
@@ -507,7 +521,7 @@ Mesh::fill( ParticleSystem &particles, int particleCount, float h, float targetD
     LOG( "Filling mesh in %d x %d x %d grid (%s voxels)...", grid.dim.x, grid.dim.y, grid.dim.z, STR(QLocale().toString(grid.dim.x*grid.dim.y*grid.dim.z)) );
 
     particles.resize( particleCount );
-    fillMesh( &m_cudaVBO, getNumTris(), grid, particles.data(), particleCount, targetDensity,  m_fillMaterialPreset );
+    fillMesh( &m_cudaVBO, getNumTris(), grid, particles.data(), particleCount, targetDensity,  materialPreset );
 
 #if 0
     fillMesh2(&m_cudaVBO, getNumTris(), grid, particles.data(), particleCount, targetDensity);
@@ -520,8 +534,6 @@ Mesh::fill( ParticleSystem &particles, int particleCount, float h, float targetD
 //    glm::vec3 newVel = glm::normalize(glm::vec3(multVel.x,multVel.y,multVel.z));
 //    particles.setVelVec(newVel);
 //    particles.setVelMag(m_velMag);
-//    std::cout << "mesh thinks velMag is: " << m_velMag << std::endl;
-//    std::cout << "vel magnitued here: " << particles.getVelMag() << std::endl;
 }
 
 BBox

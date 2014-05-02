@@ -31,7 +31,7 @@ MitsubaExporter::MitsubaExporter()
     init();
 }
 
-MitsubaExporter::MitsubaExporter(QString fprefix, int fps)
+MitsubaExporter::MitsubaExporter( QString fprefix, int fps )
   : m_fps(fps)
 {
     // this has been temporarily hardcoded instead of prompting user for a second export prefix.

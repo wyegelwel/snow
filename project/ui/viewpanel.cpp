@@ -42,7 +42,6 @@
 #include "glm/mat4x4.hpp"
 #include "glm/gtc/matrix_transform.hpp"
 #include "glm/gtc/type_ptr.hpp"
-#include <glm/gtx/string_cast.hpp>
 
 #include <QFileDialog>
 #include <QMessageBox>
@@ -123,7 +122,7 @@ ViewPanel::initializeGL()
     glHint( GL_LINE_SMOOTH_HINT, GL_NICEST );
 
 //
-    m_infoPanel->setInfo( "Particles", 0 );
+    m_infoPanel->setInfo( "Particles", "0" );
 
     // Render ticker
     assert( connect(&m_ticker, SIGNAL(timeout()), this, SLOT(update())) );
@@ -236,7 +235,6 @@ ViewPanel::keyPressEvent( QKeyEvent *event )
 bool ViewPanel::startSimulation()
 {
     makeCurrent();
-    QString fprefix;
     if ( !m_engine->isRunning() ) {
         m_engine->clearColliders();
         for ( SceneNodeIterator it = m_scene->begin(); it.isValid(); ++it ) {
@@ -248,31 +246,21 @@ bool ViewPanel::startSimulation()
                     ImplicitCollider &collider( *(sceneCollider->getImplicitCollider()) );
                     glm::mat4 ctm = (*it)->getCTM();
                     collider.applyTransformation( ctm );
-//                    glm::vec3 v = sceneCollider->getVelVec();
-//                    glm::vec4 newV = (*it)->getCTM()*glm::vec4(v,1);
-//                    std::cout << glm::to_string(v) << std::endl;
-//                    if(glm::length(v)>0)
-//                        v = glm::normalize(glm::vec3(newV.x,newV.y,newV.z));
                     glm::vec3 v = (*it)->getRenderable()->getWorldVelVec(ctm);
                     collider.velocity = (*it)->getRenderable()->getVelMag()*v;
                     m_engine->addCollider( collider );
-                    std::cout << glm::to_string(glm::vec3(collider.velocity)) << std::endl;
                 }
             }
         }
 
-        const bool exportVol = UiSettings::exportDensity() || UiSettings::exportVelocity();
+        bool exportVol = UiSettings::exportDensity() || UiSettings::exportVelocity();
         if ( exportVol ) {
-            bool ok = !m_sceneIO->sceneFile().isNull(); // if true,
-            if (saveScene())
-                 m_engine->initExporter(m_sceneIO->sceneFile());
-//            saveScene();
-//            if (!ok) // have not saved yet
-//                ok = saveScene();
-//            if (ok)
+            saveScene();
+            if ( !m_sceneIO->sceneFile().isNull() ) m_engine->initExporter(m_sceneIO->sceneFile());
+            else exportVol = false;
         }
 
-        return m_engine->start(exportVol);
+        return m_engine->start( exportVol );
     }
 
     return false;
@@ -404,7 +392,6 @@ void ViewPanel::checkSelected()  {
        emit changeSelection("Currently Selected: Grid",false);
    }
    else  {
-       std::cout << "now here" << std::endl;
        emit changeVel(false);
        emit changeSelection("Currently Selected: more than one object",false);
        m_selected = NULL;
@@ -449,13 +436,6 @@ ViewPanel::clearSelection()
 
 void ViewPanel::updateSceneGrid()
 {
-//    SceneNode *gridNode = m_scene->getSceneGridNode();
-//    if ( gridNode ) {
-//        SceneGrid *grid = dynamic_cast<SceneGrid*>( gridNode->getRenderable() );
-//        grid->setGrid( UiSettings::buildGrid(glm::mat4(1.f)) );
-//        gridNode->setBBoxDirty();
-//        gridNode->setCentroidDirty();
-//    }
     m_scene->updateSceneGrid();
     if ( m_tool ) m_tool->update();
     update();
@@ -553,11 +533,8 @@ void ViewPanel::fillSelectedMesh()
         if ( (*it)->hasRenderable() &&
              (*it)->getType() == SceneNode::SNOW_CONTAINER &&
              (*it)->getRenderable()->isSelected() ) {
-            Mesh * original = dynamic_cast<Mesh*>((*it)->getRenderable());
 
-            original->setParticleCount(UiSettings::fillNumParticles());
-            original->setMaterialPreset(UiSettings::materialPreset());
-
+            Mesh *original = dynamic_cast<Mesh*>((*it)->getRenderable());
             Mesh *copy = new Mesh( *original );
             const glm::mat4 transformation = (*it)->getCTM();
             copy->applyTransformation( transformation );
@@ -566,13 +543,10 @@ void ViewPanel::fillSelectedMesh()
 
             currentVel = (*it)->getRenderable()->getWorldVelVec(transformation);
             currentMag = (*it)->getRenderable()->getVelMag();
-            if(EQ(0,currentMag)) {
+            if( EQ( 0, currentMag ) ) {
                 currentVel = vec3(0,0,0);
             }
             else  {
-//                glm::vec4 wV = glm::vec4(currentVel,1.f);
-//                glm::vec4 newV = glm::normalize((*it)->getCTM()*wV);
-                std::cout << "vel mesh: " << glm::to_string(currentVel) << std::endl;
                 currentVel = vec3(currentVel.x,currentVel.y,currentVel.z);
             }
         }
@@ -586,9 +560,8 @@ void ViewPanel::fillSelectedMesh()
         ParticleSystem *particles = new ParticleSystem;
         particles->setVelMag(currentMag);
         particles->setVelVec(currentVel);
-        mesh->fill( *particles, UiSettings::fillNumParticles(), UiSettings::fillResolution(), UiSettings::fillDensity() );
-        std::cout << "vel here: " << particles->getVelMag() << std::endl;
-        std::cout << "vel vector here: " << glm::to_string(particles->getVelVec()) << std::endl;
+//        mesh->fill( *particles, UiSettings::fillNumParticles(), UiSettings::fillResolution(), UiSettings::fillDensity() );
+        mesh->fill( *particles, UiSettings::fillNumParticles(), UiSettings::fillResolution(), UiSettings::fillDensity(), UiSettings::materialPreset() );
         particles->setVelocity();
         m_engine->addParticleSystem( *particles );
         delete particles;
@@ -660,44 +633,34 @@ ViewPanel::saveSelectedMesh()
 
 }
 
-bool
+void
 ViewPanel::openScene()
 {
     pauseDrawing();
     // call file dialog
-    QString filename = QFileDialog::getOpenFileName(this, "Choose Scene File Path", PROJECT_PATH "/data/scenes/");
-    if (!filename.isNull())
-        m_sceneIO->read(filename, m_scene, m_engine);
-    else
-        LOG("could not open file \n");
+    QString filename = QFileDialog::getOpenFileName( this, "Choose Scene File Path", PROJECT_PATH "/data/scenes/" );
+    if ( !filename.isNull() ) m_sceneIO->read(filename, m_scene, m_engine);
+    else LOG("could not open file \n");
     resumeDrawing();
 }
 
-bool
+void
 ViewPanel::saveScene()
 {
-    if (m_sceneIO->sceneFile().isNull())
-    {
+    pauseDrawing();
+    // this is enforced if engine->start is called and export is not checked
+    if ( m_sceneIO->sceneFile().isNull() ) {
         // filename not initialized yet
         QString filename = QFileDialog::getSaveFileName( this, "Choose Scene File Path", PROJECT_PATH "/data/scenes/" );
-        if (!filename.isNull())
-        {
+        if (!filename.isNull()) {
             m_sceneIO->setSceneFile(filename);
             m_sceneIO->write(m_scene, m_engine);
-            return true;
+        } else {
+            QMessageBox::warning( this, "Error", "Invalid file path" );
         }
-        else
-        {
-            QMessageBox msgBox;
-            msgBox.setText("Error : Invalid Save Path");
-            msgBox.exec();
-            return false;
-        }
+    } else {
+        m_sceneIO->write( m_scene, m_engine );
     }
-    else
-    {
-        m_sceneIO->write(m_scene, m_engine);
-        return true;
-    }
+    resumeDrawing();
 }
 

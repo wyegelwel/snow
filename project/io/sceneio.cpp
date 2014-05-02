@@ -314,11 +314,7 @@ void SceneIO::appendParticleSystem(QDomElement root, Scene * scene)
         {
             QDomElement cNode = m_document.createElement("SnowContainer");
             Mesh * mesh = dynamic_cast<Mesh*>((*it)->getRenderable());
-            int matPreset = mesh->getMaterialPreset();
-            int numParticles = mesh->getParticleCount();
             appendString(cNode,"filename",mesh->getFilename());
-            appendString(cNode, "materialPreset", QString::number(matPreset));
-            appendInt(cNode, "numParticles", numParticles);
             appendMatrix(cNode, "CTM", (*it)->getCTM());
             pNode.appendChild(cNode);
             count++;

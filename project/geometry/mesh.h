@@ -65,7 +65,7 @@ public:
 
     virtual ~Mesh();
 
-    void fill( ParticleSystem &particles, int particleCount, float h, float targetDensity );
+    void fill( ParticleSystem &particles, int particleCount, float h, float targetDensity, int materialPreset );
 
     inline bool isEmpty() const { return m_vertices.empty() || m_tris.empty(); }
     inline void clear() { m_vertices.clear(); m_tris.clear(); m_normals.clear(); deleteVBO(); }
@@ -119,19 +119,11 @@ public:
 
     BBox getObjectBBox() const;
 
-    inline void setParticleCount(int c) {m_fillParticleCount = c;}
-    inline void setMaterialPreset(int p) {m_fillMaterialPreset = p;}
-    inline int getParticleCount() const {return m_fillParticleCount;}
-    inline int getMaterialPreset() const {return m_fillMaterialPreset;}
-
 private:
 
     QString m_name;
     QString m_filename; // The OBJ file source
     Type m_type;
-
-    int m_fillParticleCount; // number of particles filled in this mesh
-    int m_fillMaterialPreset;
 
     // List of vertices
     QVector<Vertex> m_vertices;

@@ -77,8 +77,8 @@ public slots:
     void fillSelectedMesh();
     void saveSelectedMesh();
 
-    bool openScene();
-    bool saveScene();
+    void openScene();
+    void saveScene();
 
     void zeroVelOfSelected();
     void giveVelToSelected();

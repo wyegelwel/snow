@@ -218,28 +218,14 @@ VelocityTool::mouseMoved()
             if ( (*it)->hasRenderable() && (*it)->getRenderable()->isSelected() &&
                  (*it)->getType() != SceneNode::SIMULATION_GRID ) {
                 glm::mat4 ctm = (*it)->getCTM();
-//                (*it)->applyTransformation(glm::inverse(ctm));
                 (*it)->getRenderable()->rotateVelVec( transform, ctm );
-//                (*it)->applyTransformation(ctm);
                 (*it)->getRenderable()->updateMeshVel();
                 m_panel->checkSelected();
             }
-//            else if((*it)->getType() == SceneNode::IMPLICIT_COLLIDER && (*it)->hasRenderable() && (*it)->getRenderable()->isSelected())  {
-//                switch(dynamic_cast<SceneCollider*>((*it)->getRenderable())->getImplicitCollider()->type) {
-//                    case SPHERE:
-//                        break;
-//                    case HALF_PLANE:
-//                        (*it)->applyTransformation( transform );
-//                        break;
-//                    default:
-//                        break;
-//                }
-//            }
-//            else {}
         }
     }
     if( m_scaling)  {
-        const float scale_factor=50.0f;
+        const float scale_factor=23.0f;
         const glm::ivec2 &p0 = UserInput::mousePos() - UserInput::mouseMove();
         const glm::ivec2 &p1 = UserInput::mousePos();
         for ( SceneNodeIterator it = m_panel->m_scene->begin(); it.isValid(); ++it ) {
@@ -251,7 +237,6 @@ VelocityTool::mouseMoved()
                 t1 = intersectVelVec(p1,velVec);
                 (*it)->getRenderable()->setVelMag((*it)->getRenderable()->getVelMag() + (t1-t0)*scale_factor);
                 (*it)->getRenderable()->updateMeshVel();
-//                emit m_panel->changeVelMag((*it)->getRenderable()->getVelMag());
                 m_panel->checkSelected();
             }
          }
