@@ -42,7 +42,11 @@
         <div class="col-lg-6">
 
           <h4>The Project</h4>
-          <p> Using Disney's recent work, <a href="http://www.disneyanimation.com/technology/publications"> A Material Point Method For Snow Simulation (Stomakhin et al., Siggraph 2013) </a> we plan to implement our own snow simulator. Our extension to Disney's work is to bring most of the computation to the GPU so that we can achieve real time (or near real time) performance. </p>
+          <p> Using Disney's recent work, <a href="http://www.disneyanimation.com/technology/publications"> A Material Point Method For Snow Simulation (Stomakhin et al., Siggraph 2013) </a> we plan to implement our own snow simulator.
+
+           Disney's method is based on particle simulation. To update the position and velocity of the snow particles, we map the particles to a grid to compute the macro effects of the particles as well as collisions. Then we map updated velocities back to the particles and handle more micro effects. This produces a wide variety of phenomena you would expect with snow.  
+
+            However, Disney's implementation was run on the CPU, restricting them to at least 3 minutes per frame and on average, 6.5 minutes per frame (from their times listed). Our extension to Disney's work is to bring most of the computation to the GPU so that we can provide an interactive environment for simulating the snow. </p>
 
           <!-- 
             We plan to implement Disney's material-point method for snow simulation. The MPM method combines Lagrangian particles with a Eulerian Cartesian grid. The grid allows for implicit handling of self-collision and fracture, while the particle-based representation has the benefit of more easily tracking mass and other conserved quantities.
