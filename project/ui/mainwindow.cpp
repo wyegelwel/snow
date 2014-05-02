@@ -89,18 +89,6 @@ void MainWindow::stopSimulation()
     ui->resetButton->setEnabled( true );
 }
 
-//void MainWindow::setVelMagText(float f,bool b)  {
-//    if(!b) {
-//        ui->velMagLabel->setText("Velocity Magnitued: " );
-//        return;
-//    }
-//    QString s = QString::number(f,'g',4);
-//    QString toSet = "Velocity Magnitude: ";
-//    toSet.append(s);
-//    toSet.append(" m/s");
-//    ui->velMagLabel->setText(toSet);
-//}
-
 void MainWindow::setVelText(bool b,float f,float x, float y, float z) {
     if(!b)  {
         ui->velLabel->setText("Velocity: ");

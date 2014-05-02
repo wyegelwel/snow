@@ -102,7 +102,9 @@ private:
     Grid *m_devGrid;
 
     NodeCache *m_devNodeCaches;
-    ParticleCache *m_devParticleCaches;
+
+    ParticleCache *m_hostParticleCache;
+    ParticleCache *m_devParticleCache;
 
     ImplicitCollider *m_devColliders;
     Material *m_devMaterial;

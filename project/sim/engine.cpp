@@ -40,6 +40,8 @@ Engine::Engine()
     m_particleSystem = new ParticleSystem;
     m_particleGrid =  new ParticleGrid;
 
+    m_hostParticleCache = NULL;
+
     assert( connect(&m_ticker, SIGNAL(timeout()), this, SLOT(update())) );
 }
 
@@ -48,6 +50,7 @@ Engine::~Engine()
     if ( m_running ) stop();
     SAFE_DELETE( m_particleSystem );
     SAFE_DELETE( m_particleGrid );
+    SAFE_DELETE( m_hostParticleCache );
     SAFE_DELETE( m_exporter );
 }
 
@@ -64,8 +67,8 @@ void Engine::addCollider(const ColliderType &t, const vec3 &center, const vec3 &
 
 void Engine::addParticleSystem( const ParticleSystem &particles )
 {
-    QVector<Particle> parts = particles.getParticles();
 
+    QVector<Particle> parts = particles.getParticles();
     *m_particleSystem += particles;
 }
 
@@ -175,7 +178,7 @@ void Engine::update()
             LOG( "Grid nodes resource error : %lu bytes (%lu expected)", size, m_particleGrid->size()*sizeof(Node) );
         }
 
-        updateParticles( devParticles, m_devParticleCaches, m_particleSystem->size(), m_devGrid,
+        updateParticles( devParticles, m_devParticleCache, m_hostParticleCache, m_particleSystem->size(), m_devGrid,
                          devNodes, m_devNodeCaches, m_grid.nodeCount(), m_devColliders, m_colliders.size(),
                          UiSettings::timeStep(), UiSettings::implicit() );
 
@@ -223,6 +226,7 @@ void Engine::initializeCudaResources()
     LOG( "Allocated %.2f MB for particle system.", particlesSize );
 
     int numNodes = m_grid.nodeCount();
+    int numParticles = m_particleSystem->size();
 
     // Grid Nodes
     registerVBO( &m_nodesResource, m_particleGrid->vbo() );
@@ -244,9 +248,17 @@ void Engine::initializeCudaResources()
     float nodeCachesSize = numNodes*sizeof(NodeCache) / 1e6;
     LOG( "Allocating %.2f MB for implicit update node cache.", nodeCachesSize );
 
-    checkCudaErrors(cudaMalloc( (void**)&m_devParticleCaches, m_particleSystem->size()*sizeof(ParticleCache) ));
-    checkCudaErrors(cudaMemset( m_devParticleCaches, 0, m_particleSystem->size()*sizeof(ParticleCache)));
-    float particleCachesSize = m_particleSystem->size()*sizeof(ParticleCache) / 1e6;
+    SAFE_DELETE( m_hostParticleCache );
+    m_hostParticleCache = new ParticleCache;
+    cudaMalloc( (void**)&m_hostParticleCache->sigmas, numParticles*sizeof(mat3) );
+    cudaMalloc( (void**)&m_hostParticleCache->Aps, numParticles*sizeof(mat3) );
+    cudaMalloc( (void**)&m_hostParticleCache->FeHats, numParticles*sizeof(mat3) );
+    cudaMalloc( (void**)&m_hostParticleCache->ReHats, numParticles*sizeof(mat3) );
+    cudaMalloc( (void**)&m_hostParticleCache->SeHats, numParticles*sizeof(mat3) );
+    cudaMalloc( (void**)&m_hostParticleCache->dFs, numParticles*sizeof(mat3) );
+    cudaMalloc( (void**)&m_devParticleCache, sizeof(ParticleCache) );
+    cudaMemcpy( m_devParticleCache, m_hostParticleCache, sizeof(ParticleCache), cudaMemcpyHostToDevice );
+    float particleCachesSize = numParticles*6*sizeof(mat3) / 1e6;
     LOG( "Allocating %.2f MB for implicit update particle caches.", particleCachesSize );
 
     LOG( "Allocated %.2f MB in total", particlesSize + nodesSize + nodeCachesSize + particleCachesSize );
@@ -273,7 +285,17 @@ void Engine::freeCudaResources()
     cudaFree( m_devGrid );
     cudaFree( m_devColliders );
     cudaFree( m_devNodeCaches );
-    cudaFree( m_devParticleCaches );
+
+    // Free the particle cache using the host structure
+    cudaFree( m_hostParticleCache->sigmas );
+    cudaFree( m_hostParticleCache->Aps );
+    cudaFree( m_hostParticleCache->FeHats );
+    cudaFree( m_hostParticleCache->ReHats );
+    cudaFree( m_hostParticleCache->SeHats );
+    cudaFree( m_hostParticleCache->dFs );
+    SAFE_DELETE( m_hostParticleCache );
+    cudaFree( m_devParticleCache );
+
     cudaFree( m_devMaterial );
 }
 

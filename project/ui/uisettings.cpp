@@ -135,8 +135,7 @@ Grid
 UiSettings::buildGrid( const glm::mat4 &ctm )
 {
     Grid grid;
-    vec3 p = UiSettings::gridPosition();
-    glm::vec4 point = ctm * glm::vec4(glm::vec3(p),1);
+    glm::vec4 point = ctm * glm::vec4(0,0,0,1);
     grid.pos = vec3( point.x, point.y, point.z );
     grid.dim = UiSettings::gridDimensions();
     grid.h = UiSettings::gridResolution();

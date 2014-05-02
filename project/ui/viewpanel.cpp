@@ -42,7 +42,6 @@
 #include "glm/mat4x4.hpp"
 #include "glm/gtc/matrix_transform.hpp"
 #include "glm/gtc/type_ptr.hpp"
-#include <glm/gtx/string_cast.hpp>
 
 #include <QFileDialog>
 #include <QMessageBox>
@@ -123,7 +122,7 @@ ViewPanel::initializeGL()
     glHint( GL_LINE_SMOOTH_HINT, GL_NICEST );
 
 //
-    m_infoPanel->setInfo( "Particles", 0 );
+    m_infoPanel->setInfo( "Particles", "0" );
 
     // Render ticker
     assert( connect(&m_ticker, SIGNAL(timeout()), this, SLOT(update())) );
@@ -236,7 +235,6 @@ ViewPanel::keyPressEvent( QKeyEvent *event )
 bool ViewPanel::startSimulation()
 {
     makeCurrent();
-    QString fprefix;
     if ( !m_engine->isRunning() ) {
         m_engine->clearColliders();
         for ( SceneNodeIterator it = m_scene->begin(); it.isValid(); ++it ) {
@@ -248,7 +246,6 @@ bool ViewPanel::startSimulation()
                     ImplicitCollider &collider( *(sceneCollider->getImplicitCollider()) );
                     glm::mat4 ctm = (*it)->getCTM();
                     collider.applyTransformation( ctm );
-
                     glm::vec3 v = (*it)->getRenderable()->getWorldVelVec(ctm);
                     collider.velocity = (*it)->getRenderable()->getVelMag()*v;
                     m_engine->addCollider( collider );
@@ -259,10 +256,12 @@ bool ViewPanel::startSimulation()
         const bool exportVol = UiSettings::exportDensity() || UiSettings::exportVelocity();
         if ( exportVol ) {
             bool ok = !m_sceneIO->sceneFile().isNull();
+            saveScene();
             if (!ok) // have not saved yet
                 ok = saveScene();
             if (ok)
                 m_engine->initExporter(m_sceneIO->sceneFile());
+
         }
 
         return m_engine->start(exportVol);
@@ -441,13 +440,6 @@ ViewPanel::clearSelection()
 
 void ViewPanel::updateSceneGrid()
 {
-//    SceneNode *gridNode = m_scene->getSceneGridNode();
-//    if ( gridNode ) {
-//        SceneGrid *grid = dynamic_cast<SceneGrid*>( gridNode->getRenderable() );
-//        grid->setGrid( UiSettings::buildGrid(glm::mat4(1.f)) );
-//        gridNode->setBBoxDirty();
-//        gridNode->setCentroidDirty();
-//    }
     m_scene->updateSceneGrid();
     if ( m_tool ) m_tool->update();
     update();
@@ -545,11 +537,8 @@ void ViewPanel::fillSelectedMesh()
         if ( (*it)->hasRenderable() &&
              (*it)->getType() == SceneNode::SNOW_CONTAINER &&
              (*it)->getRenderable()->isSelected() ) {
-            Mesh * original = dynamic_cast<Mesh*>((*it)->getRenderable());
 
-            original->setParticleCount(UiSettings::fillNumParticles());
-            original->setMaterialPreset(UiSettings::materialPreset());
-
+            Mesh *original = dynamic_cast<Mesh*>((*it)->getRenderable());
             Mesh *copy = new Mesh( *original );
             const glm::mat4 transformation = (*it)->getCTM();
             copy->applyTransformation( transformation );
@@ -558,7 +547,7 @@ void ViewPanel::fillSelectedMesh()
 
             currentVel = (*it)->getRenderable()->getWorldVelVec(transformation);
             currentMag = (*it)->getRenderable()->getVelMag();
-            if(EQ(0,currentMag)) {
+            if( EQ( 0, currentMag ) ) {
                 currentVel = vec3(0,0,0);
             }
             else  {
@@ -575,7 +564,8 @@ void ViewPanel::fillSelectedMesh()
         ParticleSystem *particles = new ParticleSystem;
         particles->setVelMag(currentMag);
         particles->setVelVec(currentVel);
-        mesh->fill( *particles, UiSettings::fillNumParticles(), UiSettings::fillResolution(), UiSettings::fillDensity() );
+//        mesh->fill( *particles, UiSettings::fillNumParticles(), UiSettings::fillResolution(), UiSettings::fillDensity() );
+        mesh->fill( *particles, UiSettings::fillNumParticles(), UiSettings::fillResolution(), UiSettings::fillDensity(), UiSettings::materialPreset() );
         particles->setVelocity();
         m_engine->addParticleSystem( *particles );
         delete particles;

@@ -222,7 +222,6 @@ VelocityTool::mouseMoved()
                 (*it)->getRenderable()->updateMeshVel();
                 m_panel->checkSelected();
             }
-
         }
     }
     if( m_scaling)  {
