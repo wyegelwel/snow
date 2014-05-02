@@ -32,7 +32,7 @@
 
 #include "cuda/functions.h"
 
-#define ALPHA 0.95f
+#define ALPHA 0.05f
 
 #define GRAVITY vec3(0.f,-9.8f,0.f)
 

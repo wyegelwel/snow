@@ -66,7 +66,7 @@ ScaleTool::renderAxis( unsigned int i ) const
 {
     glMatrixMode( GL_MODELVIEW );
     glPushMatrix();
-    glm::mat4 translate = glm::translate( glm::mat4(1.f), glm::vec3(m_center.x, m_center.y, m_center.z) );
+    glm::mat4 translate = glm::translate( glm::mat4(1.f), glm::vec3(m_center) );
     glm::mat4 basis = glm::scale( Tool::getAxialBasis(i), glm::vec3(m_scale) );
     glMultMatrixf( glm::value_ptr(translate*basis) );
     glBindBuffer( GL_ARRAY_BUFFER, m_vbo );
@@ -210,8 +210,8 @@ ScaleTool::mouseMoved()
                                                 0.f, 0.f, 0.f, 1.f );
             }
         }
-        glm::mat4 T = glm::translate( glm::mat4(1.f), glm::vec3(m_center.x,m_center.y,m_center.z) );
-        glm::mat4 Tinv = glm::translate( glm::mat4(1.f), glm::vec3(-m_center.x,-m_center.y,-m_center.z) );
+        glm::mat4 T = glm::translate( glm::mat4(1.f), glm::vec3(m_center) );
+        glm::mat4 Tinv = glm::translate( glm::mat4(1.f), glm::vec3(-m_center) );
         transform = T * transform * Tinv;
         uniformScale = T * uniformScale * Tinv;
         for ( SceneNodeIterator it = m_panel->m_scene->begin(); it.isValid(); ++it ) {
