@@ -218,24 +218,10 @@ VelocityTool::mouseMoved()
             if ( (*it)->hasRenderable() && (*it)->getRenderable()->isSelected() &&
                  (*it)->getType() != SceneNode::SIMULATION_GRID ) {
                 glm::mat4 ctm = (*it)->getCTM();
-//                (*it)->applyTransformation(glm::inverse(ctm));
                 (*it)->getRenderable()->rotateVelVec( transform, ctm );
-//                (*it)->applyTransformation(ctm);
                 (*it)->getRenderable()->updateMeshVel();
                 m_panel->checkSelected();
             }
-//            else if((*it)->getType() == SceneNode::IMPLICIT_COLLIDER && (*it)->hasRenderable() && (*it)->getRenderable()->isSelected())  {
-//                switch(dynamic_cast<SceneCollider*>((*it)->getRenderable())->getImplicitCollider()->type) {
-//                    case SPHERE:
-//                        break;
-//                    case HALF_PLANE:
-//                        (*it)->applyTransformation( transform );
-//                        break;
-//                    default:
-//                        break;
-//                }
-//            }
-//            else {}
         }
     }
     if( m_scaling)  {
@@ -252,7 +238,6 @@ VelocityTool::mouseMoved()
                 (*it)->getRenderable()->setVelMag((*it)->getRenderable()->getVelMag() + (t1-t0)*scale_factor);
                 std::cout << (*it)->getRenderable()->getVelMag() << std::endl;
                 (*it)->getRenderable()->updateMeshVel();
-//                emit m_panel->changeVelMag((*it)->getRenderable()->getVelMag());
                 m_panel->checkSelected();
             }
          }
