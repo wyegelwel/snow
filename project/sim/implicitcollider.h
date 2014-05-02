@@ -70,12 +70,12 @@ struct ImplicitCollider
     __host__ __device__
     void applyTransformation( const glm::mat4 &ctm )
     {
-        glm::vec4 c = ctm * glm::vec4( glm::vec3(center), 1.f );
+        glm::vec4 c = ctm * glm::vec4( glm::vec3(0,0,0), 1.f );
         center = vec3( c.x, c.y, c.z );
         switch ( type ) {
         case HALF_PLANE:
         {
-            glm::vec4 n = ctm * glm::vec4( glm::vec3(param), 0.f );
+            glm::vec4 n = ctm * glm::vec4( glm::vec3(0,1,0), 0.f );
             param = vec3( n.x, n.y, n.z );
             break;
         }
