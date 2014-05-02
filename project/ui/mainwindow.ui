@@ -65,9 +65,9 @@
        <property name="geometry">
         <rect>
          <x>0</x>
-         <y>-407</y>
-         <width>280</width>
-         <height>1169</height>
+         <y>-514</y>
+         <width>282</width>
+         <height>1111</height>
         </rect>
        </property>
        <layout class="QGridLayout" name="gridLayout_2">
@@ -265,7 +265,7 @@
                  <number>1</number>
                 </property>
                 <property name="maximum">
-                 <number>60</number>
+                 <number>200</number>
                 </property>
                 <property name="value">
                  <number>24</number>
