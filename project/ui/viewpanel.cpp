@@ -253,18 +253,14 @@ bool ViewPanel::startSimulation()
             }
         }
 
-        const bool exportVol = UiSettings::exportDensity() || UiSettings::exportVelocity();
+        bool exportVol = UiSettings::exportDensity() || UiSettings::exportVelocity();
         if ( exportVol ) {
-            bool ok = !m_sceneIO->sceneFile().isNull();
             saveScene();
-            if (!ok) // have not saved yet
-                ok = saveScene();
-            if (ok)
-                m_engine->initExporter(m_sceneIO->sceneFile());
-
+            if ( !m_sceneIO->sceneFile().isNull() ) m_engine->initExporter(m_sceneIO->sceneFile());
+            else exportVol = false;
         }
 
-        return m_engine->start(exportVol);
+        return m_engine->start( exportVol );
     }
 
     return false;
@@ -633,46 +629,33 @@ ViewPanel::saveSelectedMesh()
 
 }
 
-bool
+void
 ViewPanel::openScene()
 {
     pauseDrawing();
     // call file dialog
-    QString filename = QFileDialog::getOpenFileName(this, "Choose Scene File Path", PROJECT_PATH "/data/scenes/");
-    if (!filename.isNull())
-        m_sceneIO->read(filename, m_scene, m_engine);
-    else
-        LOG("could not open file \n");
+    QString filename = QFileDialog::getOpenFileName( this, "Choose Scene File Path", PROJECT_PATH "/data/scenes/" );
+    if ( !filename.isNull() ) m_sceneIO->read(filename, m_scene, m_engine);
+    else LOG("could not open file \n");
     resumeDrawing();
 }
 
-bool
+void
 ViewPanel::saveScene()
 {
     pauseDrawing();
     // this is enforced if engine->start is called and export is not checked
-    QString foo = m_sceneIO->sceneFile();
-    if (m_sceneIO->sceneFile().isNull())
-    {
+    if ( m_sceneIO->sceneFile().isNull() ) {
         // filename not initialized yet
         QString filename = QFileDialog::getSaveFileName( this, "Choose Scene File Path", PROJECT_PATH "/data/scenes/" );
-
-        if (!filename.isNull())
-        {
+        if (!filename.isNull()) {
             m_sceneIO->setSceneFile(filename);
             m_sceneIO->write(m_scene, m_engine);
+        } else {
+            QMessageBox::warning( this, "Error", "Invalid file path" );
         }
-        else
-        {
-            QMessageBox msgBox;
-            msgBox.setText("Error : Invalid Save Path");
-            msgBox.exec();
-            return false;
-        }
-    }
-    else
-    {
-        m_sceneIO->write(m_scene, m_engine);
+    } else {
+        m_sceneIO->write( m_scene, m_engine );
     }
     resumeDrawing();
 }

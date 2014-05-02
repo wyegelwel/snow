@@ -89,6 +89,7 @@ __global__ void computeParticleDensity( Particle *particles, int numParticles, c
      }
 }
 
+
 /**
  * Computes the particle's volume. Assumes computeParticleDensity(...) has just been called.
  *

@@ -40,6 +40,7 @@ struct Tri {
     vec3 v2, n2;
 };
 
+
 /*
  * Moller, T, and Trumbore, B. Fast, Minimum Storage Ray/Triangle Intersection.
  */
