@@ -335,15 +335,9 @@ __global__ void updateParticlesFromGrid( Particle *particles, const Grid *grid, 
 }
 
 __global__ void updateColliderPositions(ImplicitCollider *colliders, int numColliders,float timestep)  {
-
-    ImplicitCollider &collider = colliders[0];
-
-//    printf("collider vol %f \n", collider.velocity.y);
-
     for(int i = 0; i < numColliders; i++)  {
         ImplicitCollider &collider = colliders[i];
         collider.center += collider.velocity*timestep;
-//        printf("collider vel is: %d",colliders[i].velocity.y);
     }
 }
 
