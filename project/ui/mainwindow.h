@@ -29,13 +29,20 @@ public slots:
     void importMesh();
     void addCollider();
 
+//    void setVelMagText(float f,bool b);
+//    void setVelVecText(vec3,bool);
+    void setVelText(bool b,float f,float x,float y,float z);
+    void setSelectionText(QString,bool,int);
+
     void startSimulation();
     void stopSimulation();
+
 
     virtual void resizeEvent( QResizeEvent* );
     virtual void moveEvent( QMoveEvent* );
 
     virtual void keyPressEvent( QKeyEvent *event );
+
 
 public:
 

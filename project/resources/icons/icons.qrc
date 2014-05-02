@@ -4,6 +4,6 @@
         <file>rotate.png</file>
         <file>cursor.png</file>
         <file>scale.png</file>
-        <file>placeholder.jpg</file>
+        <file>velocity.png</file>
     </qresource>
 </RCC>

@@ -181,12 +181,14 @@ Scene::addCollider(const ColliderType &t,const vec3 &center, const vec3 &param, 
         sceneCollider->setVelVec(vec3::normalize(velocity));
     }
 
+    sceneCollider->updateMeshVel();
+
     node->setRenderable( sceneCollider );
     glm::mat4 ctm = glm::translate(glm::mat4(1.f),glm::vec3(center));
 
     switch(t) {
     case SPHERE:
-        ctm = glm::scale(ctm,glm::vec3(param.x,param.x,param.x));
+        ctm = glm::scale(ctm,glm::vec3(param.x));
         break;
     case HALF_PLANE:
         ctm *= glm::orientation(glm::vec3(param),glm::vec3(0,1,0));

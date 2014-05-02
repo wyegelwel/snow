@@ -63,7 +63,7 @@ VelocityTool::renderAxis( unsigned int i ) const
 {
     glMatrixMode( GL_MODELVIEW );
     glPushMatrix();
-    glm::mat4 translate = glm::translate( glm::mat4(1.f), glm::vec3(m_center.x, m_center.y, m_center.z) );
+    glm::mat4 translate = glm::translate( glm::mat4(1.f), glm::vec3(m_center) );
     glm::mat4 basis = glm::scale( Tool::getAxialBasis(i), glm::vec3(m_scale) );
     glMultMatrixf( glm::value_ptr(translate*basis) );
     glBindBuffer( GL_ARRAY_BUFFER, m_vbo );
@@ -209,16 +209,20 @@ VelocityTool::mouseMoved()
         float theta0 = intersectAxis( UserInput::mousePos()-UserInput::mouseMove() );
         float theta1 = intersectAxis( UserInput::mousePos() );
         float theta = theta1-theta0;
-        glm::mat4 Tinv = glm::translate( glm::mat4(1.f), glm::vec3(-m_center.x, -m_center.y, -m_center.z) );
-        glm::mat4 T = glm::translate( glm::mat4(1.f), glm::vec3(m_center.x, m_center.y, m_center.z) );
+        glm::mat4 Tinv = glm::translate( glm::mat4(1.f), glm::vec3(-m_center) );
+        glm::mat4 T = glm::translate( glm::mat4(1.f), glm::vec3(m_center) );
         glm::vec3 axis(0,0,0); axis[m_axisSelection] = 1.f;
         glm::mat4 R = glm::rotate( glm::mat4(1.f), theta, axis );
         glm::mat4 transform = T * R * Tinv;
         for ( SceneNodeIterator it = m_panel->m_scene->begin(); it.isValid(); ++it ) {
             if ( (*it)->hasRenderable() && (*it)->getRenderable()->isSelected() &&
                  (*it)->getType() != SceneNode::SIMULATION_GRID ) {
-                (*it)->getRenderable()->rotateVelVec( transform );
+                glm::mat4 ctm = (*it)->getCTM();
+//                (*it)->applyTransformation(glm::inverse(ctm));
+                (*it)->getRenderable()->rotateVelVec( transform, ctm );
+//                (*it)->applyTransformation(ctm);
                 (*it)->getRenderable()->updateMeshVel();
+                m_panel->checkSelected();
             }
 //            else if((*it)->getType() == SceneNode::IMPLICIT_COLLIDER && (*it)->hasRenderable() && (*it)->getRenderable()->isSelected())  {
 //                switch(dynamic_cast<SceneCollider*>((*it)->getRenderable())->getImplicitCollider()->type) {
@@ -248,6 +252,8 @@ VelocityTool::mouseMoved()
                 (*it)->getRenderable()->setVelMag((*it)->getRenderable()->getVelMag() + (t1-t0)*scale_factor);
                 std::cout << (*it)->getRenderable()->getVelMag() << std::endl;
                 (*it)->getRenderable()->updateMeshVel();
+//                emit m_panel->changeVelMag((*it)->getRenderable()->getVelMag());
+                m_panel->checkSelected();
             }
          }
     }

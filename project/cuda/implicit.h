@@ -34,7 +34,7 @@
 
 #define BETA 0.5f
 #define MAX_ITERATIONS 15
-#define RESIDUAL_THRESHOLD 1e-6
+#define RESIDUAL_THRESHOLD 1e-20
 
 /**
  * Called over particles
@@ -174,7 +174,7 @@ __device__ void computedR( const mat3 &dF, const mat3 &Se, const mat3 &Re, mat3 
  *
  */
 __device__ void compute_dJF_invTrans( const mat3 &F, const mat3 &dF, mat3 &dJF_invTrans )
-{  
+{
     dJF_invTrans[0] = F[4]*dF[8] - F[5]*dF[7] - F[7]*dF[5] + F[8]*dF[4];
     dJF_invTrans[1] = F[5]*dF[6] - F[3]*dF[8] + F[6]*dF[5] - F[8]*dF[3];
     dJF_invTrans[2] = F[3]*dF[7] - F[4]*dF[6] - F[6]*dF[4] + F[7]*dF[3];
@@ -254,6 +254,13 @@ __global__ void computeEuResult( const Node *nodes, NodeCache *nodeCaches, int n
     nodeCache[resultOffset] = nodeCache[uOffset] - BETA*dt*scale*nodeCache.df;
 }
 
+__global__ void zero_df( NodeCache *nodeCaches, int numNodes )
+{
+    int tid = blockDim.x*blockIdx.x + threadIdx.x;
+    if ( tid >= numNodes ) return;
+    nodeCaches[tid].df = vec3(0.0f);
+}
+
 /**
  * Computes the matrix-vector product Eu.
  */
@@ -268,6 +275,8 @@ __host__ void computeEu( const Particle *particles, ParticleCache *pCaches, int 
 
     computeAp<<< (numParticles+threadCount-1)/threadCount, threadCount >>>( particles, pCaches );
     checkCudaErrors( cudaDeviceSynchronize() );
+
+    zero_df<<< (numNodes+threadCount-1)/threadCount, threadCount >>>( nodeCaches, numNodes );
 
     dim3 blocks = dim3( numParticles/threadCount, 64 );
     dim3 threads = dim3( threadCount/64, 64 );

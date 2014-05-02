@@ -20,6 +20,8 @@
 #include <QObject>
 #include <QSlider>
 #include <QSpinBox>
+#include <QLabel>
+#include "ui/viewpanel.h"
 
 class IntBinding : public QObject
 {
@@ -156,6 +158,42 @@ private:
 
     bool &m_value;
 };
+
+//class StringBinding : public QObject
+//{
+
+//    Q_OBJECT
+
+//public:
+
+//    StringBinding( QString &s, ViewPanel *parent = NULL ) : QObject(parent), m_value(value) {}
+
+//    static BoolBinding* bindCheckBox( QCheckBox *checkbox, bool &value, QObject *parent = NULL )
+//    {
+//        BoolBinding *binding = new BoolBinding( value, parent );
+//        checkbox->setChecked( value );
+//        assert( connect(checkbox, SIGNAL(toggled(bool)), binding, SLOT(valueChanged(bool))) );
+//        return binding;
+//    }
+//    static StringBinding* bindLabel(QLabel *label,const QString &s, QObject *parent = NULL )
+//    {
+//        StringBinding *binding = new StringBinding( value, parent );
+//        label->setText(s);
+//        assert( connect(binding,SIGNAL(parent->set)))
+
+//    }
+
+//public slots:
+
+//    void valueChanged( bool value )
+//    {
+//        m_value = value;
+//    }
+
+//private:
+
+//    bool &m_value;
+//};
 
 class SliderIntAttribute : public QObject
 {

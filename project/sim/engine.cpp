@@ -27,7 +27,7 @@
 #include <helper_functions.h>
 #include <helper_cuda.h>
 
-#define TICKS 50
+#define TICKS 10
 
 Engine::Engine()
     : m_particleSystem(NULL),
@@ -89,10 +89,6 @@ void Engine::initExporter( QString fprefix )
 
 bool Engine::start( bool exportVolume )
 {
-    for(int i = 0; i < m_colliders.size();i++)  {
-        std::cout << "in engine: " << m_colliders[i].velocity.y << std::endl;
-    }
-
     if ( m_particleSystem->size() > 0 && !m_grid.empty() && !m_running ) {
         std::cout << "vel mag: " << m_particleSystem->getVelMag() << std::endl;
         if ( (m_export = exportVolume) ) m_exporter->reset( m_grid );
@@ -250,9 +246,6 @@ void Engine::initializeCudaResources()
     checkCudaErrors(cudaMalloc( (void**)&m_devGrid, sizeof(Grid) ));
     checkCudaErrors(cudaMemcpy( m_devGrid, &m_grid, sizeof(Grid), cudaMemcpyHostToDevice ));
 
-    for(int i = 0; i < m_colliders.size(); i++)  {
-        std::cout << "last chance: " << m_colliders[i].velocity.y << std::endl;
-    }
 
     // Colliders
     checkCudaErrors(cudaMalloc( (void**)&m_devColliders, m_colliders.size()*sizeof(ImplicitCollider) ));
