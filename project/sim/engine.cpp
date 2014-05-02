@@ -65,10 +65,7 @@ void Engine::addCollider(const ColliderType &t, const vec3 &center, const vec3 &
 void Engine::addParticleSystem( const ParticleSystem &particles )
 {
     QVector<Particle> parts = particles.getParticles();
-//    for(int i = 0; i < parts.size(); i++)  {
-//        std::cout << "velocity in engine: " << mag << std::endl;
-//        parts[i].velocity = vel*mag;
-//    }
+
     *m_particleSystem += particles;
 }
 
@@ -90,7 +87,6 @@ void Engine::initExporter( QString fprefix )
 bool Engine::start( bool exportVolume )
 {
     if ( m_particleSystem->size() > 0 && !m_grid.empty() && !m_running ) {
-        std::cout << "vel mag: " << m_particleSystem->getVelMag() << std::endl;
         if ( (m_export = exportVolume) ) m_exporter->reset( m_grid );
 
         initializeCudaResources();
@@ -216,15 +212,6 @@ void Engine::update()
 
     }
 }
-
-//void Engine::updateColliders()  {
-//    float timestep = UiSettings::timeStep();
-//    for(int i = 0; i < m_colliders.size(); i++)  {
-//        ImplicitCollider &col = m_colliders[i];
-//        col.center += col.velocity*timestep;
-//        std::cout << "col vel: " << col.velocity.y << std::endl;
-//    }
-//}
 
 void Engine::initializeCudaResources()
 {

@@ -19,7 +19,6 @@
 #include "glm/gtc/matrix_transform.hpp"
 #include "glm/geometric.hpp"
 #include "glm/mat4x4.hpp"
-#include "glm/gtx/string_cast.hpp"
 #include "common/math.h"
 #include "cuda/vector.h"
 #include "iostream"
@@ -58,23 +57,11 @@ public:
     virtual void rotateVelVec(const glm::mat4 &transform, const glm::mat4 &ctm){
         glm::vec4 v = glm::vec4(getWorldVelVec(ctm),0);
         if(EQ(glm::length(v),0)) return;
-////        v = glm::normalize(glm::inverse(ctm)*v);
         v=transform*v;
 
         v = glm::normalize(glm::inverse(ctm)*v);
 
-
-////        v = glm::normalize(ctm*v);
         m_velVec=glm::vec3(v.x,v.y,v.z);
-//        glm::mat3 rotate = glm::transpose(Renderable::getRotation(ctm));
-//        std::cout << glm::to_string(rotate) << std::endl;
-//        glm::vec3 vec = m_velVec;
-//        vec = glm::inverse(rotate)*vec;
-//        glm::vec4 v(vec.x,vec.y,vec.z,1);
-//        if(EQ(glm::length(v),0)) return;
-//        v = glm::normalize(transform*v);
-//        vec = glm::vec3(v.x,v.y,v.z);
-//        m_velVec = rotate*vec;
 
     }
 
