@@ -259,7 +259,7 @@ void SceneIO::appendColliders(QDomElement root, Scene * scene)
             ImplicitCollider iCollider(*sCollider->getImplicitCollider()); // make copy
 
             iCollider.applyTransformation((*it)->getCTM());
-            iCollider.velocity = (*it)->getRenderable()->getVelMag()*(*it)->getRenderable()->getVelVec();
+            iCollider.velocity = (*it)->getRenderable()->getVelMag() * (*it)->getRenderable()->getVelVec();
 
             cNode.setAttribute("type", iCollider.type);
             appendVector(cNode, "center", iCollider.center);
