@@ -40,7 +40,7 @@ __global__ void applyChunky(Particle *particles, int particleCount)
     if ( tid >= particleCount ) return;
     Particle &particle = particles[tid];
     vec3 pos = particle.position;
-    float fbm = fbm3( pos * 20.0 ); // adjust the .5 to get desired frequency of chunks within fbm
+    float fbm = fbm3( pos * 40.f ); // adjust the .5 to get desired frequency of chunks within fbm
     Material mat;
     mat.setYoungsAndPoissons( MIN_E0 + fbm*(MAX_E0-MIN_E0), POISSONS_RATIO );
     mat.xi = MIN_XI + fbm*(MAX_XI-MIN_XI);

@@ -19,6 +19,7 @@
 #include <helper_cuda.h>
 #include <helper_cuda_gl.h>
 
+#include "cuda/helpers.h"
 #include "cuda/vector.h"
 
 #define CUDA_INCLUDE
@@ -38,6 +39,7 @@ struct Tri {
     vec3 v1, n1;
     vec3 v2, n2;
 };
+
 
 /*
  * Moller, T, and Trumbore, B. Fast, Minimum Storage Ray/Triangle Intersection.
@@ -151,6 +153,8 @@ __global__ void fillMeshVoxelsKernel( curandState *states, unsigned int seed, Gr
     Particle particle;
     particle.mass = particleMass;
     particle.position = min + r*(max-min);
+    particle.velocity = vec3(0,-1,0);
+    particle.material = Material();
     particles[tid] = particle;
 }
 
@@ -205,7 +209,9 @@ void fillMesh( cudaGraphicsResource **resource, int triCount, const Grid &grid, 
     {
     case 0:
         break;
-    case 1: applyChunky<<<(particleCount+511)/512, 512>>>(devParticles, particleCount); // TODO - we could use the uisettings materialstiffness here
+    case 1:
+        LAUNCH( applyChunky<<<(particleCount+511)/512, 512>>>(devParticles,particleCount) ); // TODO - we could use the uisettings materialstiffness here
+        LOG( "Chunky applied" );
         break;
     default:
         break;

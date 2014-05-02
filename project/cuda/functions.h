@@ -32,7 +32,7 @@ void registerVBO( cudaGraphicsResource **resource, GLuint vbo );
 void unregisterVBO( cudaGraphicsResource *resource );
 
 // Particle simulation
-void updateParticles( Particle *particles, ParticleCache *pCaches, int numParticles,
+void updateParticles( Particle *particles, ParticleCache *devParticleCache, ParticleCache *hostParticleCache, int numParticles,
                       Grid *grid, Node *nodes, NodeCache *nodeCache, int numNodes,
                       ImplicitCollider *colliders, int numColliders,
                       float timeStep, bool implicitUpdate );

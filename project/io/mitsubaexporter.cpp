@@ -31,9 +31,13 @@ MitsubaExporter::MitsubaExporter()
     init();
 }
 
-MitsubaExporter::MitsubaExporter(QString fprefix, int fps)
-    : m_fileprefix(fprefix), m_fps(fps)
+MitsubaExporter::MitsubaExporter( QString fprefix, int fps )
+  : m_fps(fps)
 {
+    // this has been temporarily hardcoded instead of prompting user for a second export prefix.
+    // this is the only directory big enough to handle it anyway
+    //m_fileprefix = QString("%1%2").arg("/data/people/evjang/offline_renders/", QFileInfo(fprefix).baseName());
+    m_fileprefix = fprefix;
     init();
 }
 
@@ -126,7 +130,7 @@ void MitsubaExporter::writeVOLHeader(std::ofstream &os, const int channels)
 
 void MitsubaExporter::exportDensityData(float t)
 {
-    QString fname = QString("%1_%2.vol").arg(m_fileprefix, QString("%1").arg(m_frame,4,'d',0,'0'));
+    QString fname = QString("%1_D_%2.vol").arg(m_fileprefix, QString("%1").arg(m_frame,4,'d',0,'0'));
     std::ofstream os(fname.toStdString().c_str());
 
     writeVOLHeader(os, 1);
@@ -155,7 +159,7 @@ void MitsubaExporter::exportDensityData(float t)
 
 void MitsubaExporter::exportVelocityData(float t)
 {
-    QString fname = QString("%1_%2.vol").arg(m_fileprefix, QString("%1").arg(m_frame,4,'d',0,'0'));
+    QString fname = QString("%1_V_%2.vol").arg(m_fileprefix, QString("%1").arg(m_frame,4,'d',0,'0'));
     std::ofstream os(fname.toStdString().c_str());
 
     writeVOLHeader(os, 3);

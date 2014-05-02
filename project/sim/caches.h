@@ -59,15 +59,14 @@ struct NodeCache
 struct ParticleCache
 {
     // Data used during initial node computations
-    mat3 sigma;
-    vec3 particleGridPos;
+    mat3 *sigmas;
 
     // Data used during implicit node velocity update
-    mat3 Ap;
-    mat3 FeHat;
-    mat3 ReHat;
-    mat3 SeHat;
-    mat3 dF;
+    mat3 *Aps;
+    mat3 *FeHats;
+    mat3 *ReHats;
+    mat3 *SeHats;
+    mat3 *dFs;
 };
 
 #endif // CACHES_H

@@ -59,63 +59,63 @@ mat3( 4.0168094858, 2.2950560759, 3.6252732452, 2.2950560759, 2.2574134685, 2.42
 
 __global__ void printKernel( NodeCache *caches, int numNodes, NodeCache::Offset offset )
 {
-	for ( int i = 0; i < numNodes; ++i ) {
-		const NodeCache &cache = caches[i];
+    for ( int i = 0; i < numNodes; ++i ) {
+        const NodeCache &cache = caches[i];
         const vec3 &v = cache[offset];
-		printf( "        %.10f %.10f %.10f\n", v.x, v.y, v.z );
-	}
+        printf( "        %.10f %.10f %.10f\n", v.x, v.y, v.z );
+    }
 }
 
 __global__ void _initializeVKernel( NodeCache *caches )
 {
-	int tid = blockDim.x*blockIdx.x + threadIdx.x;
-	caches[tid].v = vec3( 0, 0, 0 );
+    int tid = blockDim.x*blockIdx.x + threadIdx.x;
+    caches[tid].v = vec3( 0, 0, 0 );
 }
 
 __global__ void _initializeRPKernel( NodeCache *caches, vec3 *devB )
 {
-	int tid = blockDim.x*blockIdx.x + threadIdx.x;
+    int tid = blockDim.x*blockIdx.x + threadIdx.x;
     caches[tid].r = devB[tid] - caches[tid].r;
     caches[tid].p = caches[tid].r;
 }
 
 __global__ void _initializeApKernel( NodeCache *caches )
 {
-	int tid = blockDim.x*blockIdx.x + threadIdx.x;
-	caches[tid].Ap = caches[tid].Ar;
+    int tid = blockDim.x*blockIdx.x + threadIdx.x;
+    caches[tid].Ap = caches[tid].Ar;
 }
 
 __global__ void _updateVRKernel( NodeCache *caches, float alpha )
 {
-	int tid = blockDim.x*blockIdx.x + threadIdx.x;
-	caches[tid].v += alpha * caches[tid].p;
-	caches[tid].r -= alpha * caches[tid].Ap;
+    int tid = blockDim.x*blockIdx.x + threadIdx.x;
+    caches[tid].v += alpha * caches[tid].p;
+    caches[tid].r -= alpha * caches[tid].Ap;
 }
 
 __global__ void _updatePApResidualKernel( NodeCache *caches, float beta )
 {
-	int tid = blockDim.x*blockIdx.x + threadIdx.x;
-	caches[tid].p = caches[tid].r + beta * caches[tid].p;
-	caches[tid].Ap = caches[tid].Ar + beta * caches[tid].Ap;
+    int tid = blockDim.x*blockIdx.x + threadIdx.x;
+    caches[tid].p = caches[tid].r + beta * caches[tid].p;
+    caches[tid].Ap = caches[tid].Ar + beta * caches[tid].Ap;
     caches[tid].scratch = vec3::dot( caches[tid].r, caches[tid].r );
 }
 
 __global__ void _innerProductKernel( NodeCache *caches, int numNodes, NodeCache::Offset uOffset, NodeCache::Offset vOffset )
 {
-	float sum = 0.f;
-	for ( int i = 0; i < numNodes; ++i ) {
-		const NodeCache &cache = caches[i];
-		sum += vec3::dot( cache[uOffset], cache[vOffset] );
-	}
-	caches[0].scratch = sum;
+    float sum = 0.f;
+    for ( int i = 0; i < numNodes; ++i ) {
+        const NodeCache &cache = caches[i];
+        sum += vec3::dot( cache[uOffset], cache[vOffset] );
+    }
+    caches[0].scratch = sum;
 }
 
 __host__ float _innerProduct( NodeCache *caches, int numNodes, NodeCache::Offset uOffset, NodeCache::Offset vOffset )
 {
     _innerProductKernel<<<1,1>>>( caches, numNodes, uOffset, vOffset ); cudaDeviceSynchronize();
-	float result;
-	cudaMemcpy( &result, &(caches[0].scratch), sizeof(float), cudaMemcpyDeviceToHost );
-	return result;
+    float result;
+    cudaMemcpy( &result, &(caches[0].scratch), sizeof(float), cudaMemcpyDeviceToHost );
+    return result;
 }
 
 __global__ void _scratchSumKernel( NodeCache *caches, int numNodes )
@@ -137,26 +137,26 @@ __host__ float _scratchSum( NodeCache *caches, int numNodes )
 
 __global__ void computeEuKernel( NodeCache *caches, int numNodes, const mat3 *devE, NodeCache::Offset uOffset, NodeCache::Offset resultOffset )
 {
-	for ( int i = 0; i < numNodes; ++i ) {
-		NodeCache &resultCache = caches[i];
-		vec3 &result = resultCache[resultOffset];
-		result = vec3( 0, 0, 0 );
-		for ( int j = 0; j < numNodes; ++j ) {
-			NodeCache &uCache = caches[j];
+    for ( int i = 0; i < numNodes; ++i ) {
+        NodeCache &resultCache = caches[i];
+        vec3 &result = resultCache[resultOffset];
+        result = vec3( 0, 0, 0 );
+        for ( int j = 0; j < numNodes; ++j ) {
+            NodeCache &uCache = caches[j];
             vec3 &u = uCache[uOffset];
             const mat3 &m = devE[4*i+j];
-			result += m * u;
-		}
-	}
+            result += m * u;
+        }
+    }
 }
 
 void testConjugateResidual()
 {
-	int numNodes = 4;
+    int numNodes = 4;
 
-	NodeCache *devCaches;
-	checkCudaErrors( cudaMalloc((void**)&devCaches, numNodes*sizeof(NodeCache)) );
-	checkCudaErrors( cudaMemset(devCaches, 0, numNodes*sizeof(NodeCache)) );
+    NodeCache *devCaches;
+    checkCudaErrors( cudaMalloc((void**)&devCaches, numNodes*sizeof(NodeCache)) );
+    checkCudaErrors( cudaMemset(devCaches, 0, numNodes*sizeof(NodeCache)) );
 
     vec3 *devB;
     checkCudaErrors( cudaMalloc((void**)&devB, numNodes*sizeof(vec3)) );
@@ -172,15 +172,15 @@ void testConjugateResidual()
     computeEuKernel<<<1,1>>>( devCaches, numNodes, devE, NodeCache::R, NodeCache::AR ); cudaDeviceSynchronize();
     _initializeApKernel<<<numNodes,1>>>( devCaches ); cudaDeviceSynchronize();
 
-	int k = 0;
-	float residual;
-	do {
+    int k = 0;
+    float residual;
+    do {
 
         float alphaNum = _innerProduct( devCaches, numNodes, NodeCache::R, NodeCache::AR );
         float alphaDen = _innerProduct( devCaches, numNodes, NodeCache::AP, NodeCache::AP );
         float alpha = ( fabsf(alphaDen) > 0.f ) ? alphaNum / alphaDen : 0.f;
 
-		float betaDen = alphaNum;
+        float betaDen = alphaNum;
         _updateVRKernel<<<numNodes,1>>>( devCaches, alpha ); cudaDeviceSynchronize();
         computeEuKernel<<<1,1>>>( devCaches, numNodes, devE, NodeCache::R, NodeCache::AR ); cudaDeviceSynchronize();
         float betaNum = _innerProduct( devCaches, numNodes, NodeCache::R, NodeCache::AR );
@@ -193,8 +193,8 @@ void testConjugateResidual()
 
     } while ( k++ < 100 && residual > 1e-12 );
 
-	NodeCache *caches = new NodeCache[numNodes];
-	checkCudaErrors( cudaMemcpy(caches, devCaches, numNodes*sizeof(NodeCache), cudaMemcpyDeviceToHost) );
+    NodeCache *caches = new NodeCache[numNodes];
+    checkCudaErrors( cudaMemcpy(caches, devCaches, numNodes*sizeof(NodeCache), cudaMemcpyDeviceToHost) );
 
     bool passed = residual < 1e-8;
 
@@ -207,13 +207,13 @@ void testConjugateResidual()
     LAUNCH( printKernel<<<1,1>>>(devCaches, numNodes, NodeCache::V) );
     printf( "\n" );
 
-	if ( passed ) {
+    if ( passed ) {
         LOG( "CONJUGATE RESIDUAL: PASSED (%d iterations)", k );
-	} else {
-		LOG( "CONJUGATE RESIDUAL: FAILED" );
-	}
+    } else {
+        LOG( "CONJUGATE RESIDUAL: FAILED" );
+    }
 
-	cudaFree( devCaches );
+    cudaFree( devCaches );
     cudaFree( devB );
     cudaFree( devE );
 }

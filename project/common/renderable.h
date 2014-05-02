@@ -16,8 +16,15 @@
 #endif
 #include "glm/mat4x4.hpp"
 #include "glm/common.hpp"
+#include "glm/gtc/matrix_transform.hpp"
+#include "glm/geometric.hpp"
+#include "glm/mat4x4.hpp"
+#include "common/math.h"
+#include "cuda/vector.h"
+#include "iostream"
 
-struct vec3;
+
+//struct vec3;
 struct BBox;
 
 class Renderable
@@ -47,7 +54,16 @@ public:
     virtual void setSelected( bool selected ) { m_selected = selected; }
     bool isSelected() const { return m_selected; }
 
-    virtual void rotateVelVec(const glm::mat4 &transform){glm::vec4 v(m_velVec.x,m_velVec.y,m_velVec.z,1);v=transform*v;m_velVec=glm::vec3(v.x,v.y,v.z);}
+    virtual void rotateVelVec(const glm::mat4 &transform, const glm::mat4 &ctm){
+        glm::vec4 v = glm::vec4(getWorldVelVec(ctm),0);
+        if(EQ(glm::length(v),0)) return;
+        v=transform*v;
+
+        v = glm::normalize(glm::inverse(ctm)*v);
+
+        m_velVec=glm::vec3(v.x,v.y,v.z);
+
+    }
 
     virtual void setVelMag(const float m)  {m_velMag = m;}
 
@@ -62,6 +78,13 @@ public:
     virtual glm::vec3 getVelVec() {return m_velVec;}
 
     virtual void setCTM(const glm::mat4 &ctm){m_ctm = ctm;}
+
+    virtual glm::vec3 getWorldVelVec(const glm::mat4 &ctm)  {
+        if(EQ(m_velMag,0)) return glm::vec3(0);
+        glm::vec3 v = glm::vec3(m_velVec);
+        glm::vec4 vWorld = ctm*glm::vec4((v),0);
+        return glm::normalize(glm::vec3(vWorld.x,vWorld.y,vWorld.z));
+    }
 
 protected:
 

@@ -105,7 +105,7 @@ SceneGrid::buildVBO()
     const glm::ivec3 &dim = m_grid.dim;
     const float &h = m_grid.h;
     vec3 min = m_grid.pos;
-    vec3 max = m_grid.pos + h * vec3( dim.x, dim.y, dim.z );
+    vec3 max = m_grid.pos + h*vec3(dim);
 
     // Bounding box
     data += min;

@@ -46,7 +46,7 @@ Scene::~Scene()
     for ( SceneNodeIterator it = begin(); it.isValid(); ++it ) {
         if ( (*it)->hasRenderable() && (*it)->getType() == SceneNode::SIMULATION_GRID ) {
             glm::vec4 point = (*it)->getCTM() * glm::vec4(0,0,0,1);
-            UiSettings::gridPosition() = vec3(point.x, point.y, point.z);
+            UiSettings::gridPosition() = vec3( point.x, point.y, point.z );
             break;
         }
     }
@@ -66,6 +66,8 @@ Scene::initSceneGrid()
 {
     // Add scene grid
     SceneNode *gridNode = new SceneNode( SceneNode::SIMULATION_GRID );
+    glm::mat4 transform = glm::translate( glm::mat4(1.f), glm::vec3(UiSettings::gridPosition()) );
+    gridNode->applyTransformation(transform);
     Grid grid;
     grid.pos = vec3(0,0,0);
     grid.dim = UiSettings::gridDimensions();
@@ -188,7 +190,7 @@ Scene::addCollider(const ColliderType &t,const vec3 &center, const vec3 &param, 
 
     switch(t) {
     case SPHERE:
-        ctm = glm::scale(ctm,glm::vec3(param.x,param.x,param.x));
+        ctm = glm::scale(ctm,glm::vec3(param.x));
         break;
     case HALF_PLANE:
         ctm *= glm::orientation(glm::vec3(param),glm::vec3(0,1,0));

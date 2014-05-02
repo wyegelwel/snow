@@ -77,16 +77,21 @@ public slots:
     void fillSelectedMesh();
     void saveSelectedMesh();
 
-    bool openScene();
-    bool saveScene();
+    void openScene();
+    void saveScene();
 
     void zeroVelOfSelected();
     void giveVelToSelected();
+    void checkSelected();
 
 signals:
 
     void showMeshes();
     void showParticles();
+//    void changeVelMag(float f,bool b);
+    void changeSelection(QString s,bool b,int i=0);
+//    void changeVelVec(vec3 &v,bool b);
+    void changeVel(bool b,float f=0,float x=0,float y=0,float z=0);
 
 protected:
 
@@ -122,6 +127,8 @@ protected:
     friend class RotateTool;
     friend class ScaleTool;
     friend class VelocityTool;
+
+    SceneNode *m_selected;
 
     //friend class SceneIO;
 
