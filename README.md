@@ -15,3 +15,9 @@ To build the project, open project/snow.pro in QtCreator and then look at the fi
 
 Take a look at snow_math.pdf and snow_implicit_math.pdf for a sense of the implementation.
 
+We implemented some features that may be of interest to people not interested in snow. These include:
+
+* A 3x3 svd solver for cuda (__device__) which as been snow tested
+* A vec3 and mat3 class with most features you would expect
+
+
