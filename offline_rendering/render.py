@@ -2,6 +2,7 @@
 
 import argparse
 import subprocess
+import math
 
 def printHelp():
 	print('''
@@ -15,7 +16,7 @@ renders out teapot_0020.xml ... teapot_0029.xml
 
 to render out all the frames, just do python render teapot_*.xml
 ''')
-import ipdb as pdb
+
 def main():
 	parser = argparse.ArgumentParser(description='Parallel Render Mitsuba Frames to movie')
 	parser.add_argument('-i',type=int, help="bth block to render")
@@ -31,15 +32,17 @@ def main():
 	b = args.b
 	xmlFiles = args.xmlFiles
 	n = len(xmlFiles)
+	x = int(math.ceil(n/b))
 	if i is not None and b is not None:
 		print("i=",i)
 		print("b=",b)
-		start = (i-1)*b
-		end = (i)*b if (i != b) else n # any rounding errors are assigned to the last block.
+		print("x=",x)
+		start = (i-1)*x
+		end = (i)*x if (i != b) else n # any rounding errors are assigned to the last block.
 		xmlFiles = xmlFiles[start:end]
 			
 	# j - parallelize when applicable, suppress logs, dont overwrite existing images
-	cmds = ['mitsuba','-xj','2']
+	cmds = ['mitsuba','-xp','8']
 	cmds.extend(xmlFiles)
 	print(cmds)
 	subprocess.call(cmds)
