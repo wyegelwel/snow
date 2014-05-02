@@ -67,6 +67,8 @@ void Engine::addCollider(const ColliderType &t, const vec3 &center, const vec3 &
 
 void Engine::addParticleSystem( const ParticleSystem &particles )
 {
+
+    QVector<Particle> parts = particles.getParticles();
     *m_particleSystem += particles;
 }
 
@@ -214,15 +216,6 @@ void Engine::update()
 
     }
 }
-
-//void Engine::updateColliders()  {
-//    float timestep = UiSettings::timeStep();
-//    for(int i = 0; i < m_colliders.size(); i++)  {
-//        ImplicitCollider &col = m_colliders[i];
-//        col.center += col.velocity*timestep;
-//        std::cout << "col vel: " << col.velocity.y << std::endl;
-//    }
-//}
 
 void Engine::initializeCudaResources()
 {

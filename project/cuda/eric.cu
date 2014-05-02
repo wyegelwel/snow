@@ -40,8 +40,6 @@ __device__ void printMat3( const mat3 &mat ) {
 __device__ void printQuat( const glm::quat &q )
 {
     printf("%f  %f  %f  %f\n", q.w,q.x,q.y,q.z);
-    //std::cout << q.w << "  " << q.x << "  " << q.y  << "  " << q.z <<std::endl;
-    //std::cout << q[3] << "  " << q[0] << "  " << q[1]  << "  " << q[2] <<std::endl;
 }
 
 __device__ inline void printMat3Failure( char * name, const mat3 &got, const mat3 &expected )

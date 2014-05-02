@@ -546,6 +546,9 @@ void ViewPanel::fillSelectedMesh()
             if( EQ( 0, currentMag ) ) {
                 currentVel = vec3(0,0,0);
             }
+            else  {
+                currentVel = vec3(currentVel.x,currentVel.y,currentVel.z);
+            }
         }
     }
 
@@ -557,6 +560,7 @@ void ViewPanel::fillSelectedMesh()
         ParticleSystem *particles = new ParticleSystem;
         particles->setVelMag(currentMag);
         particles->setVelVec(currentVel);
+//        mesh->fill( *particles, UiSettings::fillNumParticles(), UiSettings::fillResolution(), UiSettings::fillDensity() );
         mesh->fill( *particles, UiSettings::fillNumParticles(), UiSettings::fillResolution(), UiSettings::fillDensity(), UiSettings::materialPreset() );
         particles->setVelocity();
         m_engine->addParticleSystem( *particles );

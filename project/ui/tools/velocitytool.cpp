@@ -225,7 +225,7 @@ VelocityTool::mouseMoved()
         }
     }
     if( m_scaling)  {
-        const float scale_factor=50.0f;
+        const float scale_factor=23.0f;
         const glm::ivec2 &p0 = UserInput::mousePos() - UserInput::mouseMove();
         const glm::ivec2 &p1 = UserInput::mousePos();
         for ( SceneNodeIterator it = m_panel->m_scene->begin(); it.isValid(); ++it ) {

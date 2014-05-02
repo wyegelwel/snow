@@ -65,9 +65,9 @@
        <property name="geometry">
         <rect>
          <x>0</x>
-         <y>0</y>
-         <width>282</width>
-         <height>1111</height>
+         <y>-407</y>
+         <width>280</width>
+         <height>1169</height>
         </rect>
        </property>
        <layout class="QGridLayout" name="gridLayout_2">
@@ -173,13 +173,13 @@
                  <number>5</number>
                 </property>
                 <property name="minimum">
-                 <double>0.000010000000000</double>
+                 <double>0.000000000000000</double>
                 </property>
                 <property name="maximum">
                  <double>0.100000000000000</double>
                 </property>
                 <property name="singleStep">
-                 <double>0.000010000000000</double>
+                 <double>0.000001000000000</double>
                 </property>
                 <property name="value">
                  <double>0.000010000000000</double>
