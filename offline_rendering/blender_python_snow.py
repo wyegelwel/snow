@@ -2,7 +2,6 @@
 # Integration plugin for loading snow simulation data into Blender
 # and exporting it via Mitsuba.
 
-
 bl_info = {
     "name": "My Script",
     "description": "Import or Export Snow Simulation",
@@ -19,11 +18,27 @@ import time
 import bpy
 import sys
 from xml.dom import minidom
+import mathutils
+import math
+import array
+#import IPython
+#IPython.embed()
 
+import pdb
+
+
+# access to necessary mtsblend classes.
 sys.path.append(os.path.dirname('~/.config/blender/2.69/scripts/addons/mtsblend'))
 from mtsblend.export.scene import SceneExporterProperties, SceneExporter
 
+class SnowSceneData(object):
+	def __init__(self):
+		self.msg = 'snow scene says hello'
+		
+# global data structure
+snow_scene_data = SnowSceneData()
 
+# classes for handing import/export of data. Meat of the program is here
 class SnowImporter(object):
 	"""
 	Parses our custom sceneFile format and adds a 
@@ -32,38 +47,114 @@ class SnowImporter(object):
 	def __init__(self):
 		pass
 
-	def import_scenefile():
+	def parse(self, xmlfile):
 		"""
-		imports an XML
+		imports an XML.
+		Loads GridProxy into scene.
+		Also loads colliders and animates them across their velocity trajectory.
 		"""
-# TODO - set the start and end frame of the blender file.
-# scn = bpy.context.scene
-# scn.frame_start = 1
-# scn.frame_end = 101
-		pass
+		xmldoc = minidom.parse(xmlfile)	
+		sdata = SnowSceneData()
+		# load SimulationParameters
+		spNode = xmldoc.getElementsByTagName('SimulationParameters')[0]
+		sdata.timestep = float(spNode.getElementsByTagName('float')[0].getAttribute('value'))
 
-	def add_collider():
-		"""
-		adds collider geom and insert keyframes.
-		"""
-		pass
-# linear animation interpolation!!!
-# keyInterp = context.user_preferences.edit.keyframe_new_interpolation_type
-# context.user_preferences.edit.keyframe_new_interpolation_type ='LINEAR'
+		esNode = xmldoc.getElementsByTagName('ExportSettings')[0]
+		sdata.basename = os.path.basename(esNode.getElementsByTagName('string')[0].getAttribute('value'))
+		for pNode in esNode.getElementsByTagName('int'):
+			val = int(pNode.getAttribute('value'))
+			if pNode.getAttribute('name') == 'maxTime':
+				sdata.maxTime = val
+			elif pNode.getAttribute('name') == 'exportFPS':
+				sdata.exportFPS = val
+			elif pNode.getAttribute('name') == 'exportDensity':
+				sdata.exportDensity = val
+			elif pNode.getAttribute('name') == 'exportVelocity':
+				sdata.exportVelocity = val
 
-# temp_ob.keyframe_insert(data_path='location', frame=(cf))
-# temp_ob.keyframe_insert(data_path='rotation_euler', frame=(cf))
+		# add the particle system
+		sdata.nframes = math.ceil(sdata.maxTime*sdata.exportFPS)
+		bpy.context.scene.frame_end = sdata.nframes
+		dirname = os.path.dirname(xmlfile)
+		print(dirname + '/' + sdata.basename )
+		if sdata.exportDensity:
+			sdata.densityVOLs = [(dirname + '/' + sdata.basename + ("_D_%04d.vol" % i) ) for i in range(sdata.nframes)]
+			
+		if sdata.exportVelocity:
+			sdata.velocityVOLs = [(dirname + '/' + sdata.basename + ("_V_%04d.vol" % i) ) for i in range(sdata.nframes)]
+		if sdata.exportDensity:
+			firstfile = sdata.densityVOLs[0]
+		elif sdata.exportVelocity:
+			firstfile = sdata.velocityVOLs[0]
+		# create particlesystem box
+		# infer from volume data
+		# f = open(firstfile,"rb")
+		# f.seek(24) # beginning of bbox data
+		# bbox = array.array('f')
+		# bbox.fromfile(f,6)
+		# [minX, minY, minZ, maxX, maxY, maxZ] = [i for i in bbox]
+		# print(bbox)
+		gNode = xmldoc.getElementsByTagName('Grid')[0]
+		dNode = gNode.getElementsByTagName('dim')[0]
+		dimX = int(dNode.getAttribute('x'))
+		dimY = int(dNode.getAttribute('y'))
+		dimZ = int(dNode.getAttribute('z'))
+		pNode = gNode.getElementsByTagName('vector')[0]
+		posX = float(pNode.getAttribute('x'))
+		posY = float(pNode.getAttribute('y'))
+		posZ = float(pNode.getAttribute('z'))
+		h = float(gNode.getElementsByTagName('float')[0].getAttribute('value'))	
 
-# context.user_preferences.edit.keyframe_new_interpolation_type = keyInterp
+		bbox_min = mathutils.Vector([posX, posY, posZ])
+		bbox_max = mathutils.Vector([posX+h*dimX, posY+h*dimY, posZ+h*dimZ])
+		
+		print('bbox min: ',bbox_min)
+		print('bbox max: ',bbox_max)
+		
+		bpy.ops.mesh.primitive_cube_add(location=((bbox_min+bbox_max)/2)) 
+		bpy.context.object.name = '__snowVolume__'
+		container = bpy.data.objects['__snowVolume__']
+		container.scale = (bbox_max-bbox_min)/2
 
-	def add_particle_system():
-		"""
-		create box with snow interior.
-		"""
-		# bpy.ops.object.empty_add(type='CUBE', view_align=False, location=())
-		# designate it with special label
-		pass
+		# add the colliders	
+		colliderNodes = xmldoc.getElementsByTagName('Collider')
+		for cNode in colliderNodes:
+			vNodes = cNode.getElementsByTagName('vector')
+			cData = {} # collider data
+			cType = int(cNode.getAttribute('type'))
+			for vNode in vNodes: # parse the collider data
+				vector = mathutils.Vector([float(vNode.getAttribute(i)) for i in ['x','y','z']])
+				cData[vNode.getAttribute('name')] = vector
+				
+			if cType == 0: # HALF-PLANE
+				print('adding half plane')
+				up = mathutils.Vector([0,1,0])
+				normal = cData['param']
+				RotationAxis = up.cross(normal)
+				angle = math.acos(normal.dot(up))
+				bpy.ops.mesh.primitive_plane_add(location=cData['center'],rotation=(-math.pi/2,0,0))
+				bpy.ops.transform.rotate(value=angle, axis=RotationAxis)
+			elif cType == 1: # COLLIDER SPHERE
+				print('adding sphere')
+				bpy.ops.mesh.primitive_uv_sphere_add(location=cData['center'], size=cData['param'][0])
+			
+			print(cData)
+			obj = bpy.context.object
+			# set the start keyframe
+			obj.keyframe_insert(data_path='location',frame=0)
+			# set the end keyframe
+			obj.location += cData['velocity']*sdata.maxTime
+			obj.keyframe_insert(data_path='location',frame=sdata.nframes)
 
+		# for obj in bpy.data.objects:
+		# 	bpy.ops.transform.translate(value=-obj.location)
+		# 	pvec = mathutils.Vector(obj.location)
+		# 	obj.location = mathutils.Vector([0,0,0])
+		# 	obj.rotation_euler[0] -= math.pi/2
+		# 	obj.location = pvec
+
+		return sdata
+		
 class MitsubaSnowExporter(object):
 	"""
 	Simply makes a call to the mtsblend plugin to export 1 .xml file for each frame 
@@ -72,24 +163,81 @@ class MitsubaSnowExporter(object):
 	def __init__(self):
 		pass
 
-	def export(self):
-		# bpy.ops.anim.change_frame(frame = 17)
+	def export(self, sdata, vol_type, filepath):
+		print('export called')
+		self.config_blender()
+		# 
 		# bpy.ops.anim.keyframe_insert_menu(type='Translation')
 
 		# As of 30 April 2014, mtsblend's "bpy.ops.export.mitsuba" operator is broken.
 		# however rendering obviously works by writing out the correct XMLs, so we will
 		# mimic that part of the pipeline.
 		scene = bpy.context.scene
-		scene_exporter = SceneExporter()
-		scene_exporter.properties.directory = self.output_dir
-		scene_exporter.properties.filename = self.output_filename # dont add the xml extension, it gets added later.
-		scene_exporter.properties.api_type = 'FILE'			# Set export target
-		scene_exporter.properties.write_files = True		# Use file write decision from above
-		scene_exporter.properties.write_all_files = False		# Use UI file write settings
-		scene_exporter.set_scene(scene)
-		export_result = scene_exporter.export()
+		basename = os.path.splitext(os.path.basename(filepath))[0]
+		dirname = os.path.dirname(filepath)
+		sdata.output_filenames = [(basename + ("_%s_%04d" % (vol_type,i)) ) for i in range(sdata.nframes)]
+		print(sdata.output_filenames[0:3])
+		# export each frame sequentially. 
+		c = bpy.data.objects['__snowVolume__']
+		print('location: ', c.location)
+		print('dimensions : ', c.dimensions)
+		minX = c.location.x - c.dimensions[0]/2
+		minY = c.location.y - c.dimensions[1]/2
+		minZ = c.location.z - c.dimensions[2]/2
+		maxX = c.location.x + c.dimensions[0]/2
+		maxY = c.location.y + c.dimensions[1]/2
+		maxZ = c.location.z + c.dimensions[2]/2
+
+		bbox = array.array('f',[minX, minY, minZ, maxX ,maxY ,maxZ])
+		print('new bbox:')
+		print(bbox)
+		for frame in range(sdata.nframes):
+			bpy.context.scene.frame_current=frame
+			scene_exporter = SceneExporter()
+			scene_exporter.properties.directory = dirname # has to be a full path
+			scene_exporter.properties.filename = sdata.output_filenames[frame] # dont add the xml extension, it gets added later.
+			scene_exporter.properties.api_type = 'FILE'			# Set export target
+			scene_exporter.properties.write_files = True		# Use file write decision from above
+			scene_exporter.properties.write_all_files = False		# Use UI file write settings
+			scene_exporter.set_scene(scene)
+			export_result = scene_exporter.export()
+
+			# inject the VOL data
+			
+			# user moves __snowVolume__ box around, becomes the new minXYZ
+			# this bounding box might be incorrect...
+			# add local bounding box coords to world space position
+			# that the user might have edited.
+			
+			if sdata.exportDensity:
+				volfile = sdata.densityVOLs[frame]
+				# overwrite the bounding box values in each VOL data file
+				with open(volfile, "r+b") as f:
+					f.seek(24)
+					bbox.tofile(f)
+			if sdata.exportVelocity:
+				volfile = sdata.velocityVOLs[frame]
+				# overwrite the bounding box values in each VOL data file
+				with open(volfile, "r+b") as f:
+					f.seek(24)
+					bbox.tofile(f)
+			print('frame %d written' % frame)
+
+	def config_blender(self):
+		# disable logo
+		bpy.data.cameras["Camera"].mitsuba_camera.mitsuba_film.banner = False
+		# high quality settings
+		bpy.data.cameras["Camera"].mitsuba_camera.mitsuba_film.highQualityEdges = False # change this 
+		bpy.context.scene.mitsuba_integrator.type = 'volpath_simple'
+		bpy.data.cameras["Camera"].mitsuba_camera.mitsuba_film.fileFormat = 'png'
+		# HDTV 1080p - lower resolution for prototyping for the time being
+		bpy.context.scene.render.resolution_x = 1920 * .25
+		bpy.context.scene.render.resolution_y = 1080 * .25
+		bpy.context.user_preferences.edit.keyframe_new_interpolation_type ='LINEAR'
 
 ################################################################################################
+
+# Blender UI Operators
 
 class SnowImportOperator(bpy.types.Operator):
 	""" Load a Snow Simulation Scene """	# tooltip
@@ -105,35 +253,48 @@ class SnowImportOperator(bpy.types.Operator):
 		context.window_manager.fileselect_add(self)
 		return {'RUNNING_MODAL'}
 
-	# entrypoint
 	def execute(self, context):
+		global snow_scene_data
 		scene = bpy.context.scene
-		# do stuff here!!!!
-		# for obj in scene.objects:
-		# 	obj.location.x += 1.0
-		print(self.filepath)
+		sImporter = SnowImporter()
+		snow_scene_data = sImporter.parse(self.filepath)
 		context.scene.update()
-		return {'FINISHED'}	# this lets blender know the operator finished successfully.
+		return {'FINISHED'}
 
 class SnowExportOperator(bpy.types.Operator):
 	""" Export Mitsuba Snow """ 
-	bl_idname = "snow.export"				# unique identifier for buttons and menu items to reference
-	bl_label = "Export Mitsuba Snow"		# display name in interface
-	bl_options = {'REGISTER', 'UNDO'}		# enable undo
+	bl_idname = "snow.export"				
+	bl_label = "Export Mitsuba Snow"	
+	bl_options = {'REGISTER', 'UNDO'}		
 	bl_space_type = 'PROPERTIES'
 	bl_region_type = 'WINDOW'
 
 	filepath = bpy.props.StringProperty(subtype='FILE_PATH', options={'HIDDEN',})
+
+	# context groups
+	vol_type = bpy.props.EnumProperty(
+            name="Volume Data",
+            items=(('D', "Density", ""),
+                   ('V', "Velocity", "")
+                   ),
+            default='D',
+            )
 
 	def invoke(self, context, event):
 		context.window_manager.fileselect_add(self)
 		return {'RUNNING_MODAL'}
 
 	def execute(self, context):
-		# scene = bpy.context.scene
-		print(self.filepath)
+		print('Exporting Snow Scene...')
+		mtsExporter = MitsubaSnowExporter()
+		mtsExporter.config_blender()
+		global snow_scene_data
+		mtsExporter.export(snow_scene_data, self.vol_type, self.filepath)
+		print('export finished!')
 		context.scene.update()
 		return {'FINISHED'}
+
+# Blender Menu function bindings to operators
 
 def menu_import_func(self, context):
     self.layout.operator_context = 'INVOKE_DEFAULT'
@@ -144,29 +305,20 @@ def menu_export_func(self, context):
 	self.layout.operator(SnowExportOperator.bl_idname, text=SnowExportOperator.bl_label)
 
 def register():
-	print('Registering Plugin')
-	# importing
 	bpy.utils.register_class(SnowImportOperator)
 	bpy.types.INFO_MT_file_import.append(menu_import_func)
-	# exporting
 	bpy.utils.register_class(SnowExportOperator)
-	bpy.types.INFO_MT_file_import.append(menu_export_func)
-
+	bpy.types.INFO_MT_file_export.append(menu_export_func)
+	print('Plugin Registered')
+	
 def unregister():
-#	bpy.utils.unregister_module(__name__)
-	print('Unregistering Plugin')
 	bpy.utils.unregister_class(SnowImportOperator)
 	bpy.utils.unregister_class(SnowExportOperator)
-
+	print('Plugin Unregistered')
 
 ################################################################################################
 
-# entry point of script
-# allows this to be run from the Blender internal text editor without having to install
 if __name__ == "__main__":
 	print('hello world')
 	register()
 
-# run this to find addon path locations in python console
-# import addon_utils
-#print(addon_utils.paths())

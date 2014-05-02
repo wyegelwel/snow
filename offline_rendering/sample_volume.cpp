@@ -5,14 +5,14 @@
 
 void write_data(int frame)
 {
-int xres=128;
+    int xres=128;
     int yres=128;
     int zres=128;
 
     float t = float(frame)/24;
 
     char fname[128];
-    snprintf(fname, sizeof(fname), "/home/evjang/offline_renders/cbox/vol/test_%04i.vol", frame);
+    snprintf(fname, sizeof(fname), "/data/people/evjang/offline_renders/mts_scene/test_%04i.vol", frame);
     std::ofstream os(fname);
 
     os.write("VOL",3);
@@ -50,7 +50,7 @@ int xres=128;
     float sx,sy,sz;
     float dx,dy,dz;
     float h = float(maxX-minX)/xres;
-
+int success = 0;
     printf("sphere center : %f, %f, %f \n", sx, sy, sz);
     for (int i=0; i<xres*yres*zres; ++i)
     {
@@ -78,24 +78,28 @@ int xres=128;
         //float density = (dx*dx + dy*dy + dz*dz < r2) ? 1.f : 0.f;
         //float density = sin(z*20);
         float density = 0;
+        
         if (dx*dx + dy*dy + dz*dz < r2)
         {
+            success++;
             //printf("success\n");
             density = 1;
         }
 
+
         os.write((char*)&density,sizeof(float));
     }   
+    printf("num success: %d \n", success);
 }
 
 int main()
 {
     float seconds = 2;
-
-	for (int f=0; f<int(seconds*24); f++)
-    {
-        write_data(f);
-    }
+    write_data(0);
+	// for (int f=0; f<int(seconds*24); f++)
+ //    {
+ //        write_data(f);
+ //    }
     printf("done \n ");
 	return 0;
 }

@@ -33,7 +33,7 @@ def replicateScenes(volNames, xmlName):
 		f.close()
 
 if __name__ == "__main__":
-	volNames = sys.argv[1:-1]
+	volNames = sys.argv[1:-1] # second all the way to the second to last
 	xmlName = sys.argv[-1]
 	replicateScenes(volNames, xmlName)
 	print('helo world')

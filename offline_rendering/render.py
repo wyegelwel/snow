@@ -39,7 +39,8 @@ def main():
 		xmlFiles = xmlFiles[start:end]
 		print(xmlFiles)
 
-	subprocess.call(['mitsuba','-xj'].extend(xmlFiles))
+	# j - parallelize when applicable, suppress logs, dont overwrite existing images
+	subprocess.call(['mitsuba','-xjq'].extend(xmlFiles))
 	
 if __name__ == "__main__":
 	main()
