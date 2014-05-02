@@ -236,7 +236,6 @@ VelocityTool::mouseMoved()
                 t0 = intersectVelVec(p0,velVec);
                 t1 = intersectVelVec(p1,velVec);
                 (*it)->getRenderable()->setVelMag((*it)->getRenderable()->getVelMag() + (t1-t0)*scale_factor);
-                std::cout << (*it)->getRenderable()->getVelMag() << std::endl;
                 (*it)->getRenderable()->updateMeshVel();
                 m_panel->checkSelected();
             }

@@ -88,7 +88,6 @@ void Engine::initExporter( QString fprefix )
 bool Engine::start( bool exportVolume )
 {
     if ( m_particleSystem->size() > 0 && !m_grid.empty() && !m_running ) {
-        std::cout << "vel mag: " << m_particleSystem->getVelMag() << std::endl;
         if ( (m_export = exportVolume) ) m_exporter->reset( m_grid );
 
         initializeCudaResources();

@@ -256,10 +256,12 @@ bool ViewPanel::startSimulation()
         const bool exportVol = UiSettings::exportDensity() || UiSettings::exportVelocity();
         if ( exportVol ) {
             bool ok = !m_sceneIO->sceneFile().isNull();
+            saveScene();
             if (!ok) // have not saved yet
                 ok = saveScene();
             if (ok)
                 m_engine->initExporter(m_sceneIO->sceneFile());
+
         }
 
         return m_engine->start(exportVol);
