@@ -228,6 +228,7 @@ void Mesh::renderVelocity(bool velTool)  {
 void
 Mesh::renderForPicker()
 {
+
     if ( !hasVBO() ) {
         buildVBO();
     }
@@ -250,6 +251,11 @@ Mesh::renderVelForPicker()
         buildVelVBO();
     }
     if ( (m_type == SNOW_CONTAINER) ? UiSettings::showContainers() : UiSettings::showColliders() ) {
+        glMatrixMode( GL_MODELVIEW );
+        glPushMatrix();
+        glm::mat4 translate = glm::translate(glm::mat4(1.f),glm::vec3(getCentroid(glm::mat4(1.f))));
+        glMultMatrixf( glm::value_ptr(translate) );
+
         glPushAttrib( GL_DEPTH_TEST );
         glEnable( GL_DEPTH_TEST );
         glPushAttrib( GL_LIGHTING_BIT );
@@ -259,6 +265,8 @@ Mesh::renderVelForPicker()
             renderVelVBO();
         glPopAttrib();
         glPopAttrib();
+
+        glPopMatrix();
     }
 }
 
