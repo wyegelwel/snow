@@ -232,7 +232,7 @@ OBJParser::write( Mesh *mesh ) const
 
     for ( int i = 0; i < mesh->getNumVertices(); ++i ) {
         const Vertex &v = mesh->getVertex( i );
-        sprintf( s, "v %f %f %f\n", v.x(), v.y(), v.z() );
+        sprintf( s, "v %f %f %f\n", v.x, v.y, v.z );
         string += s;
     }
 

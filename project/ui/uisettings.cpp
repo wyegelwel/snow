@@ -105,9 +105,9 @@ UiSettings::saveSettings()
     s.setValue( "exportFPS", exportFPS());
     s.setValue( "maxTime", maxTime());
 
-    s.setValue( "gridPositionX", gridPosition().x() );
-    s.setValue( "gridPositionY", gridPosition().y() );
-    s.setValue( "gridPositionZ", gridPosition().z() );
+    s.setValue( "gridPositionX", gridPosition().x );
+    s.setValue( "gridPositionY", gridPosition().y );
+    s.setValue( "gridPositionZ", gridPosition().z );
 
     s.setValue( "gridDimensionX", gridDimensions().x );
     s.setValue( "gridDimensionY", gridDimensions().y );

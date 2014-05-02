@@ -82,7 +82,7 @@ struct ImplicitCollider
         case SPHERE:
         {
             const float *m = glm::value_ptr(ctm);
-            param.x() = sqrtf( m[0]*m[0] + m[1]*m[1] + m[2]*m[2] ); // Assumes uniform scale
+            param.x = sqrtf( m[0]*m[0] + m[1]*m[1] + m[2]*m[2] ); // Assumes uniform scale
             break;
         }
         }

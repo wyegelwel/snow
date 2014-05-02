@@ -85,7 +85,7 @@ ScaleTool::renderCenter() const
 {
     glMatrixMode( GL_MODELVIEW );
     glPushMatrix();
-    glm::mat4 translate = glm::translate( glm::mat4(1.f), glm::vec3(m_center.x(), m_center.y()-m_scale*(1.f-m_radius), m_center.z()) );
+    glm::mat4 translate = glm::translate( glm::mat4(1.f), glm::vec3(m_center.x, m_center.y-m_scale*(1.f-m_radius), m_center.z) );
     glm::mat4 scale = glm::scale( glm::mat4(1.f), glm::vec3(m_scale) );
     glMultMatrixf( glm::value_ptr(translate*scale) );
     glBindBuffer( GL_ARRAY_BUFFER, m_vbo );
@@ -114,10 +114,10 @@ ScaleTool::render()
         glEnable( GL_LINE_SMOOTH );
         glHint( GL_LINE_SMOOTH_HINT, GL_NICEST );
         for ( unsigned int i = 0; i < 3; ++i ) {
-            glColor3fv( getAxialColor((i==m_axisSelection)?3:i).ptr() );
+            glColor3fv( getAxialColor((i==m_axisSelection)?3:i).data );
             renderAxis( i );
         }
-        glColor3fv( getAxialColor(3).ptr() );
+        glColor3fv( getAxialColor(3).data );
         renderCenter();
         glPopAttrib();
         glPopAttrib();

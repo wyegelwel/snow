@@ -48,7 +48,7 @@ __device__ bool isCollidingHalfPlaneImplicit(const ImplicitCollider &collider, c
  * and collider.param.x is the radius.
  */
 __device__ bool isCollidingSphereImplicit(const ImplicitCollider &collider, const vec3 &position){
-    float radius = collider.param.x();
+    float radius = collider.param.x;
     return (vec3::length(position-collider.center) <= radius);
 }
 

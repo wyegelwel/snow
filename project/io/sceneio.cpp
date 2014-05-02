@@ -189,9 +189,9 @@ void SceneIO::applyColliders(Scene * scene, Engine * engine)
         {
             QDomElement c = e.childNodes().at(j).toElement();
             vec3 vector;
-            vector.x() = c.attribute("x").toFloat();
-            vector.y() = c.attribute("y").toFloat();
-            vector.z() = c.attribute("z").toFloat();
+            vector.x = c.attribute("x").toFloat();
+            vector.y = c.attribute("y").toFloat();
+            vector.z = c.attribute("z").toFloat();
             QString name = c.attribute("name");
             if (name.compare("center")==0)
             {
@@ -389,9 +389,9 @@ void SceneIO::appendVector(QDomElement node, const QString name, const vec3 v)
 {
     QDomElement vNode = m_document.createElement("vector");
     vNode.setAttribute("name",name);
-    vNode.setAttribute("x", v.x());
-    vNode.setAttribute("y", v.y());
-    vNode.setAttribute("z", v.z());
+    vNode.setAttribute("x", v.x);
+    vNode.setAttribute("y", v.y);
+    vNode.setAttribute("z", v.z);
     node.appendChild(vNode);
 }
 
