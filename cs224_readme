@@ -1,0 +1,11 @@
+To get the program to run, you need to set your LD_LIBRARY_PATH correctly. This command will do it:
+
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/course/cs224/lib/g3d9/lib:/contrib/projects/cuda5-toolkit/lib64
+
+After that, everything else should be good to go for the department machines. Have fun with snow!
+
+Just a heads up, the scene loading requires absolute paths and if that doesn't get fixed it will just mean you will need to go into the scene file and change the paths to work with you. 
+
+Any machine with a GPU like the ones in the sunlab will run this o.k. However, we recommend using Laura in 368 because that graphics cards makes a big difference.
+
+That's it. Hope you liked the project!
