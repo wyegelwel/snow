@@ -139,8 +139,8 @@ __global__ void computeSigma( const Particle *particles, ParticleCache *particle
 
     const Material material = particle.material;
 
-    float muFp = material.mu*__expf(material.xi*(1-Jpp));
-    float lambdaFp = material.lambda*__expf(material.xi*(1-Jpp));
+    float muFp = material.mu*expf(material.xi*(1-Jpp));
+    float lambdaFp = material.lambda*expf(material.xi*(1-Jpp));
 
     particleCache->sigmas[particleIdx] = (2*muFp*mat3::multiplyABt(Fe-Re, Fe) + mat3(lambdaFp*(Jep-1)*Jep)) * -particle.volume;
 }
@@ -243,9 +243,9 @@ __device__ void processGridVelocities( Particle &particle, const Grid *grid, con
     const float h = grid->h;
 
     // Compute neighborhood of particle in grid
-    vec3 gridIndex = (pos - grid->pos) / h,
-         gridMax = vec3::floor( gridIndex + vec3(2,2,2) ),
-         gridMin = vec3::ceil( gridIndex - vec3(2,2,2) );
+    vec3 particleGridPos = (pos - grid->pos) / h,
+         gridMax = vec3::floor( particleGridPos + vec3(2,2,2) ),
+         gridMin = vec3::ceil( particleGridPos - vec3(2,2,2) );
     glm::ivec3 maxIndex = glm::clamp( glm::ivec3(gridMax), glm::ivec3(0,0,0), dim ),
                minIndex = glm::clamp( glm::ivec3(gridMin), glm::ivec3(0,0,0), dim );
 
@@ -260,20 +260,20 @@ __device__ void processGridVelocities( Particle &particle, const Grid *grid, con
     int pageSize = (dim.y+1)*rowSize;
     for ( int i = minIndex.x; i <= maxIndex.x; ++i ) {
         vec3 d, s;
-        d.x = gridIndex.x - i;
+        d.x = particleGridPos.x - i;
         d.x *= ( s.x = ( d.x < 0 ) ? -1.f : 1.f );
         int pageOffset = i*pageSize;
         for ( int j = minIndex.y; j <= maxIndex.y; ++j ) {
-            d.y = gridIndex.y - j;
+            d.y = particleGridPos.y - j;
             d.y *= ( s.y = ( d.y < 0 ) ? -1.f : 1.f );
             int rowOffset = pageOffset + j*rowSize;
             for ( int k = minIndex.z; k <= maxIndex.z; ++k ) {
-                d.z = gridIndex.z - k;
+                d.z = particleGridPos.z - k;
                 d.z *= ( s.z = ( d.z < 0 ) ? -1.f : 1.f );
                 const Node &node = nodes[rowOffset+k];
                 float w;
                 vec3 wg;
-                weightAndGradient( -s, d, w, wg );
+                weightAndGradient( s, d, w, wg );
                 velocityGradient += mat3::outerProduct( node.velocity, wg );
                 // Particle velocities
                 v_PIC += node.velocity * w;

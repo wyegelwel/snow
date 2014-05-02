@@ -6,7 +6,7 @@
 // YOUNGS MODULUS
 #define E0 1.4e5 // default modulus
 #define MIN_E0 4.8e4
-#define MAX_E0 5e5
+#define MAX_E0 1.4e5
 
 // CRITICAL COMPRESSION
 #define MIN_THETA_C 1.9e-2
@@ -18,7 +18,7 @@
 
 // HARDENING COEFF
 #define MIN_XI 5
-#define MAX_XI 20
+#define MAX_XI 10
 
 #include <cuda.h>
 #include <cuda_runtime.h>
