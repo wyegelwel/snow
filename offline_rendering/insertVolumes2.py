@@ -115,6 +115,7 @@ def replicateScenes(volNames, xmlName):
 	volNames = [os.path.abspath(volName) for volName in volNames]
 
 	for volName in volNames:
+		print(volName)
 		f = open(volName,"r+b")
 		f.seek(24)
 		bbox_old = array.array('f')
@@ -123,10 +124,10 @@ def replicateScenes(volNames, xmlName):
 		w = bbox_old[3]-bbox_old[0]
 		h = bbox_old[4]-bbox_old[1]
 		d = bbox_old[5]-bbox_old[2]
-		s = 1/max([w,h ,d])
+		s = 1/max([w,h,d])
 
-		center = [0.5*(bbox_old[3]+bbox_old[0]),0.5*(bbox_old[4]+bbox_old[1]),0.5*(bbox_old[5]+bbox_old[2])];
-		bbox_new = array.array( 'f', [center[0]-s*w/2, 0, center[2]-s*d/2, center[0]+s*w/2, s*h, center[2]+s*d/2] );
+		newCenter = [0, 0.5, 0]
+		bbox_new = array.array( 'f', [newCenter[0]-s*w/2, 0, newCenter[2]-s*d/2, newCenter[0]+s*w/2, s*h, newCenter[2]+s*d/2] );
 		f.seek(24)
 		bbox_new.tofile(f)
 		
