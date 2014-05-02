@@ -263,13 +263,13 @@ bool ViewPanel::startSimulation()
 
         const bool exportVol = UiSettings::exportDensity() || UiSettings::exportVelocity();
         if ( exportVol ) {
-            bool ok = !m_sceneIO->sceneFile().isNull();
-            saveScene();
-            if (!ok) // have not saved yet
-                ok = saveScene();
-            if (ok)
-                m_engine->initExporter(m_sceneIO->sceneFile());
-
+            bool ok = !m_sceneIO->sceneFile().isNull(); // if true,
+            if (saveScene())
+                 m_engine->initExporter(m_sceneIO->sceneFile());
+//            saveScene();
+//            if (!ok) // have not saved yet
+//                ok = saveScene();
+//            if (ok)
         }
 
         return m_engine->start(exportVol);
@@ -676,18 +676,15 @@ ViewPanel::openScene()
 bool
 ViewPanel::saveScene()
 {
-    pauseDrawing();
-    // this is enforced if engine->start is called and export is not checked
-    QString foo = m_sceneIO->sceneFile();
     if (m_sceneIO->sceneFile().isNull())
     {
         // filename not initialized yet
         QString filename = QFileDialog::getSaveFileName( this, "Choose Scene File Path", PROJECT_PATH "/data/scenes/" );
-
         if (!filename.isNull())
         {
             m_sceneIO->setSceneFile(filename);
             m_sceneIO->write(m_scene, m_engine);
+            return true;
         }
         else
         {
@@ -700,7 +697,7 @@ ViewPanel::saveScene()
     else
     {
         m_sceneIO->write(m_scene, m_engine);
+        return true;
     }
-    resumeDrawing();
 }
 
