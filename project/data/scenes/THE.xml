@@ -6,21 +6,19 @@
     <ExportSettings>
         <string value="/gpfs/main/home/evjang/course/cs224/group_final/snow/project/data/scenes/THE" name="filePrefix"/>
         <int value="3" name="maxTime"/>
-        <int value="24" name="exportFPS"/>
-        <int value="0" name="exportDensity"/>
+        <int value="100" name="exportFPS"/>
+        <int value="1" name="exportDensity"/>
         <int value="0" name="exportVelocity"/>
     </ExportSettings>
     <ParticleSystem>
         <SnowContainer>
             <string value="/gpfs/main/home/evjang/course/cs224/group_final/snow/project/data/models/THE.obj" name="filename"/>
-            <string value="0" name="materialPreset"/>
-            <int value="199680" name="numParticles"/>
-            <matrix value="0.038608 0.000000 0.000000 -0.026590 0.000000 0.038608 0.000000 0.000070 0.000000 0.000000 0.038608 -0.003355 0.000000 0.000000 0.000000 1.000000" name="CTM"/>
+            <matrix value="0.038608 0.000000 0.000000 -0.016421 0.000000 0.038608 0.000000 0.015665 0.000000 0.000000 0.038608 0.047946 0.000000 0.000000 0.000000 1.000000" name="CTM"/>
         </SnowContainer>
     </ParticleSystem>
     <Grid>
-        <dim x="80" y="40" z="30" name="gridDim"/>
-        <vector x="-0.0282317" y="-0.000906107" z="-0.0180582" name="pos"/>
+        <dim x="100" y="50" z="50" name="gridDim"/>
+        <vector x="-0.0299568" y="0.00299707" z="0.0293927" name="pos"/>
         <float value="0.001" name="h"/>
     </Grid>
     <ImplicitColliders>
@@ -28,6 +26,11 @@
             <vector x="0" y="0" z="0" name="center"/>
             <vector x="0" y="0" z="0" name="velocity"/>
             <vector x="0" y="1" z="0" name="param"/>
+        </Collider>
+        <Collider type="1">
+            <vector x="0.0946567" y="0.0322087" z="0.0478402" name="center"/>
+            <vector x="-0.998716" y="-0.0131805" z="0.0489207" name="velocity"/>
+            <vector x="0.01" y="0" z="0" name="param"/>
         </Collider>
     </ImplicitColliders>
 </SnowSimulation>
