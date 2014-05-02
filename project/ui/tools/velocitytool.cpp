@@ -217,7 +217,10 @@ VelocityTool::mouseMoved()
         for ( SceneNodeIterator it = m_panel->m_scene->begin(); it.isValid(); ++it ) {
             if ( (*it)->hasRenderable() && (*it)->getRenderable()->isSelected() &&
                  (*it)->getType() != SceneNode::SIMULATION_GRID ) {
-                (*it)->getRenderable()->rotateVelVec( transform );
+                glm::mat4 ctm = (*it)->getCTM();
+//                (*it)->applyTransformation(glm::inverse(ctm));
+                (*it)->getRenderable()->rotateVelVec( transform, ctm );
+//                (*it)->applyTransformation(ctm);
                 (*it)->getRenderable()->updateMeshVel();
                 m_panel->checkSelected();
             }
