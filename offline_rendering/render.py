@@ -15,7 +15,7 @@ renders out teapot_0020.xml ... teapot_0029.xml
 
 to render out all the frames, just do python render teapot_*.xml
 ''')
-
+import ipdb as pdb
 def main():
 	parser = argparse.ArgumentParser(description='Parallel Render Mitsuba Frames to movie')
 	parser.add_argument('-i',type=int, help="bth block to render")
@@ -37,10 +37,12 @@ def main():
 		start = (i-1)*b
 		end = (i)*b if (i != b) else n # any rounding errors are assigned to the last block.
 		xmlFiles = xmlFiles[start:end]
-		print(xmlFiles)
-
+			
 	# j - parallelize when applicable, suppress logs, dont overwrite existing images
-	subprocess.call(['mitsuba','-xjq'].extend(xmlFiles))
+	cmds = ['mitsuba','-xj','2']
+	cmds.extend(xmlFiles)
+	print(cmds)
+	subprocess.call(cmds)
 	
 if __name__ == "__main__":
 	main()
