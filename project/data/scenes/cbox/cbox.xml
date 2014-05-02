@@ -2,7 +2,7 @@
 
 <scene version="0.5.0">
 	<integrator type="volpath_simple">
-		<integer name="maxDepth" value="9"/>
+		<integer name="maxDepth" value="24"/>
 	</integrator>
 
 	<sensor type="perspective">
@@ -34,18 +34,6 @@
 		<spectrum name="reflectance" value="400:0.78, 500:0.78, 600:0.78, 700:0.78"/>
 	</bsdf>
 
-<!-- 	<shape type="obj">
-		<string name="filename" value="obj/luminaire.obj"/>
-		<transform name="toWorld">
-			<translate x="0" y="0" z="0"/>
-		</transform>
-
-		<ref id="light"/>
-
-		<emitter type="area">
-			<spectrum name="radiance" value="400:0, 500:8, 600:15.6, 700:18.4"/>
-		</emitter>
-	</shape> -->
 	
 	<shape type="rectangle">
 		<transform name="toWorld">
@@ -55,7 +43,7 @@
 
 		</transform>
 		<emitter type="area">
-			<spectrum name="radiance" value="1.1"/>
+			<spectrum name="radiance" value="8"/>
 		</emitter>
 	</shape>
 
@@ -73,13 +61,15 @@
 		</phase>
 		<volume name="density" type="gridvolume">
 			<!-- <string name="filename" value="vol/teapot_0000.vol"/> -->
-			<string name="filename" value="/gpfs/main/home/evjang/course/cs224/group_final/snow/project/data/scenes/THE_D_0001.vol"/>
+			<string name="filename" value="/data/people/evjang/offline_renders/THE_scene/THE_D_0000.vol"/>
 		</volume>
 
 		<volume name="albedo" type="constvolume">
 			<!-- using a slightly scaled up version of scattering albedo -->
-			<!-- <rgb name="value" value=".9 .95 1.0"/> -->
-			<rgb name="value" value="1.3500    1.4250    1.5000"/>
+			<rgb name="value" value=".9 .95 1.0"/>
+			<rgb name="value" value=".99 1.045 1.1"/>
+			
+<!-- 			<rgb name="value" value="1.3500    1.4250    1.5000"/> -->
 		</volume>
 		<!-- <volume name="density" type="constvolume">
 			<float name="value" value="1"/>
