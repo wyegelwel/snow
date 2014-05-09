@@ -17,7 +17,7 @@ Take a look at snow_math.pdf and snow_implicit_math.pdf for a sense of the imple
 
 We implemented some features that may be of interest to people not interested in snow. These include:
 
-* A 3x3 svd solver for cuda (__device__) which as been snow tested
+* A 3x3 svd solver for cuda (__device__) which as been snow tested, you can checkout the standalone implementation at: https://github.com/ericjang/svd3
 * A vec3 and mat3 class with most features you would expect
 
 
