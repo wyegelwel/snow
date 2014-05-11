@@ -113,6 +113,7 @@ ParticleSystem::buildBuffers()
     offset += 2*sizeof(mat3);
 
     // lambda (stiffness) attribute
+    offset += 2*sizeof(GLfloat); // skip to material.xi
     glEnableVertexAttribArray(4);
     glVertexAttribPointer( 4, 1, GL_FLOAT, GL_FALSE, sizeof(Particle), (void*)offset);
     offset += sizeof(GLfloat);
