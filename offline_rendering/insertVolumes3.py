@@ -129,7 +129,7 @@ def replicateScenes(volNames, sceneXMLName, xmlName):
 	appendXform(sceneXMLDoc, xform, "translate", [0,s*h/2,0])
 	vNode.appendChild(xform)
 
-	spf = 2.0*1/float(sdata['exportFPS'])
+	spf = 1.0/float(sdata['exportFPS'])
 	xyz= ["x","y","z"]
 
 	########
@@ -195,7 +195,7 @@ def replicateScenes(volNames, sceneXMLName, xmlName):
 			# apply the velocity
 			cData = colliders[c_idx]
 			cNode = cNodes[c_idx]
-			newPos = cData['center'] + spf * i * cData['velocity'] * .6 # for some reason the displayed velocity doesn't line up with rendered??
+			newPos = cData['center'] + spf * i * cData['velocity']
 			# the first translate node corresponds to position in original space
 			t = cNode.getElementsByTagName("translate")[0] 
 			for a in range(3):
