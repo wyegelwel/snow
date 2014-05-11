@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<SnowSimulation>
+    <SimulationParameters>
+        <float value="2.2e-05" name="timeStep"/>
+    </SimulationParameters>
+    <ExportSettings>
+        <string value="/gpfs/main/home/evjang/course/cs224/group_final/snow/project/data/scenes/snow" name="filePrefix"/>
+        <int value="1" name="maxTime"/>
+        <int value="100" name="exportFPS"/>
+        <int value="1" name="exportDensity"/>
+        <int value="0" name="exportVelocity"/>
+    </ExportSettings>
+    <ParticleSystem>
+        <SnowContainer>
+            <string value="/gpfs/main/home/evjang/course/cs224/group_final/snow/project/data/models/snow.obj" name="filename"/>
+            <matrix value="0.048304 0.000000 0.000000 -0.008765 0.000000 0.048304 0.000000 0.002915 0.000000 0.000000 -0.046586 -0.041293 0.000000 0.000000 0.000000 1.000000" name="CTM"/>
+        </SnowContainer>
+    </ParticleSystem>
+    <Grid>
+        <dim x="210" y="55" z="30" name="gridDim"/>
+        <vector x="-0.0183805" y="0.00181055" z="-0.0528121" name="pos"/>
+        <float value="0.0008" name="h"/>
+    </Grid>
+    <ImplicitColliders>
+        <Collider type="0">
+            <vector x="0" y="0.00327029" z="0" name="center"/>
+            <vector x="0" y="0" z="0" name="velocity"/>
+            <vector x="0" y="1" z="0" name="param"/>
+        </Collider>
+    </ImplicitColliders>
+</SnowSimulation>
