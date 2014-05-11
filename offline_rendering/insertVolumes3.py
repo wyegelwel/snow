@@ -129,7 +129,7 @@ def replicateScenes(volNames, sceneXMLName, xmlName):
 	appendXform(sceneXMLDoc, xform, "translate", [0,s*h/2,0])
 	vNode.appendChild(xform)
 
-	spf = 1.0/float(sdata['exportFPS'])
+	spf = 1.0/float(sdata['exportFPS']) * .53 # for some reason my velocity reconstruction doesn't line up
 	xyz= ["x","y","z"]
 
 	########
