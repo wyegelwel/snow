@@ -2,6 +2,35 @@
 # Integration plugin for loading snow simulation data into Blender
 # and exporting it via Mitsuba.
 
+"""
+This script is incomplete (exporting step has some bugs and does not insert the snow medium yet)
+the blender exporting step also fails to export the camera &  geometry after frame 1, may require some
+further hacking.
+However the fixes should be pretty easy.
+
+
+1. Set up Snow Simulation
+User sets up a particle + collider sim in snow, or loads one from XML file.  (C++)
+Grid can be set up anywhere in the scene, any dimension. The location of the simulation data can be translated later.
+
+2. Run Simulation
+ If file is new, prompts for save path. Scene XML is written there.
+VOL export data path is inserted to existing XML file
+Simulation starts and runs to completion. VOL data written.
+If the scenefile is “teapot.xml” then the density data will be written as “teapot_rho_0000.vol” and the velocity data will be written as “teapot_v_0000.vol” 
+
+3. Blender Snow Plugin > IMPORT
+The XML file already points to the teapot_rho_0000.vol files. Names generated from name of the XML file itself.
+Parses the XML file, creates instances of collider geometry and sets keyframes over the appropriate time range using Blender API.
+We could have just injected the collider and snow geom straight into the Mitsuba exported XML but this approach let’s us see the scene layout better. Can make material shading tweaks to the colliders and such.
+A temporary “SnowParticleSystem” Box is also created so the user can position it within the scene. Its rotation is locked.
+
+4. Art Direction
+User is free to move/scale the snow simulation bounding box (grid data will be scaled accordingly), apply material shaders to colliders, add stuff to the non-interacting scene (i.e. lights).
+
+"""
+
+
 bl_info = {
     "name": "My Script",
     "description": "Import or Export Snow Simulation",
@@ -21,9 +50,6 @@ from xml.dom import minidom
 import mathutils
 import math
 import array
-#import IPython
-#IPython.embed()
-
 import pdb
 
 
