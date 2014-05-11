@@ -160,7 +160,6 @@ ViewPanel::paintGL()
         m_infoPanel->setInfo( "Sim Time", QString::number(m_engine->getSimulationTime(), 'f', 3)+" s", false );
     }
 
-
     float currTime = m_engine->getSimulationTime();
     updateColliders(currTime - m_prevTime);
     m_prevTime = currTime;
@@ -256,7 +255,11 @@ bool ViewPanel::startSimulation()
         bool exportVol = UiSettings::exportDensity() || UiSettings::exportVelocity();
         if ( exportVol ) {
             saveScene();
-            if ( !m_sceneIO->sceneFile().isNull() ) m_engine->initExporter(m_sceneIO->sceneFile());
+            if ( !m_sceneIO->sceneFile().isEmpty() ) {
+                QString filename = QFileDialog::getSaveFileName( this, "Choose export destination.", PROJECT_PATH "/data/sim/" );
+                QFileInfo info(filename);
+                m_engine->initExporter(QString("%1/%2").arg(info.absolutePath(),info.baseName())); // insert new prefix here
+            }
             else exportVol = false;
         }
 
@@ -632,6 +635,7 @@ ViewPanel::saveSelectedMesh()
 
 
 }
+
 
 void
 ViewPanel::openScene()

@@ -65,9 +65,9 @@
        <property name="geometry">
         <rect>
          <x>0</x>
-         <y>-514</y>
-         <width>282</width>
-         <height>1111</height>
+         <y>-187</y>
+         <width>280</width>
+         <height>1093</height>
         </rect>
        </property>
        <layout class="QGridLayout" name="gridLayout_2">
@@ -265,7 +265,7 @@
                  <number>1</number>
                 </property>
                 <property name="maximum">
-                 <number>200</number>
+                 <number>1000</number>
                 </property>
                 <property name="value">
                  <number>24</number>
@@ -473,13 +473,19 @@
                    <string> m</string>
                   </property>
                   <property name="decimals">
-                   <number>3</number>
+                   <number>4</number>
+                  </property>
+                  <property name="minimum">
+                   <double>0.000100000000000</double>
+                  </property>
+                  <property name="maximum">
+                   <double>0.100000000000000</double>
                   </property>
                   <property name="singleStep">
-                   <double>0.001000000000000</double>
+                   <double>0.000100000000000</double>
                   </property>
                   <property name="value">
-                   <double>0.005000000000000</double>
+                   <double>0.001000000000000</double>
                   </property>
                  </widget>
                 </item>
@@ -1347,7 +1353,7 @@
      <x>0</x>
      <y>0</y>
      <width>1012</width>
-     <height>29</height>
+     <height>26</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">

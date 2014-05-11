@@ -4,7 +4,7 @@ in vec3 particlePosition;
 in vec3 particleVelocity;
 in float particleMass;
 in float particleVolume;
-in float particleStiffness;
+in float particleStiffness; // mat.xi
 
 out vec4 particleColor;
 
@@ -24,7 +24,7 @@ void main( void )
     } else if ( mode == SPEED ) {
         particleColor = mix( vec4(0.15, 0.15, 0.9, 1.0), vec4(0.9, 0.9, 0.9, 1.0), smoothstep(0.0, 5.0, length(particleVelocity)) );
     } else if ( mode == STIFFNESS ) {
-        float n = (particleStiffness - 4.8e4)/(5e5-4.8e4);
+        float n = (particleStiffness - 5.f)/5.f;
         particleColor = vec4(vec3(n),1);
     }
 

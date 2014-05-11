@@ -39,12 +39,12 @@ struct ImplicitCollider
           center(0,0,0),
           param(0,1,0),
           velocity(0,0,0),
-          coeffFriction(0.2f)
+          coeffFriction(0.1f)
     {
     }
 
     __host__ __device__
-    ImplicitCollider( ColliderType t, vec3 c, vec3 p = vec3(0,0,0), vec3 v = vec3(0,0,0), float f = 0.2f )
+    ImplicitCollider( ColliderType t, vec3 c, vec3 p = vec3(0,0,0), vec3 v = vec3(0,0,0), float f = 0.1f )
         : type(t),
           center(c),
           param(p),

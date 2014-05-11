@@ -34,7 +34,16 @@
 		<spectrum name="reflectance" value="400:0.78, 500:0.78, 600:0.78, 700:0.78"/>
 	</bsdf>
 
-	
+	<!-- colliders are made out of solid gold because why not -->
+	<bsdf id="gold" type="conductor">
+    	<string name="material" value="Au" />
+  	</bsdf>
+  	<!-- smooth plastic material for plane colliders -->
+	<bsdf id="smoothplastic"  type="plastic">
+        <srgb  name="diffuseReflectance"  value="#18455c"/>
+        <float  name="intIOR"  value="1.9"/>
+	</bsdf>
+
 	<shape type="rectangle">
 		<transform name="toWorld">
 			<scale x=".5" y=".5"/>
@@ -60,24 +69,13 @@
 			<float name="g" value=".5"/>
 		</phase>
 		<volume name="density" type="gridvolume">
-			<!-- <string name="filename" value="vol/teapot_0000.vol"/> -->
-			<string name="filename" value="/data/people/evjang/offline_renders/THE_scene/THE_D_0000.vol"/>
+			<string name="filename" value="THE_D_0000.vol"/>
 		</volume>
-
 		<volume name="albedo" type="constvolume">
 			<!-- using a slightly scaled up version of scattering albedo -->
-			<rgb name="value" value=".9 .95 1.0"/>
 			<rgb name="value" value=".99 1.045 1.1"/>
-			
-<!-- 			<rgb name="value" value="1.3500    1.4250    1.5000"/> -->
-		</volume>
-		<!-- <volume name="density" type="constvolume">
-			<float name="value" value="1"/>
 		</volume>
 		
-
-		<volume name="orientation" type="constvolume">
-		</volume> -->
 		<float name="scale" value="1000"/>
 	</medium>
 

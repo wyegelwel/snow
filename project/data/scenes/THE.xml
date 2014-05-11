@@ -5,10 +5,10 @@
     </SimulationParameters>
     <ExportSettings>
         <string value="/gpfs/main/home/evjang/course/cs224/group_final/snow/project/data/scenes/THE" name="filePrefix"/>
-        <int value="3" name="maxTime"/>
+        <int value="1" name="maxTime"/>
         <int value="100" name="exportFPS"/>
         <int value="1" name="exportDensity"/>
-        <int value="0" name="exportVelocity"/>
+        <int value="1" name="exportVelocity"/>
     </ExportSettings>
     <ParticleSystem>
         <SnowContainer>

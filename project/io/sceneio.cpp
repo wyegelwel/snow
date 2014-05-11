@@ -263,6 +263,8 @@ void SceneIO::appendColliders(QDomElement root, Scene * scene)
 //                glm::vec4 vel = (*it)->getCTM()*glm::vec4(sCollider->getVelVec(),1.f);
 //                iCollider.velocity = vec3::normalize(vec3(vel.x,vel.y,vel.z))*sCollider->getVelMag();
                 iCollider.velocity = sCollider->getVelMag() * sCollider->getWorldVelVec((*it)->getCTM());
+                float mag = sCollider->getVelMag();
+                glm::vec3 velVec = sCollider->getWorldVelVec((*it)->getCTM());
             }
             else iCollider.velocity = vec3(0,0,0);
 

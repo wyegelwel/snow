@@ -102,8 +102,10 @@ __device__ void checkForAndHandleCollisions( const ImplicitCollider *colliders, 
                 vec3 vt = vRel - normal*vn;
                 float magVt = vec3::length(vt);
                 if ( magVt <= -collider.coeffFriction*vn ) { // tangential velocity not enough to overcome force of friction
+                    //printf("dud %f\n",collider.coeffFriction);
                     vRel = vec3( 0.0f );
                 } else{
+                    //printf("overcame %f\n",collider.coeffFriction);
                     vRel = (1+collider.coeffFriction*vn/magVt)*vt;
                 }
             }

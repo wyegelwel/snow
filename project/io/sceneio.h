@@ -49,7 +49,7 @@ public:
     void setSceneFile(QString filename);
 
 private:
-    QString m_sceneFilePrefix;
+    QString m_sceneFilePrefix; // i.e. /users/jcarberr/Castle
     QDomDocument m_document; // XML document
 
     /// import functions

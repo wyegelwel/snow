@@ -50,8 +50,11 @@ class SnowImporter(object):
 	def parse(self, xmlfile):
 		"""
 		imports an XML.
-		Loads GridProxy into scene.
+		Loads a Cube that represents a proxy for the snow volume.
 		Also loads colliders and animates them across their velocity trajectory.
+		
+		Snow simulator is written with y axis up, but Blender is Z-up,
+		so swap the Y axis with the Z axis and we should be good to go.
 		"""
 		xmldoc = minidom.parse(xmlfile)	
 		sdata = SnowSceneData()
@@ -75,7 +78,7 @@ class SnowImporter(object):
 		# add the particle system
 		sdata.nframes = math.ceil(sdata.maxTime*sdata.exportFPS)
 		bpy.context.scene.frame_end = sdata.nframes
-		dirname = os.path.dirname(xmlfile)
+		dirname = os.path.dirname(xmlfile) # assume .vol files are located in same path
 		print(dirname + '/' + sdata.basename )
 		if sdata.exportDensity:
 			sdata.densityVOLs = [(dirname + '/' + sdata.basename + ("_D_%04d.vol" % i) ) for i in range(sdata.nframes)]
@@ -99,17 +102,25 @@ class SnowImporter(object):
 		dimX = int(dNode.getAttribute('x'))
 		dimY = int(dNode.getAttribute('y'))
 		dimZ = int(dNode.getAttribute('z'))
+		[dimY,dimZ] = [dimZ, dimY]
+
 		pNode = gNode.getElementsByTagName('vector')[0]
 		posX = float(pNode.getAttribute('x'))
 		posY = float(pNode.getAttribute('y'))
 		posZ = float(pNode.getAttribute('z'))
+		# swap
+		[posY,posZ] = [posZ, posY]
+
 		h = float(gNode.getElementsByTagName('float')[0].getAttribute('value'))	
 
+		# extract position of bounding box from grid position.
 		bbox_min = mathutils.Vector([posX, posY, posZ])
 		bbox_max = mathutils.Vector([posX+h*dimX, posY+h*dimY, posZ+h*dimZ])
 		
-		print('bbox min: ',bbox_min)
-		print('bbox max: ',bbox_max)
+		print('original bbox:')
+		print(bbox_min)
+		print(bbox_max)
+		#pdb.set_trace()
 		
 		bpy.ops.mesh.primitive_cube_add(location=((bbox_min+bbox_max)/2)) 
 		bpy.context.object.name = '__snowVolume__'
@@ -124,34 +135,28 @@ class SnowImporter(object):
 			cType = int(cNode.getAttribute('type'))
 			for vNode in vNodes: # parse the collider data
 				vector = mathutils.Vector([float(vNode.getAttribute(i)) for i in ['x','y','z']])
+				[vector[1],vector[2]] = [vector[2],vector[1]] # swap Y,Z
 				cData[vNode.getAttribute('name')] = vector
 				
 			if cType == 0: # HALF-PLANE
 				print('adding half plane')
-				up = mathutils.Vector([0,1,0])
+				up = mathutils.Vector([0,0,1])
 				normal = cData['param']
 				RotationAxis = up.cross(normal)
 				angle = math.acos(normal.dot(up))
-				bpy.ops.mesh.primitive_plane_add(location=cData['center'],rotation=(-math.pi/2,0,0))
+				bpy.ops.mesh.primitive_plane_add(location=cData['center'])
 				bpy.ops.transform.rotate(value=angle, axis=RotationAxis)
 			elif cType == 1: # COLLIDER SPHERE
 				print('adding sphere')
 				bpy.ops.mesh.primitive_uv_sphere_add(location=cData['center'], size=cData['param'][0])
 			
-			print(cData)
+			# print(cData)
 			obj = bpy.context.object
 			# set the start keyframe
 			obj.keyframe_insert(data_path='location',frame=0)
 			# set the end keyframe
 			obj.location += cData['velocity']*sdata.maxTime
 			obj.keyframe_insert(data_path='location',frame=sdata.nframes)
-
-		# for obj in bpy.data.objects:
-		# 	bpy.ops.transform.translate(value=-obj.location)
-		# 	pvec = mathutils.Vector(obj.location)
-		# 	obj.location = mathutils.Vector([0,0,0])
-		# 	obj.rotation_euler[0] -= math.pi/2
-		# 	obj.location = pvec
 
 		return sdata
 		
@@ -166,9 +171,6 @@ class MitsubaSnowExporter(object):
 	def export(self, sdata, vol_type, filepath):
 		print('export called')
 		self.config_blender()
-		# 
-		# bpy.ops.anim.keyframe_insert_menu(type='Translation')
-
 		# As of 30 April 2014, mtsblend's "bpy.ops.export.mitsuba" operator is broken.
 		# however rendering obviously works by writing out the correct XMLs, so we will
 		# mimic that part of the pipeline.
@@ -187,10 +189,19 @@ class MitsubaSnowExporter(object):
 		maxX = c.location.x + c.dimensions[0]/2
 		maxY = c.location.y + c.dimensions[1]/2
 		maxZ = c.location.z + c.dimensions[2]/2
+		"""
+		instead of re-writing the bytes in each VOL file, we just set a transformation attribute on 
+		the medium interior
 
+		- rotate x -90 degrees
+		- translate to desired location
+		- scale up 		
+
+		"""
 		bbox = array.array('f',[minX, minY, minZ, maxX ,maxY ,maxZ])
 		print('new bbox:')
 		print(bbox)
+		#pdb.set_trace()
 		for frame in range(sdata.nframes):
 			bpy.context.scene.frame_current=frame
 			scene_exporter = SceneExporter()
@@ -201,27 +212,6 @@ class MitsubaSnowExporter(object):
 			scene_exporter.properties.write_all_files = False		# Use UI file write settings
 			scene_exporter.set_scene(scene)
 			export_result = scene_exporter.export()
-
-			# inject the VOL data
-			
-			# user moves __snowVolume__ box around, becomes the new minXYZ
-			# this bounding box might be incorrect...
-			# add local bounding box coords to world space position
-			# that the user might have edited.
-			
-			if sdata.exportDensity:
-				volfile = sdata.densityVOLs[frame]
-				# overwrite the bounding box values in each VOL data file
-				with open(volfile, "r+b") as f:
-					f.seek(24)
-					bbox.tofile(f)
-			if sdata.exportVelocity:
-				volfile = sdata.velocityVOLs[frame]
-				# overwrite the bounding box values in each VOL data file
-				with open(volfile, "r+b") as f:
-					f.seek(24)
-					bbox.tofile(f)
-			print('frame %d written' % frame)
 
 	def config_blender(self):
 		# disable logo

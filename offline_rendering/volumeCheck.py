@@ -2,7 +2,7 @@
 
 import array
 
-f = open("/gpfs/main/home/evjang/course/cs224/group_final/snow/project/data/scenes/THE_D_0003.vol","rb")
+f = open("/data/people/evjang/offline_renders/THE_rerender/THE_D_0000.vol","rb")
 #f = open("/data/people/evjang/offline_renders/mts_scene/test_0000.vol","rb")
 
 f.seek(8)
