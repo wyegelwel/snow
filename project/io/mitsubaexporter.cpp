@@ -11,6 +11,7 @@
 #include "mitsubaexporter.h"
 #include <QFile>
 #include <iostream>
+#include <QtConcurrent/QtConcurrent>
 #include "scene/scenenode.h"
 #include "geometry/bbox.h"
 #include "scene/scene.h"

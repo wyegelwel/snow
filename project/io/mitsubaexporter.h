@@ -13,7 +13,7 @@
 
 #include <QString>
 #include <QtXml>
-#include <QtConcurrentRun>
+//#include <QtConcurrentRun>
 #include <glm/geometric.hpp>
 #include "geometry/grid.h"
 #include "geometry/bbox.h"
